@@ -13,7 +13,9 @@
 {% assign cal_locale = trmnl.plugin_settings.custom_fields_values.locale | default: "en" | strip | downcase %}
 <link rel="stylesheet" href="/rolling-month-calendar/fullcalendar/7.1.0/skeleton.css">
 <script src="/rolling-month-calendar/fullcalendar/7.1.0/all/global.js"></script>
-<script>window.FullCalendar || document.write('<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@7.1.0/skeleton.css"><script src="https://cdn.jsdelivr.net/npm/fullcalendar@7.1.0/all/global.js"><\/script>');</script>
+{% comment %} '<' + 'link': trmnlp test (0.17.0) puts every stylesheet link it finds in the page
+  inline, this one in the script's string too, which breaks the script {% endcomment %}
+<script>window.FullCalendar || document.write('<' + 'link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@7.1.0/skeleton.css"><script src="https://cdn.jsdelivr.net/npm/fullcalendar@7.1.0/all/global.js"><\/script>');</script>
 {% if cal_locale != "en" and cal_locale != "" %}
 <script src="/rolling-month-calendar/fullcalendar/7.1.0/locales-all/global.js"></script>
 <script>(window.FullCalendar && FullCalendar.globalLocales && FullCalendar.globalLocales.length) || document.write('<script src="https://cdn.jsdelivr.net/npm/fullcalendar@7.1.0/locales-all/global.js"><\/script>');</script>
