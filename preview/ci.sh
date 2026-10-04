@@ -56,15 +56,6 @@ trmnlp_render() {
     node trmnlp.mjs "$2" "$3" ${4:+"$4"}
     render_now "$1" --body "$3" --expect-events
 }
-# ... a variant (plugin/<variant>, each a TRMNL.com one); the rest are render.mjs options.
-# Rendered at TRMNL.com's scale (regular), so it compares with
-# trmnlp's own PNG ($name-trmnlp.png), the nearest to TRMNL.com's screen
-trmnlp_render_variant() {
-    name=$1 context=$2 body=$3 variant=$4
-    shift 4
-    TRMNLP_VARIANT=$variant TRMNLP_PNG="$out/$name-trmnlp.png" node trmnlp.mjs "$context" "$body" &&
-        render_now "$name" --body "$body" --scale regular "$@"
-}
 trmnlp_lint_test() {
     lint=0
     node trmnlp.mjs --lint || lint=1
@@ -84,14 +75,8 @@ spawn variants node variants.mjs check
 # docs/sample-ics (TRMNL.com's marketplace preview) in step with the sample calendars
 spawn sample-ics node sample-data.mjs check
 
-# TRMNL.com's serverless function (plugin/trmnl-com-polling/transform.js) against the fake Home
-# Assistant of e2e/, and the weather it adds on the screen
-transform_render() {
-    node transforms.mjs "$out/$1.json"
-    render_now "$1" --data "$out/$1.json" --set calendars=calendar.family,calendar.work \
-        --set weather_entity=weather.forecast_home --set weather_temperatures=high_low --expect-events
-}
-spawn transform-ha-x transform_render transform-ha-x
+# The stand-in Home Assistant (sample-server/worker.mjs) with TRMNL.com's serverless function
+spawn stand-in node transforms.mjs
 
 # The contexts for the PHP and trmnlp renders, first so those can start early
 render liquidjs-x --set calendar_colors=black,-,gray-65 --dump-context "$out/context.json"
@@ -173,14 +158,9 @@ if [ -n "$trmnlp" ]; then
     spawn trmnlp-ics-x trmnlp_render trmnlp-ics-x "$out/context-ics.json" "$out/trmnlp-ics-body.html"
     spawn trmnlp-half-vertical-x trmnlp_render trmnlp-half-vertical-x "$out/context.json" "$out/trmnlp-half-vertical-body.html" half_vertical
     spawn trmnlp-quadrant-x trmnlp_render trmnlp-quadrant-x "$out/context.json" "$out/trmnlp-quadrant-body.html" quadrant
-    # TRMNL.com's Plugin Merge lookups (merge.liquid) in Ruby Liquid
-    spawn trmnlp-merge-weather-x trmnlp_render_variant trmnlp-merge-weather-x "$out/context-merge-weather.json" \
-        "$out/trmnlp-merge-weather-body.html" trmnl-com-merge --expect-events --merge-weather trmnl
-    # TRMNL.com's Home Assistant recipe (plugin/trmnl-com-polling): the polled calendars as IDX_n
-    spawn trmnlp-ha-x trmnlp_render_variant trmnlp-ha-x "$out/context.json" "$out/trmnlp-ha-body.html" \
-        trmnl-com-polling --expect-events
     # TRMNL's best-practice checks, as LaraPaper and TRMNL.com run the recipe, then the
-    # TRMNL.com variants' own tests (trmnlp test; report in $out/trmnlp-test/<variant>/).
+    # TRMNL.com variants' own tests (trmnlp test: their polling, serverless function, Plugin
+    # Merge lookups and views on TRMNL's devices; report in $out/trmnlp-test/<variant>/).
     # One after the other: both build the variants into dist/
     spawn trmnlp-lint-test trmnlp_lint_test
 else

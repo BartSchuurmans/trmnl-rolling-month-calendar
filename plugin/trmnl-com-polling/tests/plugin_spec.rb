@@ -110,6 +110,29 @@ RSpec.describe 'Rolling Month Calendar (Home Assistant)' do
     expect(problems(screen)).to be_empty
   end
 
+  it 'adds the forecast after a single calendar' do
+    screen = trmnl.render(device: 'v2', now:, mocks:, custom_fields: custom_fields.merge(calendars: 'calendar.family'))
+
+    expect(screen).to have_text('Parent-teacher meeting')
+    expect(screen).to have_css('.trmnl-weather')
+    expect(problems(screen)).to be_empty
+  end
+
+  {
+    'refuses the forecast' => { status: 400, json: { message: 'Entity not found' } },
+    "can't be reached for the forecast" => { error: :reset },
+  }.each do |what, answer|
+    it "still draws the calendars when Home Assistant #{what}" do
+      failing = mocks.merge("POST #{HA}/api/services/weather/get_forecasts*" => answer)
+      screen = trmnl.render(device: 'v2', now:, custom_fields:, mocks: failing)
+
+      expect(screen).to have_text('Parent-teacher meeting')
+      expect(screen).to have_text('Could not load weather.forecast_home:')
+      expect(screen).to have_text('Entity not found') if answer[:json]
+      expect(problems(screen)).to be_empty
+    end
+  end
+
   it 'says which calendar Home Assistant refused' do
     screen = trmnl.render(device: 'v2', now:, mocks:,
                           custom_fields: custom_fields.merge(calendars: 'calendar.family,calendar.missing'))
