@@ -11,10 +11,10 @@
 //
 // Needs Docker (the trmnl/trmnlp image). The context's custom fields and payload go into
 // .trmnlp.yml, so trmnlp hands the payload over the TRMNL way: its keys at the top level,
-// several calendars as IDX_0, IDX_1, ... and no `data`. trmnlp's own polling can't reach
-// the sample URLs and is left to fail (it only warns). The screenshot is render.mjs's, with
-// the framework served locally, so it compares with the other renders. The TRMNL.com
-// variants are rendered by their own tests instead (--test), with trmnlp's own screens.
+// several calendars as IDX_0, IDX_1, ... and no `data`; trmnlp doesn't poll. The screenshot
+// is render.mjs's, with the framework served locally, so it compares with the other renders.
+// The TRMNL.com variants are rendered by their own tests instead (--test), with trmnlp's own
+// screens.
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -50,6 +50,13 @@ const context = JSON.parse(fs.readFileSync(contextFile, 'utf8'));
 const payload = context.data;
 const project = fs.mkdtempSync(path.join(os.tmpdir(), 'trmnlp-'));
 fs.cpSync(path.join(here, '..', 'plugin', 'src'), path.join(project, 'src'), { recursive: true });
+// No polling: the payload comes from .trmnlp.yml, and the recipe's URLs (LaraPaper's local
+// Home Assistant proxy, the sample feeds) can't be reached here. Without a polling url trmnlp
+// (0.17.0 on) renders with the variables only, instead of warning about each URL
+const settingsFile = path.join(project, 'src', 'settings.yml');
+const settings = yaml.load(fs.readFileSync(settingsFile, 'utf8'));
+delete settings.polling_url;
+fs.writeFileSync(settingsFile, yaml.dump(settings));
 fs.writeFileSync(path.join(project, '.trmnlp.yml'), yaml.dump({
   watch: false,
   time_zone: context.trmnl.user.time_zone_iana,
