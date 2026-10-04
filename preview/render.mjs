@@ -105,6 +105,14 @@ const settings = yaml.load(fs.readFileSync(path.join(src, 'settings.yml'), 'utf8
 // no_screen_padding: 'yes' (as every variant has it) is screen--no-bleed on TRMNL.com and in
 // LaraPaper (its "Remove bleed margin?" box)
 if (settings.no_screen_padding === 'yes') device.classes += ' screen--no-bleed';
+// --set takes only the recipe's settings (with --merge, the merge variant's too), so a
+// setting that's gone can't linger in a check that no longer tests anything
+const known = new Set(settings.custom_fields.map((f) => f.keyname));
+if (merge) {
+  for (const f of yaml.load(fs.readFileSync(path.join(src, '..', 'trmnl-com-merge', 'settings.yml'), 'utf8')).custom_fields) known.add(f.keyname);
+}
+const unknown = Object.keys(overrides).filter((k) => !known.has(k));
+if (unknown.length) throw new Error(`not a setting: ${unknown.join(', ')}`);
 const customFields = {};
 // Like LaraPaper: boolean fields hold true/false, the rest text. --set x=true|false gives a
 // boolean field a boolean; "yes"/"no" stay text, as installs from before the booleans saved them.

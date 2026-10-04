@@ -99,7 +99,9 @@ render sample-x
 render sample-og --device og
 render sample-og-2bit --device og2
 render colors-x --set calendar_colors=black,-,gray-65 --set calendar_labels=-,M:,S: --set month_header=true
-render colors-og --device og --set calendar_colors=black,-,gray-50 --set calendar_labels=-,M:,S:
+# The settings that are on by default turned off, and events hidden by title
+render off-x --set highlight_today=false --set shade_weekends=false --set include_event_time=false \
+    --set fade_past_events=false --set ignored_phrases=Gym --set ignored_phrases_exact_match=Standup
 # (yes/no: the on/off settings as installs from before the boolean fields saved them)
 render options-x --set locale=nl --set first_day=0 --set show_week_numbers=yes --set time_format=am/pm \
     --set display_event_end=no --set rolling_advancement=day --set include_past_events=no

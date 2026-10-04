@@ -26,7 +26,6 @@ import { fileURLToPath } from 'node:url';
 import * as yaml from 'js-yaml';
 
 const IMAGE = 'trmnl/trmnlp:v0.16.0';
-// `trmnlp lint` findings that don't apply to this recipe
 // Rule IDs (as `trmnlp lint` prints them, e.g. no_opacity) of findings that don't apply
 // here, each with why. Empty since trmnlp 0.15.0 counts only real style attributes in its
 // inline-styles check (it used to count CSS words in shared.liquid's stylesheet).
