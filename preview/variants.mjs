@@ -4,9 +4,10 @@
 //
 //   node variants.mjs check                  every variant's settings.yml against
 //                                            plugin/src/settings.yml: the settings both have
-//                                            must match (type, name, options, default,
-//                                            order), and every setting of plugin/src must be
-//                                            in the variant too, unless VARIANTS says why not.
+//                                            must match (type, name, group, options,
+//                                            default, order), and every setting of
+//                                            plugin/src must be in the variant too, unless
+//                                            VARIANTS says why not.
 //                                            Run by ci.sh.
 //   node variants.mjs diff <variant> <dir>   a trmnlp project pulled from TRMNL.com
 //                                            (`trmnlp pull`) against dist/<variant>/src:
@@ -102,7 +103,7 @@ function check() {
         continue;
       }
       if (rules.leftOut[key]) errors.push(`${key}: in ${at}, but its leftOut says ${rules.leftOut[key]}`);
-      const props = OWN_TEXT.includes(key) ? ['field_type'] : ['field_type', 'name', 'options', 'default', 'optional'];
+      const props = OWN_TEXT.includes(key) ? ['field_type'] : ['field_type', 'name', 'group', 'options', 'default', 'optional'];
       for (const prop of props) {
         if (differs[`${key}.${prop}`]) continue;
         // a boolean's default may be text ('true') in a variant (see plugin/trmnl-com-merge/settings.yml)
