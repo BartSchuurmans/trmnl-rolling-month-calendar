@@ -248,6 +248,15 @@
       if (event.allDay || !event.end) return false;
       return event.start.toISOString().slice(0, 10) !== new Date(event.end.valueOf() - 1).toISOString().slice(0, 10);
     }
+    // Bands on top: on the day an event starts, all-day events and timed events over
+    // several days (see isMultiDay) come before that day's other timed events, which
+    // FullCalendar's default order mixes them with by start time. It compares objects
+    // with start/end in ms (wall-clock time as UTC here).
+    function bandsFirst(a, b) {
+      var day = function(ms) { return Math.floor(ms / 864e5); };
+      var band = function(o) { return o.allDay || (o.end > o.start && day(o.end - 1) !== day(o.start)) ? 0 : 1; };
+      return day(a.start) - day(b.start) || band(a) - band(b);
+    }
     function eventContent(info) {
       var calendar = info.view.calendar;
       if (!isMultiDay(info.event) || info.isNarrow || calendar.getOption('displayEventTime') === false) return true;
@@ -282,6 +291,8 @@
         eventContrastColor: 'var(--mono-fill-text)',
         eventClass: function(info) { return join(info.isPast && 'mono-event--past', info.isNarrow && 'mono-event--narrow'); },
         eventContent: eventContent,
+        // FullCalendar's default ('start,-duration,allDay,title') with bandsFirst in front
+        eventOrder: [bandsFirst, 'start', '-duration', 'allDay', 'title'],
         eventTimeClass: 'mono-event-time',
         eventTitleClass: 'mono-event-title',
         dayHeaderRowClass: 'mono-header-row',
