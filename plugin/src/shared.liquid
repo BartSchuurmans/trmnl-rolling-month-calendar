@@ -53,6 +53,9 @@
     text-transform: uppercase;
     letter-spacing: 0.06em;
   }
+  /* narrow views: a one-week grid's headers carry the date too ("28 MON"), which didn't fit
+     a quadrant's columns at TRMNL.com's regular scale */
+  .trmnl-calendar--narrow .mono-header-inner { padding-inline: calc(2px * var(--mono-u)); letter-spacing: 0; }
 
   /* day number, right aligned, with the month's short name left of it where one starts
      (and on the grid's first day); today's number in a pill */
