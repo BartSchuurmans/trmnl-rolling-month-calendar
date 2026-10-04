@@ -46,9 +46,12 @@ plugin; see README.md for setup and UPSTREAM.md for what differs from upstream.
   one's output is printed as it finishes. Needs `npm ci` in `preview/`, `composer install` in
   `preview/php/`, and `FRAMEWORK_DIR` set up as in `.github/workflows/render.yml`.
   Screenshots land in `preview/out/ci/` — look at them after visual changes. The TRMNL.com
-  variants also get trmnlp's own PNG (`*-trmnlp.png`, `TRMNLP_PNG` in `preview/trmnlp.mjs`):
-  a TRMNL X at TRMNL.com's regular scale, rendered as TRMNL's converter does, with the
-  framework from trmnl.com and FullCalendar from jsDelivr, so it needs internet access.
+  variants are tested by `trmnlp test` instead (`node preview/trmnlp.mjs --test`, in
+  `ci.sh`), from each variant's `plugin/<variant>/tests/*_spec.rb`: RSpec through trmnlp's
+  own pipeline, with fake APIs (polling and the serverless function's requests), a fixed
+  clock and TRMNL's devices, drawn as TRMNL's converter does (framework from trmnl.com,
+  FullCalendar from jsDelivr, so it needs internet access); its report, with every screen
+  drawn, is the `trmnlp-test-report` artifact (`preview/out/ci/trmnlp-test/`).
 - `node preview/render.mjs --device x|og|og2 --set key=value ...` for one-off renders;
   `--size half_horizontal|half_vertical|quadrant` renders that view inside a mashup.
 - `node preview/variants.mjs check` (in `ci.sh`) — each variant's `settings.yml` in step
@@ -147,8 +150,9 @@ cover those calendars there.
 polled data (IDX_n, or `data` for one URL) plus `trmnl` (custom fields under
 `trmnl.plugin_settings.custom_fields_values`), and returns the template's data. Only the
 Polling and Webhook strategies run it, not Plugin Merge. LaraPaper has no such runtime,
-so the output must be a shape `shared.liquid` already reads. trmnlp runs it too (in
-`ci.sh`'s trmnlp renders); `preview/transforms.mjs` checks it against `e2e/fake-ha.mjs`.
+so the output must be a shape `shared.liquid` already reads. trmnlp runs it too:
+`plugin/trmnl-com-polling/tests` (`trmnlp test`) checks it against fake APIs, and
+`preview/transforms.mjs` against the stand-in Home Assistant (`preview/sample-server/`).
 
 **Links in the form.** Field descriptions may hold `<a href="..." class="underline"
 target="_blank">` (TRMNL.com allows `a`, `b`, `i` with those attributes). LaraPaper

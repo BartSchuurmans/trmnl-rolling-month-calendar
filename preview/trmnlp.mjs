@@ -4,28 +4,25 @@
 //
 //   node trmnlp.mjs <context.json> <body.html> [full|half_horizontal|half_vertical|quadrant]
 //                                                   (context from render.mjs --dump-context)
-//   TRMNLP_VARIANT=trmnl-com-merge node trmnlp.mjs ...    a variant in plugin/ instead, put
-//                                                   together as
-//                                                   scripts/build-variant.sh does
-//   TRMNLP_PNG=<file> node trmnlp.mjs ...           also trmnlp's own PNG (see png() below)
 //   node trmnlp.mjs --pull                          only fetches the image, if missing
 //   node trmnlp.mjs --lint                          runs `trmnlp lint` (see lint() below)
+//   node trmnlp.mjs --test <merge-context.json> <report dir>
+//                                                   runs every variant's tests (see test() below)
 //
 // Needs Docker (the trmnl/trmnlp image). The context's custom fields and payload go into
 // .trmnlp.yml, so trmnlp hands the payload over the TRMNL way: its keys at the top level,
-// several calendars as IDX_0, IDX_1, ... and no `data`. trmnlp's own polling can't reach
-// the sample URLs and is left to fail (it only warns). The screenshot is render.mjs's, with
-// the framework served locally, so it compares with the other renders; TRMNLP_PNG adds
-// trmnlp's own, which loads the framework from trmnl.com.
+// several calendars as IDX_0, IDX_1, ... and no `data`; trmnlp doesn't poll. The screenshot
+// is render.mjs's, with the framework served locally, so it compares with the other renders.
+// The TRMNL.com variants are rendered by their own tests instead (--test), with trmnlp's own
+// screens.
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import net from 'node:net';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import * as yaml from 'js-yaml';
 
-const IMAGE = 'trmnl/trmnlp:v0.16.0';
+const IMAGE = 'trmnl/trmnlp:v0.17.2';
 // Rule IDs (as `trmnlp lint` prints them, e.g. no_opacity) of findings that don't apply
 // here, each with why. Empty since trmnlp 0.15.0 counts only real style attributes in its
 // inline-styles check (it used to count CSS words in shared.liquid's stylesheet).
@@ -46,27 +43,20 @@ if (contextFile === '--pull') {
   process.exit(0);
 }
 if (contextFile === '--lint') process.exit(lint() ? 0 : 1);
+if (contextFile === '--test') process.exit(test(bodyFile, size) ? 0 : 1);
 if (!contextFile || !bodyFile) throw new Error('usage: node trmnlp.mjs <context.json> <body.html> [size]');
 
 const context = JSON.parse(fs.readFileSync(contextFile, 'utf8'));
-// Plugin Merge (render.mjs --merge) has no polled `data`: the chosen plugins' data is at the top level
-const { size: _size, config: _config, trmnl: _trmnl, ...merged } = context;
-const payload = 'data' in context ? context.data : merged;
+const payload = context.data;
 const project = fs.mkdtempSync(path.join(os.tmpdir(), 'trmnlp-'));
-const plugin = path.join(here, '..', 'plugin');
-const variant = process.env.TRMNLP_VARIANT;
-fs.cpSync(path.join(plugin, 'src'), path.join(project, 'src'), { recursive: true });
-if (variant) {
-  // a variant: its settings, and its own Liquid in front of the shared markup
-  const own = fs.readdirSync(path.join(plugin, variant)).filter((f) => f.endsWith('.liquid')).sort();
-  fs.copyFileSync(path.join(plugin, variant, 'settings.yml'), path.join(project, 'src', 'settings.yml'));
-  fs.writeFileSync(path.join(project, 'src', 'shared.liquid'),
-    own.map((f) => fs.readFileSync(path.join(plugin, variant, f), 'utf8')).join('')
-    + fs.readFileSync(path.join(plugin, 'src', 'shared.liquid'), 'utf8'));  // its serverless function, which trmnlp runs on the payload as TRMNL.com does
-  for (const f of fs.readdirSync(path.join(plugin, variant)).filter((f) => /^transform\.\w+$/.test(f))) {
-    fs.copyFileSync(path.join(plugin, variant, f), path.join(project, 'src', f));
-  }
-}
+fs.cpSync(path.join(here, '..', 'plugin', 'src'), path.join(project, 'src'), { recursive: true });
+// No polling: the payload comes from .trmnlp.yml, and the recipe's URLs (LaraPaper's local
+// Home Assistant proxy, the sample feeds) can't be reached here. Without a polling url trmnlp
+// (0.17.0 on) renders with the variables only, instead of warning about each URL
+const settingsFile = path.join(project, 'src', 'settings.yml');
+const settings = yaml.load(fs.readFileSync(settingsFile, 'utf8'));
+delete settings.polling_url;
+fs.writeFileSync(settingsFile, yaml.dump(settings));
 fs.writeFileSync(path.join(project, '.trmnlp.yml'), yaml.dump({
   watch: false,
   time_zone: context.trmnl.user.time_zone_iana,
@@ -85,50 +75,44 @@ const start = open ? open.index + open[0].length : -1;
 const end = html.lastIndexOf('</div>', html.lastIndexOf('</body>'));
 if (start < 0 || end < start) throw new Error('unexpected trmnlp output');
 fs.writeFileSync(bodyFile, html.slice(start, end));
-if (process.env.TRMNLP_PNG) await png(process.env.TRMNLP_PNG);
 fs.rmSync(project, { recursive: true, force: true });
 
-// TRMNLP_PNG=<file>: also trmnlp's own PNG of the view, a TRMNL X at TRMNL.com's default
-// (regular) scale, from `trmnlp serve`, which renders as TRMNL's converter does (Framework
-// from trmnl.com, FullCalendar from jsDelivr, TRMNL's ready signals and grey levels).
-// `trmnlp build --png` can't: it renders only the default 800x480 screen.
-async function png(file) {
-  const run = (...a) => execFileSync('docker', a, { encoding: 'utf8' }).trim();
-  // TRMNLP_DOCKER_ARGS: extra `docker run` options, e.g. --network=host behind a proxy
+// `trmnlp test`: each variant's RSpec files (plugin/<variant>/tests/*_spec.rb) on the variant
+// as scripts/build-variant.sh builds it, through trmnlp's own pipeline: polling and the
+// serverless function against fake APIs, every clock at a fixed time, and the views drawn by
+// Firefox on TRMNL's devices. Next to the tests: docs/sample-ha's calendars (sample-ha/) and
+// the Plugin Merge render context (context.json, from render.mjs --dump-context). Writes
+// trmnlp's report (index.html, every screen drawn) to <report dir>/<variant>; under GitHub
+// Actions the counts and failures also go to the run's summary.
+function test(mergeContext, reportDir) {
+  if (!mergeContext || !reportDir) throw new Error('usage: node trmnlp.mjs --test <merge-context.json> <report dir>');
+  const repo = path.join(here, '..');
+  execFileSync('sh', [path.join(repo, 'scripts', 'build-variant.sh')], { stdio: 'ignore' });
   const extra = (process.env.TRMNLP_DOCKER_ARGS || '').split(' ').filter(Boolean);
-  const port = await freePort();
-  const id = run('run', '--detach', '--rm', ...user, ...extra,
-    ...(extra.includes('--network=host') ? [] : ['--publish', `127.0.0.1:${port}:${port}`]),
-    '--volume', `${project}:/plugin`, IMAGE, 'serve', '--port', String(port));
-  try {
-    const base = `http://127.0.0.1:${port}`;
-    const params = new URLSearchParams({ screen_classes: 'screen screen--4bit screen--v2 screen--lg',
-      width: 1872, height: 1404, color_depth: 4, model: 'v2', bit_depth: 4 });
-    let response;
-    for (let tries = 0; ; tries++) {
-      try { response = await fetch(`${base}/render/${size}.png?${params}`); break; } catch (error) {
-        if (tries > 60) throw error;
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-      }
-    }
-    if (!response.ok) throw new Error(`trmnlp PNG: ${response.status} ${(await response.text()).slice(0, 2000)}`);
-    const image = Buffer.from(await response.arrayBuffer());
-    fs.writeFileSync(file, image);
-    // A blank screen (the Framework or FullCalendar didn't load) compresses to about 1 kB,
-    // a calendar to well over 20 kB
-    if (image.length < 20000) throw new Error(`trmnlp PNG ${file} looks blank (${image.length} bytes)`);
-  } finally {
-    try { run('stop', id); } catch { /* already gone */ }
+  const summary = process.env.GITHUB_STEP_SUMMARY;
+  let ok = true;
+  for (const variant of fs.readdirSync(path.join(repo, 'plugin')).sort()) {
+    const tests = path.join(repo, 'plugin', variant, 'tests');
+    if (variant === 'src' || !fs.existsSync(tests)) continue;
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'trmnlp-test-'));
+    fs.cpSync(path.join(repo, 'dist', variant, 'src'), path.join(dir, 'src'), { recursive: true });
+    fs.cpSync(tests, path.join(dir, 'tests'), { recursive: true });
+    fs.cpSync(path.join(repo, 'docs', 'sample-ha', 'api', 'calendars'), path.join(dir, 'tests', 'sample-ha'), { recursive: true });
+    fs.copyFileSync(mergeContext, path.join(dir, 'tests', 'context.json'));
+    fs.writeFileSync(path.join(dir, '.trmnlp.yml'), yaml.dump({ watch: false, time_zone: 'Europe/Amsterdam' }));
+    const run = spawnSync('docker', ['run', '--rm', ...user, ...extra, '--volume', `${dir}:/plugin`,
+      ...(summary ? ['--env', 'CI=true', '--env', 'GITHUB_STEP_SUMMARY=/summary.md', '--volume', `${summary}:/summary.md`] : []),
+      IMAGE, 'test', '--report', 'report'], { encoding: 'utf8' });
+    const report = path.join(reportDir, variant);
+    fs.rmSync(report, { recursive: true, force: true });
+    if (fs.existsSync(path.join(dir, 'report'))) fs.cpSync(path.join(dir, 'report'), report, { recursive: true });
+    fs.rmSync(dir, { recursive: true, force: true });
+    // RSpec's own output, without Selenium's log lines
+    const output = `${run.stdout ?? ''}${run.stderr ?? ''}`.split('\n').filter((l) => !/selenium/i.test(l)).join('\n').trim();
+    if (run.status !== 0) ok = false;
+    console.log(`${variant}: ${run.status === 0 ? 'ok' : 'FAILED'} (report: ${path.relative(process.cwd(), report)})\n${output}`);
   }
-}
-
-function freePort() {
-  return new Promise((resolve, reject) => {
-    const server = net.createServer().once('error', reject).listen(0, '127.0.0.1', () => {
-      const { port } = server.address();
-      server.close(() => resolve(port));
-    });
-  });
+  return ok;
 }
 
 // `trmnlp lint` (TRMNL's best-practice checks) on plugin/src (LaraPaper, polling) and on

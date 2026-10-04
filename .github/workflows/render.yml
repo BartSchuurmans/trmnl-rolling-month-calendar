@@ -67,6 +67,14 @@ jobs:
           path: preview/out/ci/*.png
           if-no-files-found: ignore
 
+      # trmnlp test's report of the TRMNL.com variants: open <variant>/index.html
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: trmnlp-test-report
+          path: preview/out/ci/trmnlp-test
+          if-no-files-found: ignore
+
       - name: Build recipe ZIPs
         run: |
           sh scripts/build-zip.sh

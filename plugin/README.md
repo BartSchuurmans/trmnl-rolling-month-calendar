@@ -14,6 +14,9 @@ another place to publish it. A variant has only what differs:
   and Webhook strategies only) and returns the template's data. `trmnl-com-polling/transform.js`
   fetches the weather. LaraPaper has nothing like it, so its output must be a shape
   `src/shared.liquid` already reads.
+- optional `tests/*_spec.rb` — its tests, run by `trmnlp test` on the built variant
+  (`node preview/trmnlp.mjs --test`, in `preview/ci.sh`): the views on TRMNL's devices and,
+  with fake APIs and a fixed clock, its polling and serverless function. Not uploaded.
 
 | Variant | Where | Data |
 |---|---|---|
