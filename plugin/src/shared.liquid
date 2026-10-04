@@ -427,11 +427,13 @@
     function payloadToCalendars(payload) {
       if (Array.isArray(payload)) return [{ events: payload }];
       if (!payload || typeof payload !== 'object') return [];
-      var idxKeys = Object.keys(payload).filter(function(k) { return /^IDX_\d+$/.test(k); });
+      var idxKeys = Object.keys(payload).filter(function(k) { return /^IDX_\d+$/.test(k); })
+        .sort(function(a, b) { return parseInt(a.slice(4), 10) - parseInt(b.slice(4), 10); });
+      // trailing nulls are the unused IDX_n the markup collects (TRMNL, trmnlp), not
+      // calendars: the forecast must stay last
+      while (idxKeys.length > 1 && payload[idxKeys[idxKeys.length - 1]] == null) idxKeys.pop();
       if (idxKeys.length) {
-        return idxKeys
-          .sort(function(a, b) { return parseInt(a.slice(4), 10) - parseInt(b.slice(4), 10); })
-          .map(function(k) { return payloadToCalendars(payload[k])[0] || { events: [] }; });
+        return idxKeys.map(function(k) { return payloadToCalendars(payload[k])[0] || { events: [] }; });
       }
       // TRMNL.com hands over a private plugin's or recipe's data (Plugin Merge) wrapped as
       // { merge_variables: <its data>, custom_fields_values, markup_*_blob_id }

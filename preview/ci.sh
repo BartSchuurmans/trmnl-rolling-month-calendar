@@ -65,6 +65,11 @@ trmnlp_render_variant() {
     TRMNLP_VARIANT=$variant TRMNLP_PNG="$out/$name-trmnlp.png" node trmnlp.mjs "$context" "$body" &&
         render_now "$name" --body "$body" --scale regular "$@"
 }
+trmnlp_lint_test() {
+    lint=0
+    node trmnlp.mjs --lint || lint=1
+    node trmnlp.mjs --test "$out/context-merge-weather.json" "$out/trmnlp-test" && [ $lint = 0 ]
+}
 trmnlp=
 if command -v docker > /dev/null || [ -n "${CI:-}" ]; then
     trmnlp=yes
@@ -174,8 +179,10 @@ if [ -n "$trmnlp" ]; then
     # TRMNL.com's Home Assistant recipe (plugin/trmnl-com-polling): the polled calendars as IDX_n
     spawn trmnlp-ha-x trmnlp_render_variant trmnlp-ha-x "$out/context.json" "$out/trmnlp-ha-body.html" \
         trmnl-com-polling --expect-events
-    # TRMNL's best-practice checks, as LaraPaper and TRMNL.com run the recipe
-    spawn trmnlp-lint node trmnlp.mjs --lint
+    # TRMNL's best-practice checks, as LaraPaper and TRMNL.com run the recipe, then the
+    # TRMNL.com variants' own tests (trmnlp test; report in $out/trmnlp-test/<variant>/).
+    # One after the other: both build the variants into dist/
+    spawn trmnlp-lint-test trmnlp_lint_test
 else
     echo "== trmnlp skipped (no Docker)"
 fi

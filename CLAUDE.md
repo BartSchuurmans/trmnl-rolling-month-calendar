@@ -49,6 +49,10 @@ plugin; see README.md for setup and UPSTREAM.md for what differs from upstream.
   variants also get trmnlp's own PNG (`*-trmnlp.png`, `TRMNLP_PNG` in `preview/trmnlp.mjs`):
   a TRMNL X at TRMNL.com's regular scale, rendered as TRMNL's converter does, with the
   framework from trmnl.com and FullCalendar from jsDelivr, so it needs internet access.
+  `ci.sh` also runs `trmnlp test` (`node preview/trmnlp.mjs --test`) on each variant with a
+  `plugin/<variant>/tests/*_spec.rb`: RSpec through trmnlp's own pipeline, with fake APIs
+  (polling and the serverless function's requests), a fixed clock and TRMNL's devices in
+  Firefox; its report (every screen drawn) is the `trmnlp-test-report` artifact.
 - `node preview/render.mjs --device x|og|og2 --set key=value ...` for one-off renders;
   `--size half_horizontal|half_vertical|quadrant` renders that view inside a mashup.
 - `node preview/variants.mjs check` (in `ci.sh`) — each variant's `settings.yml` in step

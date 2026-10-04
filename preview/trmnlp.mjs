@@ -10,6 +10,8 @@
 //   TRMNLP_PNG=<file> node trmnlp.mjs ...           also trmnlp's own PNG (see png() below)
 //   node trmnlp.mjs --pull                          only fetches the image, if missing
 //   node trmnlp.mjs --lint                          runs `trmnlp lint` (see lint() below)
+//   node trmnlp.mjs --test <merge-context.json> <report dir>
+//                                                   runs every variant's tests (see test() below)
 //
 // Needs Docker (the trmnl/trmnlp image). The context's custom fields and payload go into
 // .trmnlp.yml, so trmnlp hands the payload over the TRMNL way: its keys at the top level,
@@ -25,7 +27,7 @@ import { execFileSync, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import * as yaml from 'js-yaml';
 
-const IMAGE = 'trmnl/trmnlp:v0.16.0';
+const IMAGE = 'trmnl/trmnlp:v0.17.0';
 // Rule IDs (as `trmnlp lint` prints them, e.g. no_opacity) of findings that don't apply
 // here, each with why. Empty since trmnlp 0.15.0 counts only real style attributes in its
 // inline-styles check (it used to count CSS words in shared.liquid's stylesheet).
@@ -46,6 +48,7 @@ if (contextFile === '--pull') {
   process.exit(0);
 }
 if (contextFile === '--lint') process.exit(lint() ? 0 : 1);
+if (contextFile === '--test') process.exit(test(bodyFile, size) ? 0 : 1);
 if (!contextFile || !bodyFile) throw new Error('usage: node trmnlp.mjs <context.json> <body.html> [size]');
 
 const context = JSON.parse(fs.readFileSync(contextFile, 'utf8'));
@@ -129,6 +132,44 @@ function freePort() {
       server.close(() => resolve(port));
     });
   });
+}
+
+// `trmnlp test`: each variant's RSpec files (plugin/<variant>/tests/*_spec.rb) on the variant
+// as scripts/build-variant.sh builds it, through trmnlp's own pipeline: polling and the
+// serverless function against fake APIs, every clock at a fixed time, and the views drawn by
+// Firefox on TRMNL's devices. Next to the tests: docs/sample-ha's calendars (sample-ha/) and
+// the Plugin Merge render context (context.json, from render.mjs --dump-context). Writes
+// trmnlp's report (index.html, every screen drawn) to <report dir>/<variant>; under GitHub
+// Actions the counts and failures also go to the run's summary.
+function test(mergeContext, reportDir) {
+  if (!mergeContext || !reportDir) throw new Error('usage: node trmnlp.mjs --test <merge-context.json> <report dir>');
+  const repo = path.join(here, '..');
+  execFileSync('sh', [path.join(repo, 'scripts', 'build-variant.sh')], { stdio: 'ignore' });
+  const extra = (process.env.TRMNLP_DOCKER_ARGS || '').split(' ').filter(Boolean);
+  const summary = process.env.GITHUB_STEP_SUMMARY;
+  let ok = true;
+  for (const variant of fs.readdirSync(path.join(repo, 'plugin')).sort()) {
+    const tests = path.join(repo, 'plugin', variant, 'tests');
+    if (variant === 'src' || !fs.existsSync(tests)) continue;
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'trmnlp-test-'));
+    fs.cpSync(path.join(repo, 'dist', variant, 'src'), path.join(dir, 'src'), { recursive: true });
+    fs.cpSync(tests, path.join(dir, 'tests'), { recursive: true });
+    fs.cpSync(path.join(repo, 'docs', 'sample-ha', 'api', 'calendars'), path.join(dir, 'tests', 'sample-ha'), { recursive: true });
+    fs.copyFileSync(mergeContext, path.join(dir, 'tests', 'context.json'));
+    fs.writeFileSync(path.join(dir, '.trmnlp.yml'), yaml.dump({ watch: false, time_zone: 'Europe/Amsterdam' }));
+    const run = spawnSync('docker', ['run', '--rm', ...user, ...extra, '--volume', `${dir}:/plugin`,
+      ...(summary ? ['--env', 'CI=true', '--env', 'GITHUB_STEP_SUMMARY=/summary.md', '--volume', `${summary}:/summary.md`] : []),
+      IMAGE, 'test', '--report', 'report'], { encoding: 'utf8' });
+    const report = path.join(reportDir, variant);
+    fs.rmSync(report, { recursive: true, force: true });
+    if (fs.existsSync(path.join(dir, 'report'))) fs.cpSync(path.join(dir, 'report'), report, { recursive: true });
+    fs.rmSync(dir, { recursive: true, force: true });
+    // RSpec's own output, without Selenium's log lines
+    const output = `${run.stdout ?? ''}${run.stderr ?? ''}`.split('\n').filter((l) => !/selenium/i.test(l)).join('\n').trim();
+    if (run.status !== 0) ok = false;
+    console.log(`${variant}: ${run.status === 0 ? 'ok' : 'FAILED'} (report: ${path.relative(process.cwd(), report)})\n${output}`);
+  }
+  return ok;
 }
 
 // `trmnlp lint` (TRMNL's best-practice checks) on plugin/src (LaraPaper, polling) and on
