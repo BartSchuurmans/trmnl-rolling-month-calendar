@@ -483,7 +483,10 @@ instead of LaraPaper's PHP Liquid, so small differences are possible.
   rendered as ICS feeds, in the shape LaraPaper parses them into, and the sample as TRMNL
   calendar plugins' data, with both kinds of weather plugin. It
   fails on template errors, JavaScript errors and renders that
-  don't finish. The screenshots are attached to the run as the `renders` artifact.
+  don't finish. The screenshots are attached to the run as the `renders` artifact. The
+  TRMNL.com recipes are also tested with `trmnlp test` (their polling, serverless function
+  and views on TRMNL's devices, against fake APIs); its report is the `trmnlp-test-report`
+  artifact.
 - **App** (`.github/workflows/app.yml`, on changes to `larapaper/` or the recipe): lints
   the app, builds the image (amd64) and starts it with a fake `/data`. It checks that
   LaraPaper comes up, serves the bundled framework, fonts and FullCalendar, applied the

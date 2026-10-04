@@ -4,10 +4,6 @@
 //
 //   node trmnlp.mjs <context.json> <body.html> [full|half_horizontal|half_vertical|quadrant]
 //                                                   (context from render.mjs --dump-context)
-//   TRMNLP_VARIANT=trmnl-com-merge node trmnlp.mjs ...    a variant in plugin/ instead, put
-//                                                   together as
-//                                                   scripts/build-variant.sh does
-//   TRMNLP_PNG=<file> node trmnlp.mjs ...           also trmnlp's own PNG (see png() below)
 //   node trmnlp.mjs --pull                          only fetches the image, if missing
 //   node trmnlp.mjs --lint                          runs `trmnlp lint` (see lint() below)
 //   node trmnlp.mjs --test <merge-context.json> <report dir>
@@ -17,12 +13,11 @@
 // .trmnlp.yml, so trmnlp hands the payload over the TRMNL way: its keys at the top level,
 // several calendars as IDX_0, IDX_1, ... and no `data`. trmnlp's own polling can't reach
 // the sample URLs and is left to fail (it only warns). The screenshot is render.mjs's, with
-// the framework served locally, so it compares with the other renders; TRMNLP_PNG adds
-// trmnlp's own, which loads the framework from trmnl.com.
+// the framework served locally, so it compares with the other renders. The TRMNL.com
+// variants are rendered by their own tests instead (--test), with trmnlp's own screens.
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import net from 'node:net';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import * as yaml from 'js-yaml';
@@ -52,24 +47,9 @@ if (contextFile === '--test') process.exit(test(bodyFile, size) ? 0 : 1);
 if (!contextFile || !bodyFile) throw new Error('usage: node trmnlp.mjs <context.json> <body.html> [size]');
 
 const context = JSON.parse(fs.readFileSync(contextFile, 'utf8'));
-// Plugin Merge (render.mjs --merge) has no polled `data`: the chosen plugins' data is at the top level
-const { size: _size, config: _config, trmnl: _trmnl, ...merged } = context;
-const payload = 'data' in context ? context.data : merged;
+const payload = context.data;
 const project = fs.mkdtempSync(path.join(os.tmpdir(), 'trmnlp-'));
-const plugin = path.join(here, '..', 'plugin');
-const variant = process.env.TRMNLP_VARIANT;
-fs.cpSync(path.join(plugin, 'src'), path.join(project, 'src'), { recursive: true });
-if (variant) {
-  // a variant: its settings, and its own Liquid in front of the shared markup
-  const own = fs.readdirSync(path.join(plugin, variant)).filter((f) => f.endsWith('.liquid')).sort();
-  fs.copyFileSync(path.join(plugin, variant, 'settings.yml'), path.join(project, 'src', 'settings.yml'));
-  fs.writeFileSync(path.join(project, 'src', 'shared.liquid'),
-    own.map((f) => fs.readFileSync(path.join(plugin, variant, f), 'utf8')).join('')
-    + fs.readFileSync(path.join(plugin, 'src', 'shared.liquid'), 'utf8'));  // its serverless function, which trmnlp runs on the payload as TRMNL.com does
-  for (const f of fs.readdirSync(path.join(plugin, variant)).filter((f) => /^transform\.\w+$/.test(f))) {
-    fs.copyFileSync(path.join(plugin, variant, f), path.join(project, 'src', f));
-  }
-}
+fs.cpSync(path.join(here, '..', 'plugin', 'src'), path.join(project, 'src'), { recursive: true });
 fs.writeFileSync(path.join(project, '.trmnlp.yml'), yaml.dump({
   watch: false,
   time_zone: context.trmnl.user.time_zone_iana,
@@ -88,51 +68,7 @@ const start = open ? open.index + open[0].length : -1;
 const end = html.lastIndexOf('</div>', html.lastIndexOf('</body>'));
 if (start < 0 || end < start) throw new Error('unexpected trmnlp output');
 fs.writeFileSync(bodyFile, html.slice(start, end));
-if (process.env.TRMNLP_PNG) await png(process.env.TRMNLP_PNG);
 fs.rmSync(project, { recursive: true, force: true });
-
-// TRMNLP_PNG=<file>: also trmnlp's own PNG of the view, a TRMNL X at TRMNL.com's default
-// (regular) scale, from `trmnlp serve`, which renders as TRMNL's converter does (Framework
-// from trmnl.com, FullCalendar from jsDelivr, TRMNL's ready signals and grey levels).
-// `trmnlp build --png` can't: it renders only the default 800x480 screen.
-async function png(file) {
-  const run = (...a) => execFileSync('docker', a, { encoding: 'utf8' }).trim();
-  // TRMNLP_DOCKER_ARGS: extra `docker run` options, e.g. --network=host behind a proxy
-  const extra = (process.env.TRMNLP_DOCKER_ARGS || '').split(' ').filter(Boolean);
-  const port = await freePort();
-  const id = run('run', '--detach', '--rm', ...user, ...extra,
-    ...(extra.includes('--network=host') ? [] : ['--publish', `127.0.0.1:${port}:${port}`]),
-    '--volume', `${project}:/plugin`, IMAGE, 'serve', '--port', String(port));
-  try {
-    const base = `http://127.0.0.1:${port}`;
-    const params = new URLSearchParams({ screen_classes: 'screen screen--4bit screen--v2 screen--lg',
-      width: 1872, height: 1404, color_depth: 4, model: 'v2', bit_depth: 4 });
-    let response;
-    for (let tries = 0; ; tries++) {
-      try { response = await fetch(`${base}/render/${size}.png?${params}`); break; } catch (error) {
-        if (tries > 60) throw error;
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-      }
-    }
-    if (!response.ok) throw new Error(`trmnlp PNG: ${response.status} ${(await response.text()).slice(0, 2000)}`);
-    const image = Buffer.from(await response.arrayBuffer());
-    fs.writeFileSync(file, image);
-    // A blank screen (the Framework or FullCalendar didn't load) compresses to about 1 kB,
-    // a calendar to well over 20 kB
-    if (image.length < 20000) throw new Error(`trmnlp PNG ${file} looks blank (${image.length} bytes)`);
-  } finally {
-    try { run('stop', id); } catch { /* already gone */ }
-  }
-}
-
-function freePort() {
-  return new Promise((resolve, reject) => {
-    const server = net.createServer().once('error', reject).listen(0, '127.0.0.1', () => {
-      const { port } = server.address();
-      server.close(() => resolve(port));
-    });
-  });
-}
 
 // `trmnlp test`: each variant's RSpec files (plugin/<variant>/tests/*_spec.rb) on the variant
 // as scripts/build-variant.sh builds it, through trmnlp's own pipeline: polling and the

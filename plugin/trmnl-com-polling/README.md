@@ -16,12 +16,12 @@ calendars answer only GET, and TRMNL.com polls every URL with the same verb and 
 after the calendars are polled, the function makes that call itself (to **Home Assistant
 URL**, with the token) and adds the response last, in the shape the LaraPaper (local)
 app's proxy gives (`{service_response: ...}`). A failed call shows as "Could not load
-<entity>" and the calendars still show. `preview/transforms.mjs` (in `ci.sh`) runs it
-against the end-to-end test's fake Home Assistant and renders its output.
+<entity>" and the calendars still show. Its tests (`tests/`, run by `trmnlp test` in
+`ci.sh`) run it against a fake Home Assistant and draw the result.
 
 The data arrives as on TRMNL for any polling recipe: one calendar's list under `data`,
 several as `IDX_0`, `IDX_1`, ... at the top level, which `shared.liquid` already reads.
-`preview/ci.sh` renders it through trmnlp (`trmnlp-ha-x`).
+The tests poll and draw it through trmnlp, as TRMNL does.
 
 ## Built from the repo
 
