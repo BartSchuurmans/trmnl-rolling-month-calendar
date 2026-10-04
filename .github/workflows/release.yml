@@ -53,9 +53,21 @@ jobs:
             exit 1
           fi
           if [ "$GITHUB_EVENT_NAME" = push ]; then
-            # The merged pull request's "release: ..." label picks the part to bump
-            labels=$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/pulls" \
-              --jq '[.[] | select(.merged_at != null) | .labels[].name | select(startswith("release: "))] | unique | .[]')
+            # The merged pull request's "release: ..." label picks the part to bump. Right
+            # after a merge GitHub can answer this with an empty body ("unexpected end of
+            # JSON input", 2026-10-04) or no pull request yet, so ask again a few times.
+            for wait in 5 10 20 0; do
+              answered=yes
+              labels=$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/pulls" \
+                --jq '[.[] | select(.merged_at != null) | .labels[].name | select(startswith("release: "))] | unique | .[]') \
+                || answered=no
+              [ "$answered" = yes ] && [ -n "$labels" ] && break
+              [ "$wait" = 0 ] || { echo "No release label found yet, asking again in ${wait}s"; sleep "$wait"; }
+            done
+            if [ "$answered" = no ]; then
+              echo "::error::Couldn't read the pull request merged in $GITHUB_SHA"
+              exit 1
+            fi
             if [ -z "$labels" ]; then
               echo "No release label on the pull request merged in $GITHUB_SHA: nothing to release"
               exit 0
