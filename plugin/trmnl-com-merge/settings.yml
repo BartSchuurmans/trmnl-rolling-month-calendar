@@ -47,21 +47,25 @@ custom_fields:
   - keyname: calendar_labels
     field_type: multi_string
     name: Calendar prefixes
+    group: Calendars
     description: Optional text shown before each event title, one per calendar in the same order as the calendars above (e.g. W:, Kids). Use - for a calendar without one.
     optional: true
   - keyname: calendar_colors
     field_type: multi_string
     name: Calendar colors
+    group: Calendars
     description: Optional event background, one per calendar in the same order as the calendars above. A <a href="https://trmnl.com/framework/docs/3.3/colors" class="underline" target="_blank">TRMNL color name</a> (black, gray-10 … gray-75, red, blue-40, …) or a hex color. Names become solid greys on the TRMNL X and dither patterns on 1-bit screens. Use - for a calendar without one.
     optional: true
   - keyname: weather_plugin
     field_type: plugin_instance_select
     name: Weather
+    group: Weather
     description: 'Optional: a weather forecast next to each day number, from today on. Pick TRMNL''s Weather plugin (today and tomorrow) or the <a href="https://trmnl.com/recipes/150460" class="underline" target="_blank">Daily Weather</a> recipe (about a week). Keep it in a playlist (it can be hidden), or the forecast stops refreshing.'
     optional: true
   - keyname: weather_temperatures
     field_type: select
     name: Weather temperatures
+    group: Weather
     description: With a weather plugin, show each day's high, or its high and low. The low is left out where the day's line has no room for it.
     options:
     - High: high
@@ -70,6 +74,7 @@ custom_fields:
   - keyname: first_day
     field_type: select
     name: Week starts on
+    group: Grid
     options:
     - Sunday: '0'
     - Monday: '1'
@@ -78,6 +83,7 @@ custom_fields:
   - keyname: rolling_advancement
     field_type: select
     name: Advance
+    group: Grid
     description: Start the grid at the beginning of the current week, or at today.
     options:
     - Weekly: week
@@ -86,6 +92,7 @@ custom_fields:
   - keyname: week_overflow
     field_type: select
     name: Busy weeks
+    group: Grid
     description: When the weeks don't all fit, show fewer weeks so every event stays visible, or keep at least 3 weeks and end a full day with "+N more".
     options:
     - Show fewer weeks: fewer_weeks
@@ -94,23 +101,28 @@ custom_fields:
   - keyname: show_week_numbers
     field_type: boolean
     name: Show week numbers
+    group: Grid
     default: 'false'
   - keyname: highlight_today
     field_type: boolean
     name: Highlight today
+    group: Grid
     default: 'true'
   - keyname: shade_weekends
     field_type: boolean
     name: Shade weekends
+    group: Grid
     default: 'true'
   - keyname: month_header
     field_type: boolean
     name: Show title bar
+    group: Grid
     description: TRMNL title bar at the bottom with the recipe name and the visible date range.
     default: 'false'
   - keyname: time_format
     field_type: select
     name: Time format
+    group: Events
     options:
     - 24 hour: 24h
     - AM/PM: am/pm
@@ -118,39 +130,47 @@ custom_fields:
   - keyname: include_event_time
     field_type: boolean
     name: Show event times
+    group: Events
     default: 'true'
   - keyname: display_event_end
     field_type: boolean
     name: Show event end times
+    group: Events
     default: 'true'
   - keyname: include_past_events
     field_type: boolean
     name: Show past events
+    group: Events
     description: Show events on days before today that are still in the grid.
     default: 'true'
   - keyname: fade_past_events
     field_type: boolean
     name: Fade past events
+    group: Events
     description: Grey out events that are over (on earlier days). Greyscale screens only; 1-bit and 2-bit screens show them as usual.
     default: 'true'
   - keyname: ignored_phrases
     field_type: multi_string
     name: Ignore events containing
+    group: Events
     description: Events whose title or description contains any of these phrases are hidden.
     optional: true
   - keyname: ignored_phrases_exact_match
     field_type: multi_string
     name: Ignore events titled exactly
+    group: Events
     description: Events whose title is exactly one of these are hidden.
     optional: true
   - keyname: time_zone
     field_type: time_zone
     name: Time zone
+    group: Language and time zone
     description: Leave empty to use your account's time zone.
     optional: true
   - keyname: locale
     field_type: string
     name: Locale
+    group: Language and time zone
     description: Language for day and month names, e.g. en, nl, de, fr (a <a href="https://fullcalendar.io/docs/locale" class="underline" target="_blank">FullCalendar locale</a> code).
     default: en
     optional: true

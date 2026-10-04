@@ -255,7 +255,9 @@ TRMNL.com has the **Calendar** and **Weather** dropdowns, its Home Assistant edi
 **Home Assistant** fields, LaraPaper the **ICS feed URLs** or **Home
 Assistant** fields (see the setup above). Everything else is the same.
 
-The form groups them in this order. On/off settings are toggles.
+On TRMNL.com the form folds them into these groups (click a group to open it), below
+the calendar fields; LaraPaper shows them as one list in this order. On/off settings are
+toggles.
 
 #### Calendars
 
