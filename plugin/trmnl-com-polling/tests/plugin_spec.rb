@@ -8,22 +8,12 @@
 RSpec.describe 'Rolling Month Calendar (Home Assistant)' do
   HA = 'https://ha.example'
   TOKEN = 'test-token'
-  # Every view and screen size of the recipe, each with its devices: the TRMNL X, and the OG
-  # at 1 and 2 bits
-  VIEWS = %w[full half_horizontal half_vertical quadrant].freeze
   # One week fits in these, and a one-week grid has no day-number line for the forecast
   NO_FORECAST = [%w[half_horizontal og_png], %w[half_horizontal og_plus], %w[quadrant og_png],
                  %w[quadrant og_plus]].freeze
-  # trmnlp's 'a publishable recipe' checks (0.18.0) have no room for the two lists below yet,
-  # so the examples here run the same checks with them
-  EXPECTED_PROBLEMS = [
-    # Firefox's notice that FullCalendar's ResizeObservers left a change for the next frame
-    # (the week fitting re-renders); the layout still settles
-    /\AResizeObserver loop completed with undelivered notifications/,
-  ].freeze
-  # Boxes that cut off on purpose: a forecast's low goes to a hidden second line where the
-  # day has no room for it, and long titles end in an ellipsis
-  CLIPPED = [/\.trmnl-weather\b/, /\.mono-event-title\b/].freeze
+  # Where a day has no room for a forecast's low, it wraps to a line its box hides on purpose;
+  # trmnlp's have_no_overflow (0.20.0) passes only ellipses and line clamps
+  CLIPPED = /\.trmnl-weather\b/
 
   # Wednesday 7 October 2026, 08:00 in Amsterdam: the second week of the sample cycle
   let(:now) { '2026-10-07T06:00:00Z' }
@@ -50,10 +40,15 @@ RSpec.describe 'Rolling Month Calendar (Home Assistant)' do
   end
 
   def header(request, name) = request[:headers].find { |key, _| key.casecmp?(name) }&.last
-  def problems(screen) = screen.problems.reject { |p| EXPECTED_PROBLEMS.any? { it.match?(p) } }
-  def overflowing(screen) = screen.overflowing.reject { |el| CLIPPED.any? { it.match?(el) } }
 
-  VIEWS.each do |view|
+  # trmnlp's own checks before publishing: every view on TRMNL's devices, each select field's
+  # options and Home Assistant failing, without page errors or leaked values; the transform
+  # without error, within TRMNL's limits. The examples below check what is drawn.
+  it_behaves_like 'a publishable recipe'
+
+  def overflowing(screen) = screen.overflowing.grep_v(CLIPPED)
+
+  TRMNLP::Testing::PUBLISHABLE_RECIPE_VIEWS.each do |view|
     # TRMNL's devices as trmnlp's publishable-recipe checks draw them: the OG at 1 and 2 bits
     # and the TRMNL X, in landscape and portrait
     TRMNLP::Testing::PUBLISHABLE_RECIPE_SCREENS.each do |screen_options|
@@ -65,8 +60,7 @@ RSpec.describe 'Rolling Month Calendar (Home Assistant)' do
         expect(screen).to have_css('.trmnl-calendar')
         expect(screen).to have_text('Parent-teacher meeting')
         expect(screen).to have_css('.trmnl-weather') unless NO_FORECAST.include?([view, device])
-        expect(screen).to have_no_text('Could not load').and have_no_leaked_text
-        expect(problems(screen)).to be_empty
+        expect(screen).to have_no_text('Could not load')
         expect(overflowing(screen)).to be_empty
       end
     end
@@ -77,8 +71,7 @@ RSpec.describe 'Rolling Month Calendar (Home Assistant)' do
       it "draws the full view with #{keyname} set to #{value}" do
         screen = trmnl.render(device: 'v2', now:, mocks:, custom_fields: custom_fields.merge(keyname => value))
 
-        expect(screen).to have_text('Parent-teacher meeting').and have_no_leaked_text
-        expect(problems(screen)).to be_empty
+        expect(screen).to have_text('Parent-teacher meeting')
         expect(overflowing(screen)).to be_empty
       end
     end
@@ -88,10 +81,9 @@ RSpec.describe 'Rolling Month Calendar (Home Assistant)' do
     it "says so when Home Assistant #{failure}" do
       screen = trmnl.render(device: 'v2', now:, custom_fields:, mocks: { '*' => answer })
 
-      expect(screen).to have_css('.trmnl-calendar').and have_no_leaked_text.and have_no_transform_error
+      expect(screen).to have_css('.trmnl-calendar')
       expect(screen).to have_text('Could not load weather.forecast_home:')
       expect(screen).to have_no_text('HTTP 200')
-      expect(problems(screen)).to be_empty
     end
   end
 
@@ -105,17 +97,15 @@ RSpec.describe 'Rolling Month Calendar (Home Assistant)' do
     expect(polls.map { header(it, 'Authorization') }.uniq).to eq(["Bearer #{TOKEN}"])
   end
 
-  it 'asks Home Assistant for the forecast and adds it last, within the limits' do
+  it 'asks Home Assistant for the forecast and adds it last' do
     run = trmnl.transform(now:, custom_fields:, mocks:)
     call = run.requests.find { it[:method] == 'POST' }
 
     expect(call[:url]).to eq("#{HA}/api/services/weather/get_forecasts?return_response")
     expect(header(call, 'Authorization')).to eq("Bearer #{TOKEN}")
     expect(JSON.parse(call[:body])).to eq('entity_id' => 'weather.forecast_home', 'type' => 'daily')
-    expect(run.error).to be_nil
     expect(run.data.keys).to include('IDX_0', 'IDX_1', 'IDX_2', 'IDX_3')
     expect(run.data.dig('IDX_3', 'service_response', 'weather.forecast_home', 'forecast').size).to eq(10)
-    expect(run).to stay_within_serverless_limits
   end
 
   it 'leaves the forecast out without a weather entity' do
@@ -132,7 +122,7 @@ RSpec.describe 'Rolling Month Calendar (Home Assistant)' do
     expect(screen.result.requests.find { it[:method] == 'POST' }[:aborted]).to be(true)
     expect(screen).to have_text('Parent-teacher meeting')
     expect(screen).to have_text('Could not load weather.forecast_home: no answer')
-    expect(problems(screen)).to be_empty
+    expect(screen).to have_no_problems
   end
 
   it 'adds the forecast after a single calendar' do
@@ -140,7 +130,7 @@ RSpec.describe 'Rolling Month Calendar (Home Assistant)' do
 
     expect(screen).to have_text('Parent-teacher meeting')
     expect(screen).to have_css('.trmnl-weather')
-    expect(problems(screen)).to be_empty
+    expect(screen).to have_no_problems
   end
 
   {
@@ -154,7 +144,7 @@ RSpec.describe 'Rolling Month Calendar (Home Assistant)' do
       expect(screen).to have_text('Parent-teacher meeting')
       expect(screen).to have_text('Could not load weather.forecast_home:')
       expect(screen).to have_text('Entity not found') if answer[:json]
-      expect(problems(screen)).to be_empty
+      expect(screen).to have_no_problems
     end
   end
 
@@ -164,6 +154,6 @@ RSpec.describe 'Rolling Month Calendar (Home Assistant)' do
 
     expect(screen).to have_text('Parent-teacher meeting')
     expect(screen).to have_text('Could not load')
-    expect(problems(screen)).to be_empty
+    expect(screen).to have_no_problems
   end
 end

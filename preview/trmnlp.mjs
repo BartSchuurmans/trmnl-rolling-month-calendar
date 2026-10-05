@@ -22,10 +22,11 @@ import { execFileSync, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import * as yaml from 'js-yaml';
 
-const IMAGE = 'trmnl/trmnlp:v0.19.0';
+const IMAGE = 'trmnl/trmnlp:v0.20.0';
 // Rule IDs (as `trmnlp lint` prints them, e.g. no_opacity) of findings that don't apply
-// here, each with why. Empty since trmnlp 0.15.0 counts only real style attributes in its
-// inline-styles check (it used to count CSS words in shared.liquid's stylesheet).
+// here, each with why; trmnlp skips them (`ignored_lint_rules`, 0.20.0). Empty since trmnlp
+// 0.15.0 counts only real style attributes in its inline-styles check (it used to count CSS
+// words in shared.liquid's stylesheet).
 const LINT_ALLOWED = [];
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -131,6 +132,7 @@ function lint() {
     fs.cpSync(src, path.join(dir, 'src'), { recursive: true });
     fs.writeFileSync(path.join(dir, '.trmnlp.yml'), yaml.dump({
       watch: false,
+      ignored_lint_rules: LINT_ALLOWED,
       custom_fields: Object.fromEntries(fields.filter((field) => field.field_type !== 'author_bio')
         .map((field) => [field.keyname, String(field.default ?? 'x')])),
     }));
@@ -139,15 +141,13 @@ function lint() {
     fs.rmSync(dir, { recursive: true, force: true });
     let report = null;
     try { report = JSON.parse(run.stdout); } catch { /* trmnlp itself failed (settings, Docker, ...) */ }
-    const unexpected = report?.issues.filter((issue) => !LINT_ALLOWED.includes(issue.rule_id));
-    if (!report || unexpected.length) {
+    if (!report || report.issues.length) {
       ok = false;
       const where = (issue) => issue.locations.map((l) => `\n     ${l.path}:${l.line}:${l.column}`).join('');
-      const findings = unexpected?.map((issue) => `\n  [${issue.rule_id}] ${issue.message}${where(issue)}`).join('');
+      const findings = report?.issues.map((issue) => `\n  [${issue.rule_id}] ${issue.message}${where(issue)}`).join('');
       console.log(`${name}: FAILED${findings || `\n${run.stdout ?? ''}${run.stderr ?? ''}${run.error ?? ''}`}`);
     } else {
-      const allowed = report.issues.map((issue) => issue.rule_id);
-      console.log(`${name}: ok${allowed.length ? ` (allowed: ${allowed.join(', ')})` : ''}`);
+      console.log(`${name}: ok`);
     }
   }
   return ok;
