@@ -10,8 +10,8 @@ plugin; see README.md for setup and UPSTREAM.md for what differs from upstream.
   fields), `shared.liquid` (CSS + JS + the markup, captured as `rolling_calendar`;
   prepended to every view by TRMNL and LaraPaper), and the views `full.liquid`,
   `half_horizontal.liquid`, `half_vertical.liquid`, `quadrant.liquid`, which only print
-  it. Narrow views (under 600 CSS px: left/right half, quadrant) get
-  `.trmnl-calendar--narrow`.
+  it. Narrow views (under 800 CSS px: left/right half, quadrant, the TRMNL X in portrait)
+  get `.trmnl-calendar--narrow`.
 - `preview/` — local renderer (`render.mjs`), CI render suite (`ci.sh`), random data
   (`random-data.mjs`), PHP Liquid check (`php/render.php`), sample calendars
   (`sample-data.mjs`: a six-week cycle, also written to `docs/sample-ics/*.ics` with

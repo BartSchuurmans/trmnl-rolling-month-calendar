@@ -7,7 +7,6 @@
 # as TRMNL's calendar plugins share them, and TRMNL's Weather plugin.
 RSpec.describe 'Rolling Month Calendar (TRMNL calendars)' do
   VIEWS = %w[full half_horizontal half_vertical quadrant].freeze
-  DEVICES = %w[v2 og_png og_plus].freeze
   # trmnlp's 'a publishable recipe' checks (0.18.0) have no room for the two lists below, nor
   # for Plugin Merge's data, so the examples here run the same checks with them
   EXPECTED_PROBLEMS = [
@@ -29,9 +28,13 @@ RSpec.describe 'Rolling Month Calendar (TRMNL calendars)' do
   def overflowing(screen) = screen.overflowing.reject { |el| CLIPPED.any? { it.match?(el) } }
 
   VIEWS.each do |view|
-    DEVICES.each do |device|
-      it "draws the #{view} view on #{device} with events and the forecast" do
-        screen = trmnl.render(view:, device:, now:, custom_fields:, variables:)
+    # TRMNL's devices as trmnlp's publishable-recipe checks draw them: the OG at 1 and 2 bits
+    # and the TRMNL X, in landscape and portrait
+    TRMNLP::Testing::PUBLISHABLE_RECIPE_SCREENS.each do |screen_options|
+      device = screen_options[:device]
+      name = [device, screen_options[:orientation]].compact.join(' ')
+      it "draws the #{view} view on #{name} with events and the forecast" do
+        screen = trmnl.render(view:, **screen_options, now:, custom_fields:, variables:)
 
         expect(screen).to have_css('.trmnl-calendar')
         # every Monday, so in the current week too
