@@ -38,6 +38,10 @@ plugin; see README.md for setup and UPSTREAM.md for what differs from upstream.
 
 ## Checks
 
+- In a fresh Claude Code cloud container, run `eval "$(sh scripts/cloud-setup.sh)"` once
+  before any check below: it installs `preview/` and `preview/php/`, fetches the framework,
+  starts Docker and sets `FRAMEWORK_DIR`, `CHROMIUM_PATH` and `TRMNLP_DOCKER_ARGS` (proxy
+  and CA for trmnlp's containers). Don't set these up by hand.
 - `sh preview/ci.sh` — renders sample and random calendars (TRMNL X, OG 1-/2-bit) and
   once each through LaraPaper's PHP Liquid engine and trmnlp (TRMNL's Ruby Liquid, via
   Docker, `preview/trmnlp.mjs`); fails on template/JS errors, renders
