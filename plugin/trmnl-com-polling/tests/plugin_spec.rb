@@ -15,10 +15,9 @@ RSpec.describe 'Rolling Month Calendar (Home Assistant)' do
   # One week fits in these, and a one-week grid has no day-number line for the forecast
   NO_FORECAST = [%w[half_horizontal og_png], %w[half_horizontal og_plus], %w[quadrant og_png],
                  %w[quadrant og_plus]].freeze
+  # trmnlp's 'a publishable recipe' checks (0.18.0) have no room for the two lists below yet,
+  # so the examples here run the same checks with them
   EXPECTED_PROBLEMS = [
-    # The local copy of FullCalendar (the LaraPaper app's) isn't there: the page then loads
-    # jsDelivr's, as on TRMNL.com
-    %r{\Afailed to load /rolling-month-calendar/},
     # Firefox's notice that FullCalendar's ResizeObservers left a change for the next frame
     # (the week fitting re-renders); the layout still settles
     /\AResizeObserver loop completed with undelivered notifications/,
@@ -63,10 +62,33 @@ RSpec.describe 'Rolling Month Calendar (Home Assistant)' do
         expect(screen).to have_css('.trmnl-calendar')
         expect(screen).to have_text('Parent-teacher meeting')
         expect(screen).to have_css('.trmnl-weather') unless NO_FORECAST.include?([view, device])
-        expect(screen).to have_no_text('Could not load')
+        expect(screen).to have_no_text('Could not load').and have_no_leaked_text
         expect(problems(screen)).to be_empty
         expect(overflowing(screen)).to be_empty
       end
+    end
+  end
+
+  TRMNLP::Testing.select_field_values.each do |keyname, values|
+    values.each do |value|
+      it "draws the full view with #{keyname} set to #{value}" do
+        screen = trmnl.render(device: 'v2', now:, mocks:, custom_fields: custom_fields.merge(keyname => value))
+
+        expect(screen).to have_text('Parent-teacher meeting').and have_no_leaked_text
+        expect(problems(screen)).to be_empty
+        expect(overflowing(screen)).to be_empty
+      end
+    end
+  end
+
+  TRMNLP::Testing::PUBLISHABLE_RECIPE_API_FAILURES.each do |failure, answer|
+    it "says so when Home Assistant #{failure}" do
+      screen = trmnl.render(device: 'v2', now:, custom_fields:, mocks: { '*' => answer })
+
+      expect(screen).to have_css('.trmnl-calendar').and have_no_leaked_text.and have_no_transform_error
+      expect(screen).to have_text('Could not load weather.forecast_home:')
+      expect(screen).to have_no_text('HTTP 200')
+      expect(problems(screen)).to be_empty
     end
   end
 

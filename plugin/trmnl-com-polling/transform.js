@@ -49,6 +49,8 @@ async function forecast(haUrl, token, entity) {
     });
     var body = await response.json().catch(function() { return null; });
     if (response.ok && body && body.service_response) return { service_response: body.service_response };
+    // answered, but without a forecast (not "HTTP 200")
+    if (response.ok) return { message: 'no forecast in the answer' };
     return { message: (body && body.message) || 'HTTP ' + response.status };
   } catch (e) {
     return { message: e && e.name === 'TimeoutError' ? 'no answer' : String((e && e.message) || e) };

@@ -8,10 +8,9 @@
 RSpec.describe 'Rolling Month Calendar (TRMNL calendars)' do
   VIEWS = %w[full half_horizontal half_vertical quadrant].freeze
   DEVICES = %w[v2 og_png og_plus].freeze
+  # trmnlp's 'a publishable recipe' checks (0.18.0) have no room for the two lists below, nor
+  # for Plugin Merge's data, so the examples here run the same checks with them
   EXPECTED_PROBLEMS = [
-    # The local copy of FullCalendar (the LaraPaper app's) isn't there: the page then loads
-    # jsDelivr's, as on TRMNL.com
-    %r{\Afailed to load /rolling-month-calendar/},
     # Firefox's notice that FullCalendar's ResizeObservers left a change for the next frame
     # (the week fitting re-renders); the layout still settles
     /\AResizeObserver loop completed with undelivered notifications/,
@@ -40,7 +39,19 @@ RSpec.describe 'Rolling Month Calendar (TRMNL calendars)' do
         # TRMNL's Weather plugin has today and tomorrow only, which a one-week grid (no day-number
         # line) or a Sunday in the last week shown can leave without a place: the full view has both
         expect(screen).to have_css('.trmnl-weather') if view == 'full'
-        expect(screen).to have_no_text('Could not load')
+        expect(screen).to have_no_text('Could not load').and have_no_leaked_text
+        expect(problems(screen)).to be_empty
+        expect(overflowing(screen)).to be_empty
+      end
+    end
+  end
+
+  TRMNLP::Testing.select_field_values.each do |keyname, values|
+    values.each do |value|
+      it "draws the full view with #{keyname} set to #{value}" do
+        screen = trmnl.render(device: 'v2', now:, variables:, custom_fields: custom_fields.merge(keyname => value))
+
+        expect(screen).to have_text('Swimming lessons').and have_no_leaked_text
         expect(problems(screen)).to be_empty
         expect(overflowing(screen)).to be_empty
       end

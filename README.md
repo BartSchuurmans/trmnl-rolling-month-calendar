@@ -519,9 +519,9 @@ To run the render checks locally, set up `FRAMEWORK_DIR` as in the workflow, run
   LaraPaper's PHP Liquid and the Ruby Liquid of TRMNL's own servers both read the same
   way.
 - The recipe loads FullCalendar from `/rolling-month-calendar/...`, which the LaraPaper (local)
-  app serves, and falls back to jsDelivr on any other server (TRMNL.com included). With
-  plain LaraPaper, rendering also loads the TRMNL framework from trmnl.com, so the
-  container needs internet access. The app avoids both. How: screens render from a
+  app serves, and falls back to jsDelivr on any other server (TRMNL.com loads it from
+  jsDelivr straight away). With plain LaraPaper, rendering also loads the TRMNL framework
+  from trmnl.com, so the container needs internet access. The app avoids both. How: screens render from a
   temporary `file://` page, so root-relative paths resolve to files in the image, and to
   nginx in the browser preview.
 - Like LaraPaper, the preview reduces the screenshot to the device's grey levels. 4-bit

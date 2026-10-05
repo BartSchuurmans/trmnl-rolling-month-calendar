@@ -9,7 +9,8 @@ another place to publish it. A variant has only what differs:
 - `settings.yml` — its whole trmnlp settings: strategy, form fields, framework.
 - optional `*.liquid` — put in front of `src/shared.liquid` (in name order), for data
   handling `src/` can't hold. `trmnl-com-merge/merge.liquid` is one: LaraPaper's Liquid can't
-  parse its lookup.
+  parse its lookup. The TRMNL.com variants' `fullcalendar.liquid` loads FullCalendar from
+  jsDelivr straight away, without trying the LaraPaper app's local copy first.
 - optional `transform.js` — a TRMNL.com serverless function: runs after polling (Polling
   and Webhook strategies only) and returns the template's data. `trmnl-com-polling/transform.js`
   fetches the weather. LaraPaper has nothing like it, so its output must be a shape
