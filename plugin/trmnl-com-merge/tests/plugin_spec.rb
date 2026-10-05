@@ -6,17 +6,9 @@
 # --dump-context` (ci.sh's), copied next to this file as context.json: the sample calendars
 # as TRMNL's calendar plugins share them, and TRMNL's Weather plugin.
 RSpec.describe 'Rolling Month Calendar (TRMNL calendars)' do
-  VIEWS = %w[full half_horizontal half_vertical quadrant].freeze
-  # trmnlp's 'a publishable recipe' checks (0.18.0) have no room for the two lists below, nor
-  # for Plugin Merge's data, so the examples here run the same checks with them
-  EXPECTED_PROBLEMS = [
-    # Firefox's notice that FullCalendar's ResizeObservers left a change for the next frame
-    # (the week fitting re-renders); the layout still settles
-    /\AResizeObserver loop completed with undelivered notifications/,
-  ].freeze
-  # Boxes that cut off on purpose: a forecast's low goes to a hidden second line where the
-  # day has no room for it, and long titles end in an ellipsis
-  CLIPPED = [/\.trmnl-weather\b/, /\.mono-event-title\b/].freeze
+  # Where a day has no room for a forecast's low, it wraps to a line its box hides on purpose;
+  # trmnlp's have_no_overflow (0.20.0) passes only ellipses and line clamps
+  CLIPPED = /\.trmnl-weather\b/
 
   let(:context) { JSON.parse(File.read(File.join(__dir__, 'context.json'))) }
   let(:now) { Time.at(context.dig('trmnl', 'system', 'timestamp_utc')).utc }
@@ -24,10 +16,13 @@ RSpec.describe 'Rolling Month Calendar (TRMNL calendars)' do
   # the chosen plugins' data, at the top level as TRMNL.com merges it
   let(:variables) { context.select { |key, _| key.match?(/\A(caldav|weather)_\d+\z/) } }
 
-  def problems(screen) = screen.problems.reject { |p| EXPECTED_PROBLEMS.any? { it.match?(p) } }
-  def overflowing(screen) = screen.overflowing.reject { |el| CLIPPED.any? { it.match?(el) } }
+  # trmnlp's own checks before publishing: every view on TRMNL's devices and each select
+  # field's options, without page errors or leaked values. The examples below check what is drawn.
+  it_behaves_like 'a publishable recipe'
 
-  VIEWS.each do |view|
+  def overflowing(screen) = screen.overflowing.grep_v(CLIPPED)
+
+  TRMNLP::Testing::PUBLISHABLE_RECIPE_VIEWS.each do |view|
     # TRMNL's devices as trmnlp's publishable-recipe checks draw them: the OG at 1 and 2 bits
     # and the TRMNL X, in landscape and portrait
     TRMNLP::Testing::PUBLISHABLE_RECIPE_SCREENS.each do |screen_options|
@@ -42,8 +37,7 @@ RSpec.describe 'Rolling Month Calendar (TRMNL calendars)' do
         # TRMNL's Weather plugin has today and tomorrow only, which a one-week grid (no day-number
         # line) or a Sunday in the last week shown can leave without a place: the full view has both
         expect(screen).to have_css('.trmnl-weather') if view == 'full'
-        expect(screen).to have_no_text('Could not load').and have_no_leaked_text
-        expect(problems(screen)).to be_empty
+        expect(screen).to have_no_text('Could not load')
         expect(overflowing(screen)).to be_empty
       end
     end
@@ -54,8 +48,7 @@ RSpec.describe 'Rolling Month Calendar (TRMNL calendars)' do
       it "draws the full view with #{keyname} set to #{value}" do
         screen = trmnl.render(device: 'v2', now:, variables:, custom_fields: custom_fields.merge(keyname => value))
 
-        expect(screen).to have_text('Swimming lessons').and have_no_leaked_text
-        expect(problems(screen)).to be_empty
+        expect(screen).to have_text('Swimming lessons')
         expect(overflowing(screen)).to be_empty
       end
     end
@@ -66,6 +59,6 @@ RSpec.describe 'Rolling Month Calendar (TRMNL calendars)' do
                           custom_fields: custom_fields.reject { |key, _| key.match?(/\Acalendar_\d\z/) })
 
     expect(screen).to have_css('.trmnl-calendar')
-    expect(problems(screen)).to be_empty
+    expect(screen).to have_no_problems
   end
 end
