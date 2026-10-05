@@ -11,7 +11,6 @@ RSpec.describe 'Rolling Month Calendar (Home Assistant)' do
   # Every view and screen size of the recipe, each with its devices: the TRMNL X, and the OG
   # at 1 and 2 bits
   VIEWS = %w[full half_horizontal half_vertical quadrant].freeze
-  DEVICES = %w[v2 og_png og_plus].freeze
   # One week fits in these, and a one-week grid has no day-number line for the forecast
   NO_FORECAST = [%w[half_horizontal og_png], %w[half_horizontal og_plus], %w[quadrant og_png],
                  %w[quadrant og_plus]].freeze
@@ -55,9 +54,13 @@ RSpec.describe 'Rolling Month Calendar (Home Assistant)' do
   def overflowing(screen) = screen.overflowing.reject { |el| CLIPPED.any? { it.match?(el) } }
 
   VIEWS.each do |view|
-    DEVICES.each do |device|
-      it "draws the #{view} view on #{device} with events and the forecast" do
-        screen = trmnl.render(view:, device:, now:, custom_fields:, mocks:)
+    # TRMNL's devices as trmnlp's publishable-recipe checks draw them: the OG at 1 and 2 bits
+    # and the TRMNL X, in landscape and portrait
+    TRMNLP::Testing::PUBLISHABLE_RECIPE_SCREENS.each do |screen_options|
+      device = screen_options[:device]
+      name = [device, screen_options[:orientation]].compact.join(' ')
+      it "draws the #{view} view on #{name} with events and the forecast" do
+        screen = trmnl.render(view:, **screen_options, now:, custom_fields:, mocks:)
 
         expect(screen).to have_css('.trmnl-calendar')
         expect(screen).to have_text('Parent-teacher meeting')

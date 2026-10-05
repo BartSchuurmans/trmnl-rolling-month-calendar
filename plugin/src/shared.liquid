@@ -85,6 +85,8 @@
     padding-right: 0.4em;
   }
   .mono-day-number { min-width: 1.5em; padding: 0 0.3em; border-radius: 999px; text-align: center; }
+  .mono-day-top--narrow .mono-month { padding-right: 0.15em; }
+  .mono-month--no-room { display: none; }
   .mono-day-top--narrow .mono-day-number { min-width: 0; padding: 0 0.15em; }
   .mono-day-top--new-month .mono-day-number { font-weight: 700; }
   .mono-day--today .mono-day-number { min-width: 1.5em; font-weight: 700; }
@@ -675,9 +677,10 @@
           locale: settings.locale || 'en'
         };
 
-        // Narrow views (the left or right half of a mashup) leave a few characters per day:
-        // events show their start time only and tighter spacing (see .trmnl-calendar--narrow)
-        if (node.offsetWidth < 600) {
+        // Narrow views (the left or right half of a mashup, and the TRMNL X in portrait, 780
+        // wide) leave a few characters per day: events show their start time only and tighter
+        // spacing (see .trmnl-calendar--narrow). The OG's full width, 800, still fits both times.
+        if (node.offsetWidth < 800) {
           node.classList.add('trmnl-calendar--narrow');
           cfg.displayEventEnd = false;
         }
@@ -787,6 +790,17 @@
         calendar.render();
 
         var finish = function() {
+          // A month name with no room beside its day number (the OG's half in portrait has
+          // about 34 px a day) is left out rather than cut to "O…": the bold 1 still marks
+          // where the month starts
+          // (cut short, or pushed out of its cell's left edge next to a forecast)
+          node.querySelectorAll('.mono-month').forEach(function(month) {
+            var cell = month.closest('.mono-day-top');
+            if (month.scrollWidth > month.clientWidth + 1 ||
+                (cell && month.getBoundingClientRect().left < cell.getBoundingClientRect().left - 0.5)) {
+              month.classList.add('mono-month--no-room');
+            }
+          });
           if (built.errors.length) {
             var err = document.createElement('div');
             err.className = 'trmnl-calendar-error text--small';
