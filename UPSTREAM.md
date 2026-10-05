@@ -37,7 +37,7 @@ treats its native plugins as source-available and is fine with them being remixe
   renderer's system zone. Day numbers and month labels read UTC dates to match.
 - **FullCalendar**: the open-source 7.1 build instead of the private build at
   trmnl.com, loaded from `/rolling-month-calendar/...` (served by the LaraPaper (local) app) with
-  jsDelivr as fallback. No `schedulerLicenseKey`, since dayGrid doesn't need one.
+  jsDelivr as fallback (on TRMNL.com, jsDelivr only). No `schedulerLicenseKey`, since dayGrid doesn't need one.
 - **Styles**: upstream links `plugins/calendars` and `plugins/calendars_full_month`
   stylesheets that aren't published. Here the look is a FullCalendar 7 theme written from
   scratch ("Mono" in `shared.liquid`: class hooks naming the grid's parts, CSS sized with

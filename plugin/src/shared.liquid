@@ -5,18 +5,27 @@
   Upstream loads a private FullCalendar build from trmnl.com; the open-source build is
   enough for dayGrid. It loads from /rolling-month-calendar/..., which the LaraPaper (local) app
   in this repo serves so rendering needs no internet, and falls back to jsDelivr on
-  any other server. The stylesheets upstream links (plugins/calendars,
+  any other server. The TRMNL.com variants set fullcalendar_from_cdn and load it from
+  jsDelivr straight away. The stylesheets upstream links (plugins/calendars,
   plugins/calendars_full_month) aren't published, so the look below is a re-creation,
   written as a FullCalendar 7 theme ("Mono") plus the TRMNL framework's classes. Only
   FullCalendar's skeleton.css (layout, no looks) is loaded with it.
 {% endcomment %}
 {% assign cal_locale = trmnl.plugin_settings.custom_fields_values.locale | default: "en" | strip | downcase %}
+{% assign fc_cdn = "https://cdn.jsdelivr.net/npm/fullcalendar@7.1.0" %}
+{% if fullcalendar_from_cdn %}
+{% comment %} The TRMNL.com variants (plugin/<variant>/fullcalendar.liquid): no local copy there {% endcomment %}
+<link rel="stylesheet" href="{{ fc_cdn }}/skeleton.css">
+<script src="{{ fc_cdn }}/all/global.js"></script>
+{% if cal_locale != "en" and cal_locale != "" %}<script src="{{ fc_cdn }}/locales-all/global.js"></script>{% endif %}
+{% else %}
 <link rel="stylesheet" href="/rolling-month-calendar/fullcalendar/7.1.0/skeleton.css">
 <script src="/rolling-month-calendar/fullcalendar/7.1.0/all/global.js"></script>
-<script>window.FullCalendar || document.write('<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@7.1.0/skeleton.css"><script src="https://cdn.jsdelivr.net/npm/fullcalendar@7.1.0/all/global.js"><\/script>');</script>
+<script>window.FullCalendar || document.write('<link rel="stylesheet" href="{{ fc_cdn }}/skeleton.css"><script src="{{ fc_cdn }}/all/global.js"><\/script>');</script>
 {% if cal_locale != "en" and cal_locale != "" %}
 <script src="/rolling-month-calendar/fullcalendar/7.1.0/locales-all/global.js"></script>
-<script>(window.FullCalendar && FullCalendar.globalLocales && FullCalendar.globalLocales.length) || document.write('<script src="https://cdn.jsdelivr.net/npm/fullcalendar@7.1.0/locales-all/global.js"><\/script>');</script>
+<script>(window.FullCalendar && FullCalendar.globalLocales && FullCalendar.globalLocales.length) || document.write('<script src="{{ fc_cdn }}/locales-all/global.js"><\/script>');</script>
+{% endif %}
 {% endif %}
 
 <style>
