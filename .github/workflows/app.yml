@@ -92,9 +92,13 @@ jobs:
           # the ingress port is published for e2e/ingress.mjs, which plays Home Assistant
           # (Home Assistant itself reaches it over its own network, as 172.30.32.2). The
           # end-to-end test runs the pre-render itself, so the background one is off.
+          # The device sensors go to a Mosquitto broker on this machine (the Supervisor's
+          # MQTT service in Home Assistant), published every 2 s instead of 10.
+          docker run -d --name mqtt -p 1883:1883 eclipse-mosquitto:2 mosquitto -c /mosquitto-no-auth.conf
           docker run -d --name app -p 4567:8080 -p 127.0.0.1:8099:8099 -e TZ=Europe/Amsterdam \
             -e SUPERVISOR_TOKEN=e2e-supervisor-token -e HA_API_URL=http://homeassistant:8123/api \
             -e LARAPAPER_LOCAL_PRERENDER=0 \
+            -e MQTT_HOST=homeassistant -e LARAPAPER_LOCAL_MQTT_INTERVAL=2 \
             -e HA_INGRESS_PROXY=172.16.0.0/12 \
             --add-host homeassistant:host-gateway -v "$RUNNER_TEMP/data:/data" larapaper-local:ci
           for i in $(seq 1 90); do
@@ -167,7 +171,7 @@ jobs:
       - name: End-to-end (recipe ZIP → LaraPaper → fake Home Assistant → TRMNL X screen)
         run: |
           sh scripts/build-zip.sh
-          node e2e/run.mjs --container app --url http://localhost:4567 --zip dist/rolling-month-calendar.zip
+          node e2e/run.mjs --container app --url http://localhost:4567 --zip dist/rolling-month-calendar.zip --mqtt mqtt
 
       - name: Web UI through Home Assistant ingress (login, dashboard, recipe preview and render)
         run: |

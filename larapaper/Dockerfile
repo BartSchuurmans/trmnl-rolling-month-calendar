@@ -37,11 +37,16 @@ RUN view=/var/www/html/resources/views/vendor/trmnl/components/screen.blade.php 
     && ! grep -q 'fonts\.bunny\.net' "$view"
 
 COPY rootfs /
-RUN chmod +x /etc/entrypoint.d/10-ha-calendar.sh /etc/s6-overlay/s6-rc.d/larapaper-local-prerender/run
+RUN chmod +x /etc/entrypoint.d/10-ha-calendar.sh /etc/s6-overlay/s6-rc.d/larapaper-local-prerender/run \
+    /etc/s6-overlay/s6-rc.d/larapaper-local-mqtt/run
 
 # Renders recipe screens ahead of time, so the TRMNL doesn't wait on a render: see
 # prerender.php. Started by s6 (rootfs/etc/s6-overlay) next to LaraPaper's scheduler.
 COPY prerender/prerender.php /opt/larapaper-local/
+
+# Publishes the TRMNL devices (battery, Wi-Fi, firmware, ...) to Home Assistant through
+# MQTT discovery: see mqtt.php. Started by s6 like the pre-render.
+COPY mqtt/mqtt.php /opt/larapaper-local/
 
 # Home Assistant ingress: see IngressServiceProvider.php and 10-ha-calendar.sh
 COPY --chown=www-data:www-data ingress/IngressServiceProvider.php /var/www/html/app/Providers/

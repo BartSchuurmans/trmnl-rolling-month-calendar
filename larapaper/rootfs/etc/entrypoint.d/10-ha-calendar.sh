@@ -55,6 +55,7 @@ APP_URL="$(opt app_url)"
 APP_URL="${APP_URL%/}"
 REGISTRATION_ENABLED="$(opt registration_enabled)"
 PRERENDER="${LARAPAPER_LOCAL_PRERENDER:-$(opt prerender)}"
+MQTT="${LARAPAPER_LOCAL_MQTT:-$(opt mqtt)}"
 
 set_env APP_KEY "$(cat "$DATA_DIR/app_key")"
 set_env APP_ENV production
@@ -64,7 +65,7 @@ set_env APP_TIMEZONE "${TZ:-UTC}"
 set_env REGISTRATION_ENABLED "${REGISTRATION_ENABLED:-1}"
 [ -n "$APP_URL" ] && set_env APP_URL "$APP_URL"
 
-log "APP_URL=${APP_URL:-<unset>} TZ=${TZ:-UTC} registration=${REGISTRATION_ENABLED:-1} prerender=${PRERENDER:-1}"
+log "APP_URL=${APP_URL:-<unset>} TZ=${TZ:-UTC} registration=${REGISTRATION_ENABLED:-1} prerender=${PRERENDER:-1} mqtt=${MQTT:-1}"
 
 # Home Assistant API without a user token: with homeassistant_api in config.yaml the
 # Supervisor gives the app its own token (SUPERVISOR_TOKEN). The recipe can't read

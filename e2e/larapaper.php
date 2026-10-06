@@ -11,6 +11,8 @@
 //       polled payload summary, cached images, and the screen's size and grey levels
 //   php larapaper.php login
 //       a new password for the user (after setup), to log in to the web UI
+//   php larapaper.php device add|delete
+//       a second device (no playlist), for the device sensors in Home Assistant
 
 use App\Models\Device;
 use App\Models\DeviceModel;
@@ -130,7 +132,20 @@ switch ($command) {
         $user->forceFill(['password' => $password, 'email_verified_at' => now()])->save();
         out(['email' => $user->email, 'password' => $password, 'plugin_id' => plugin()->id]);
 
+    case 'device':
+        $attributes = ['api_key' => 'e2e-second-device'];
+        if ($argv[2] === 'add') {
+            $device = Device::updateOrCreate($attributes, [
+                'name' => 'E2E TRMNL OG', 'mac_address' => 'E3:E3:E3:E3:E3:E3', 'friendly_id' => 'E2ETOG',
+                'user_id' => User::where('email', 'e2e@example.com')->firstOrFail()->id,
+                'device_model_id' => DeviceModel::where('name', 'og_png')->value('id'),
+            ]);
+        } else {
+            Device::where($attributes)->delete();
+        }
+        out(['devices' => Device::pluck('mac_address')]);
+
     default:
-        fwrite(STDERR, "usage: php larapaper.php setup|configure|check|login ...\n");
+        fwrite(STDERR, "usage: php larapaper.php setup|configure|check|login|device ...\n");
         exit(2);
 }

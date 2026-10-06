@@ -14,3 +14,8 @@ configuration:
       Render each recipe shortly before it goes out of date, so the TRMNL gets a ready
       screen. Off, LaraPaper renders while the TRMNL waits, which can take longer than
       the 15 seconds it waits for.
+  mqtt:
+    name: Device sensors in Home Assistant
+    description: >-
+      Show each TRMNL in Home Assistant as a device with its battery, Wi-Fi signal,
+      firmware and last check-in, through MQTT. Needs the Mosquitto broker app.

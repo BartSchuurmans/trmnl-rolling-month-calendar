@@ -1,5 +1,5 @@
 name: LaraPaper (local)
-version: "0.43.1-6"
+version: "0.43.1-7"
 slug: larapaper_local
 description: >-
   TRMNL BYOS server (LaraPaper) that renders screens without internet access:
@@ -14,6 +14,10 @@ init: false
 # The Supervisor token lets the bundled calendar proxy read Home Assistant calendars
 homeassistant_api: true
 startup: services
+# The Mosquitto broker's address and login, for the device sensors (mqtt.php); the app
+# also runs without a broker
+services:
+  - mqtt:want
 # The web UI through Home Assistant (sidebar, Open Web UI), also away from home;
 # ingress_port is left at its default, 8099
 ingress: true
@@ -28,7 +32,9 @@ options:
   app_url: ""
   registration_enabled: true
   prerender: true
+  mqtt: true
 schema:
   app_url: url
   registration_enabled: bool
   prerender: bool
+  mqtt: bool
