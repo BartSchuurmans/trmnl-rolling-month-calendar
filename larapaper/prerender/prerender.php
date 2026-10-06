@@ -18,6 +18,9 @@
 //
 //   php prerender.php           render what is due
 //   php prerender.php --dry-run list what is due
+//   php prerender.php --device <id>
+//                               render that device's recipes now, due or not (the
+//                               Refresh screen button in Home Assistant, see mqtt.php)
 
 use App\Models\Device;
 use App\Models\Plugin;
@@ -36,6 +39,7 @@ const LEAD_SECONDS = 120;
 const MIN_REFRESH_MINUTES = 5;
 
 $dryRun = in_array('--dry-run', $argv, true);
+$forceDevice = ($i = array_search('--device', $argv, true)) !== false ? (int) ($argv[$i + 1] ?? 0) : null;
 
 function say(string $message): void
 {
@@ -94,7 +98,8 @@ function prerender(Plugin $plugin, Device $device): void
 // Mirrors show their source's screen.
 $done = [];
 $devices = Device::with(['deviceModel', 'deviceModel.palette', 'palette', 'user'])
-    ->whereNull('mirror_device_id')->orderBy('id')->get();
+    ->whereNull('mirror_device_id')->when($forceDevice !== null, fn ($q) => $q->whereKey($forceDevice))
+    ->orderBy('id')->get();
 foreach ($devices as $device) {
     foreach ($device->playlists()->where('is_active', true)->get() as $playlist) {
         foreach ($playlist->getActiveItems() as $item) {
@@ -105,8 +110,8 @@ foreach ($devices as $device) {
             $done[$plugin->id] = true;
             // Only polled recipes go stale on a timer
             if ($plugin->plugin_type !== 'recipe' || $plugin->data_strategy !== 'polling'
-                || (int) $plugin->data_stale_minutes < MIN_REFRESH_MINUTES
-                || Cache::has("larapaper-local-prerender-failed-$plugin->id") || ! isDue($plugin, $device)) {
+                || ($forceDevice === null && ((int) $plugin->data_stale_minutes < MIN_REFRESH_MINUTES
+                    || Cache::has("larapaper-local-prerender-failed-$plugin->id") || ! isDue($plugin, $device)))) {
                 continue;
             }
             if ($dryRun) {

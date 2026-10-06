@@ -4,11 +4,17 @@
 // running: s6 starts it again when it exits (broker gone, no broker yet).
 //
 // Every TRMNL in LaraPaper becomes a Home Assistant device, keyed by its MAC address,
-// with battery, charging, Wi-Fi signal, firmware, last seen, an online sensor and whatever
-// attached sensors it reports. Everything comes from what LaraPaper stores when the
-// device asks for its screen (UpdateDeviceTelemetry); this script only reads it, through
-// LaraPaper's own models, without changing LaraPaper. Nothing runs inside the device's
-// request, so a slow or missing broker never slows the TRMNL down.
+// with battery, charging, Wi-Fi signal, firmware, last seen, an online sensor, the screen
+// it shows and whatever attached sensors it reports. Everything comes from what LaraPaper
+// stores when the device asks for its screen (UpdateDeviceTelemetry, RunDeviceDisplayCycle);
+// this script reads it through LaraPaper's own models, without changing LaraPaper. Nothing
+// runs inside the device's request, so a slow or missing broker never slows the TRMNL down.
+//
+// Controls (sleep mode and its times, the refresh interval, installing a firmware update)
+// arrive on <base>/<mac>/set/<key> and change the device the way LaraPaper's device page
+// does; the TRMNL picks them up at its next request. Refresh screen runs prerender.php
+// for the device in the background: its recipes poll and render now, so the TRMNL gets
+// fresh screens when it next wakes (a server can't wake it).
 //
 // Every INTERVAL seconds it builds each device's discovery config and state and
 // publishes those that changed (retained). Devices deleted in LaraPaper are removed
@@ -25,6 +31,7 @@ use App\Models\Device;
 use App\Models\Firmware;
 use App\Services\DeviceSensorService;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 $root = getenv('LARAPAPER_DIR') ?: '/var/www/html';
 require "$root/vendor/autoload.php";
@@ -36,6 +43,11 @@ const ORIGIN = ['name' => 'LaraPaper (local)', 'url' => 'https://github.com/Bart
 // A device that hasn't asked for a screen in twice its refresh interval plus this long
 // is offline
 const OFFLINE_GRACE_SECONDS = 300;
+// LaraPaper's defaults when sleep mode is turned on without times (devices/configure)
+const SLEEP_FROM = '22:00';
+const SLEEP_TO = '06:00';
+const REFRESH_MIN = 60;
+const REFRESH_MAX = 86400;
 
 $interval = max(1, (int) (getenv('LARAPAPER_LOCAL_MQTT_INTERVAL') ?: 10));
 $prefix = getenv('MQTT_DISCOVERY_PREFIX') ?: 'homeassistant';
@@ -130,11 +142,12 @@ final class Mqtt
         $this->send(0x82, $body);
     }
 
-    // Handles what the broker sends for up to $seconds; pings when idle
-    public function loop(float $seconds): void
+    // Handles what the broker sends for up to $seconds, or until $stop() says so; pings
+    // when idle
+    public function loop(float $seconds, ?callable $stop = null): void
     {
         $until = microtime(true) + $seconds;
-        while (($left = $until - microtime(true)) > 0) {
+        while (($left = $until - microtime(true)) > 0 && ! ($stop && $stop())) {
             if (microtime(true) - $this->lastSent > self::KEEPALIVE / 2) {
                 $this->send(0xC0, '');
             }
@@ -257,7 +270,8 @@ function snapshot(string $prefix, string $base, string $instance): array
             continue;
         }
         $id = "larapaper_{$instance}_".str_replace(':', '', $mac);
-        $stateTopic = "$base/".str_replace(':', '', $mac).'/state';
+        $topic = "$base/".str_replace(':', '', $mac);
+        $stateTopic = "$topic/state";
 
         $lastSeen = $device->last_refreshed_at;
         $interval = max(60, (int) $device->default_refresh_interval);
@@ -269,6 +283,17 @@ function snapshot(string $prefix, string $base, string $instance): array
             ->where('model', $device->usesTouchBar() ? 'trmnl_x' : 'trmnl')
             ->value('version_tag');
         $bool = fn (?bool $value) => $value === null ? null : ($value ? 'ON' : 'OFF');
+        // The screen the device was last given (a mirror shows its source's), as LaraPaper
+        // stores it: a PNG, or a BMP for some older devices
+        $screenUuid = $device->mirrorDevice?->current_screen_image ?? $device->current_screen_image;
+        $screen = null;
+        foreach (['png', 'bmp'] as $extension) {
+            $path = $screenUuid ? Storage::disk('public')->path("images/generated/$screenUuid.$extension") : null;
+            if ($path && is_file($path)) {
+                $screen = ['path' => $path, 'type' => "image/$extension"];
+                break;
+            }
+        }
 
         $state = [
             'battery' => $device->last_battery_voltage === null ? null : round($device->battery_percent),
@@ -279,12 +304,20 @@ function snapshot(string $prefix, string $base, string $instance): array
             'last_seen' => $lastSeen?->toIso8601String(),
             'rssi' => $device->last_rssi_level,
             'refresh_interval' => $device->default_refresh_interval,
+            'sleep_mode' => $bool((bool) $device->sleep_mode_enabled),
+            // Never set: what turning sleep mode on would use
+            'sleep_from' => $device->sleep_mode_from?->format('H:i') ?? SLEEP_FROM,
+            'sleep_to' => $device->sleep_mode_to?->format('H:i') ?? SLEEP_TO,
             'firmware' => $firmware,
             'latest_firmware' => $latest ?? $firmware,
+            'firmware_installing' => $device->update_firmware_id !== null,
         ];
 
         $sensor = fn (string $name, array $extra) => ['p' => 'sensor', 'name' => $name, 'state_class' => 'measurement'] + $extra;
         $diagnostic = ['entity_category' => 'diagnostic'];
+        $config = ['entity_category' => 'config'];
+        $time = fn (string $name) => ['p' => 'text', 'name' => $name, 'icon' => 'mdi:clock-outline',
+            'min' => 5, 'max' => 5, 'pattern' => '^([01][0-9]|2[0-3]):[0-5][0-9]$'] + $config;
         $components = [
             'battery' => $sensor('Battery', ['device_class' => 'battery', 'unit_of_measurement' => '%']),
             'charging' => ['p' => 'binary_sensor', 'name' => 'Charging', 'device_class' => 'battery_charging'],
@@ -294,14 +327,24 @@ function snapshot(string $prefix, string $base, string $instance): array
             'rssi' => $sensor('Wi-Fi signal', ['device_class' => 'signal_strength', 'unit_of_measurement' => 'dBm'] + $diagnostic),
             'battery_voltage' => $sensor('Battery voltage', ['device_class' => 'voltage', 'unit_of_measurement' => 'V',
                 'suggested_display_precision' => 2, 'enabled_by_default' => false] + $diagnostic),
-            'refresh_interval' => ['p' => 'sensor', 'name' => 'Refresh interval', 'device_class' => 'duration',
-                'unit_of_measurement' => 's', 'enabled_by_default' => false] + $diagnostic,
+            'screen' => ['p' => 'image', 'name' => 'Screen', 'image_topic' => "$topic/screen",
+                'content_type' => $screen['type'] ?? 'image/png'],
+            'sleep_mode' => ['p' => 'switch', 'name' => 'Sleep mode', 'icon' => 'mdi:sleep'] + $config,
+            'sleep_from' => $time('Sleep from'),
+            'sleep_to' => $time('Sleep until'),
+            'refresh' => ['p' => 'button', 'name' => 'Refresh screen', 'icon' => 'mdi:refresh',
+                'payload_press' => 'PRESS'],
+            'refresh_interval' => ['p' => 'number', 'name' => 'Refresh interval', 'device_class' => 'duration',
+                'unit_of_measurement' => 's', 'min' => REFRESH_MIN, 'max' => REFRESH_MAX, 'step' => 60,
+                'mode' => 'box'] + $config,
         ];
         // Once the device has said which firmware it runs (Home Assistant rejects an
         // update without an installed version)
         if ($firmware !== null) {
             $components['firmware'] = ['p' => 'update', 'name' => 'Firmware', 'device_class' => 'firmware',
-                'value_template' => "{{ {'installed_version': value_json.firmware, 'latest_version': value_json.latest_firmware} | tojson }}"];
+                'payload_install' => 'install',
+                'value_template' => "{{ {'installed_version': value_json.firmware, 'latest_version': value_json.latest_firmware,"
+                    ." 'in_progress': value_json.firmware_installing} | tojson }}"];
         }
         // Attached sensors (temperature, humidity, ...): the latest reading of each kind
         // the device has reported
@@ -312,11 +355,16 @@ function snapshot(string $prefix, string $base, string $instance): array
         }
         foreach ($components as $key => &$component) {
             $component['unique_id'] = "{$id}_$key";
-            $component['value_template'] ??= "{{ value_json.$key }}";
+            if (! in_array($component['p'], ['image', 'button'], true)) {
+                $component['value_template'] ??= "{{ value_json.$key }}";
+            }
+            if (in_array($component['p'], ['switch', 'text', 'number', 'update', 'button'], true)) {
+                $component['command_topic'] = "$topic/set/$key";
+            }
         }
         unset($component);
 
-        $config = [
+        $discovery = [
             'dev' => array_filter([
                 'ids' => [$id],
                 'cns' => [['mac', $mac]],
@@ -331,17 +379,66 @@ function snapshot(string $prefix, string $base, string $instance): array
             'stat_t' => $stateTopic,
             'avty_t' => "$base/status",
         ];
-        $result[$id] = ['config' => $config, 'state' => $state, 'state_topic' => $stateTopic];
+        $result[$id] = ['config' => $discovery, 'state' => $state, 'state_topic' => $stateTopic,
+            'screen_topic' => "$topic/screen", 'screen' => $screen];
     }
 
     return $result;
 }
 
+// Applies a control from Home Assistant to the device with this MAC (12 hex digits)
+function command(string $mac, string $key, string $payload): void
+{
+    $device = Device::where('mac_address', strtoupper(implode(':', str_split($mac, 2))))->first();
+    if ($device === null) {
+        return;
+    }
+    $name = $device->name ?: $device->friendly_id;
+    if ($key === 'refresh') {
+        // A mirror shows its source's screens
+        $id = $device->mirror_device_id ?? $device->id;
+        $script = getenv('LARAPAPER_LOCAL_PRERENDER_SCRIPT') ?: '/opt/larapaper-local/prerender.php';
+        // In the background, its output in this service's log; reaped in the main loop
+        $GLOBALS['renders'][] = proc_open(['php', $script, '--device', (string) $id],
+            [0 => ['file', '/dev/null', 'r'], 1 => STDOUT, 2 => STDERR], $pipes);
+        say("$name: refreshing its screens");
+
+        return;
+    }
+    $changes = match ($key) {
+        'sleep_mode' => $payload === 'ON'
+            ? ['sleep_mode_enabled' => true, 'sleep_mode_from' => $device->sleep_mode_from?->format('H:i') ?? SLEEP_FROM,
+                'sleep_mode_to' => $device->sleep_mode_to?->format('H:i') ?? SLEEP_TO]
+            : ['sleep_mode_enabled' => false],
+        'sleep_from', 'sleep_to' => preg_match('/^([01][0-9]|2[0-3]):[0-5][0-9]$/', $payload)
+            ? [$key === 'sleep_from' ? 'sleep_mode_from' : 'sleep_mode_to' => $payload] : [],
+        'refresh_interval' => is_numeric($payload)
+            ? ['default_refresh_interval' => max(REFRESH_MIN, min(REFRESH_MAX, (int) round((float) $payload)))] : [],
+        // The newest firmware LaraPaper knows of for this model; the device installs it at
+        // its next request, as when it's picked on LaraPaper's device page
+        'firmware' => $payload === 'install' && ($firmware = Firmware::query()->where('latest', true)
+            ->where('model', $device->usesTouchBar() ? 'trmnl_x' : 'trmnl')->first())
+            ? ['update_firmware_id' => $firmware->id] : [],
+        default => [],
+    };
+    if ($changes === []) {
+        say("ignored $key=".substr($payload, 0, 40)." for $name");
+
+        return;
+    }
+    $device->update($changes);
+    say("$name: $key=$payload");
+}
+
 // Discovery configs of this LaraPaper on the broker: [device id => state topic]
 $onBroker = [];
-// What was last published: [device id => [config JSON, state JSON]]
+// What was last published: [device id => [config JSON, state JSON, screen file and mtime]]
 $published = [];
 $haRestarted = false;
+// Controls received and not yet applied: [[mac, key, payload]]
+$commands = [];
+// Running Refresh screen renders (proc_open handles)
+$renders = [];
 
 $broker = broker();
 if ($broker === null) {
@@ -350,8 +447,10 @@ if ($broker === null) {
 }
 
 $client = new Mqtt($broker, "larapaper-local-$instance", "$base/status", 'offline',
-    function (string $topic, string $payload) use ($prefix, $instance, &$onBroker, &$haRestarted): void {
-        if ($topic === "$prefix/status") {
+    function (string $topic, string $payload) use ($prefix, $base, $instance, &$onBroker, &$haRestarted, &$commands): void {
+        if (preg_match('#^'.preg_quote($base, '#').'/([0-9a-f]{12})/set/([a-z_]+)$#', $topic, $m)) {
+            $commands[] = [$m[1], $m[2], $payload];
+        } elseif ($topic === "$prefix/status") {
             $haRestarted = $payload === 'online';
         } elseif (preg_match('#^'.preg_quote($prefix, '#')."/device/(larapaper_{$instance}_[0-9a-f]{12})/config$#", $topic, $m)) {
             if ($payload === '') {
@@ -363,7 +462,7 @@ $client = new Mqtt($broker, "larapaper-local-$instance", "$base/status", 'offlin
     });
 say("connected to {$broker['host']}:{$broker['port']} (instance $instance)");
 $client->publish("$base/status", 'online');
-$client->subscribe("$prefix/status", "$prefix/device/+/config");
+$client->subscribe("$prefix/status", "$prefix/device/+/config", "$base/+/set/+");
 // The broker sends the retained discovery configs right after subscribing
 $client->loop(1);
 
@@ -375,6 +474,16 @@ while (true) {
         $published = [];
         $haRestarted = false;
     }
+    foreach ($renders as $i => $render) {
+        if (! is_resource($render) || ! proc_get_status($render)['running']) {
+            is_resource($render) && proc_close($render);
+            unset($renders[$i]);
+        }
+    }
+    foreach ($commands as [$mac, $key, $payload]) {
+        command($mac, $key, $payload);
+    }
+    $commands = [];
     $devices = snapshot($prefix, $base, $instance);
     foreach ($devices as $id => $device) {
         $config = json_encode($device['config'], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
@@ -388,13 +497,19 @@ while (true) {
         if (($published[$id][1] ?? null) !== $state) {
             $client->publish($device['state_topic'], $state);
         }
-        $published[$id] = [$config, $state];
+        // The screen's bytes, when it changed (about 70 KB for a TRMNL X)
+        $screen = $device['screen'] ? $device['screen']['path'].'@'.filemtime($device['screen']['path']) : null;
+        if ($screen !== null && ($published[$id][2] ?? null) !== $screen) {
+            $client->publish($device['screen_topic'], (string) file_get_contents($device['screen']['path']));
+        }
+        $published[$id] = [$config, $state, $screen];
     }
     foreach (array_diff_key($onBroker + $published, $devices) as $id => $stateTopic) {
         say("removed $id (no longer in LaraPaper)");
         $client->publish("$prefix/device/$id/config", '');
         if (is_string($stateTopic)) {
             $client->publish($stateTopic, '');
+            $client->publish(preg_replace('#/state$#', '/screen', $stateTopic), '');
         }
         unset($onBroker[$id], $published[$id]);
     }
@@ -403,5 +518,8 @@ while (true) {
         $client->disconnect();
         exit(0);
     }
-    $client->loop($interval);
+    // Stop waiting as soon as a control arrives, so Home Assistant sees it applied
+    $client->loop($interval, function () use (&$commands): bool {
+        return $commands !== [];
+    });
 }

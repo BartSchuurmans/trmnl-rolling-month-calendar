@@ -20,7 +20,8 @@ image with these additions:
   ready screen. Mashups are still rendered when the TRMNL asks. The **Render screens
   ahead of time** option turns this off.
 - Each TRMNL shows up in Home Assistant as a device with its battery, Wi-Fi signal,
-  firmware and last check-in, through MQTT (see [Device sensors](#device-sensors)).
+  firmware, last check-in and screen, and its sleep mode and refresh interval to change,
+  through MQTT (see [Device sensors](#device-sensors)).
 
 Installing or updating the app downloads a prebuilt image
 (`ghcr.io/bartschuurmans/larapaper-local`, amd64 and aarch64), which needs internet.
@@ -67,14 +68,19 @@ LaraPaper. Each one has:
 | --- | --- |
 | Battery | Charge in % (from the battery voltage the TRMNL reports) |
 | Charging, USB connected | On or off (newer firmware only) |
-| Firmware | The installed version, and an update when LaraPaper knows a newer one (installing it is still done in LaraPaper) |
+| Firmware | The installed version, and an update when LaraPaper knows a newer one; **Install** has the TRMNL install it when it next wakes |
 | Wi-Fi signal | In dBm |
 | Last seen | When the TRMNL last asked for its screen |
 | Online | Off once it hasn't asked for twice its refresh interval plus 5 minutes (not while it sleeps) |
-| Battery voltage, Refresh interval | Off by default |
+| Screen | The screen the TRMNL was last given, as an image |
+| Sleep mode, Sleep from, Sleep until | Turn sleep mode on or off and set its times |
+| Refresh interval | How often the TRMNL wakes, in seconds |
+| Refresh screen | Fetches its recipes' data and renders them again now, for the TRMNL's next wake |
+| Battery voltage | Off by default |
 | Temperature, humidity, CO2, pressure | Only for a TRMNL with such a sensor attached |
 
-The values update within seconds of each check-in. A device you delete in LaraPaper is
+The values update within seconds of each check-in. Changes you make in Home Assistant
+reach the TRMNL the next time it wakes, as changes in LaraPaper do. A device you delete in LaraPaper is
 removed from Home Assistant too. The app finds the broker by itself; without one it
 checks again every few minutes. **Device sensors in Home Assistant** turns this off.
 
