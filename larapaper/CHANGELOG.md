@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.43.1-8
+
+- Each TRMNL's device in Home Assistant now also shows the **Screen** it was last given,
+  as an image you can put on a dashboard.
+- You can change the TRMNL from Home Assistant: **Sleep mode** with its **Sleep from**
+  and **Sleep until** times, the **Refresh interval**, and **Install** on the firmware
+  update. The TRMNL picks the change up the next time it wakes, as when you change it
+  in LaraPaper.
+
 ## 0.43.1-7
 
 - Each TRMNL shows up in Home Assistant as a device, with its battery, charging,

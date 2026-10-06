@@ -238,6 +238,24 @@ try {
     const status = retained(config.avty_t ?? 'larapaper/+/status');
     check(Object.values(status)[0] === 'online', `availability is online (${JSON.stringify(status)})`);
 
+    // The screen the device was given, as the image's bytes (%l: the payload's length)
+    const base = (config.avty_t ?? '').replace(/\/status$/, '');
+    let screenSize = 0;
+    try {
+      screenSize = Number(execFileSync('docker', ['exec', opt.mqtt, 'mosquitto_sub', '--retained-only', '-C', '1', '-W', '2',
+        '-F', '%l', '-t', `${base}/e2e2e2e2e2e2/screen`], { encoding: 'utf8' }).trim());
+    } catch { /* timed out: none retained */ }
+    check(config.cmps?.screen?.p === 'image' && screenSize > 10000, `screen image is published (${screenSize} bytes)`);
+
+    // A control from Home Assistant changes the device in LaraPaper
+    execFileSync('docker', ['exec', opt.mqtt, 'mosquitto_pub', '-t', `${base}/e2e2e2e2e2e2/set/refresh_interval`, '-m', '1800']);
+    const changed = await waitFor(() => {
+      const value = JSON.parse(Object.values(retained(`${base}/e2e2e2e2e2e2/state`))[0] ?? '{}');
+      return value.refresh_interval === 1800 ? value : null;
+    });
+    check(!!changed, 'refresh interval set from Home Assistant');
+    execFileSync('docker', ['exec', opt.mqtt, 'mosquitto_pub', '-t', `${base}/e2e2e2e2e2e2/set/refresh_interval`, '-m', '900']);
+
     php('device', 'add');
     check(!!await waitFor(() => configTopic('e3e3e3e3e3e3')), 'a new device gets its own discovery config');
     php('device', 'delete');

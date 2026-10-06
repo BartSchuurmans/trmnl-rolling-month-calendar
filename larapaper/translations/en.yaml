@@ -18,4 +18,5 @@ configuration:
     name: Device sensors in Home Assistant
     description: >-
       Show each TRMNL in Home Assistant as a device with its battery, Wi-Fi signal,
-      firmware and last check-in, through MQTT. Needs the Mosquitto broker app.
+      firmware, last check-in and screen, and its sleep mode and refresh interval to
+      change, through MQTT. Needs the Mosquitto broker app.
