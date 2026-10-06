@@ -75,6 +75,7 @@ LaraPaper. Each one has:
 | Screen | The screen the TRMNL was last given, as an image |
 | Sleep mode, Sleep from, Sleep until | Turn sleep mode on or off and set its times |
 | Refresh interval | How often the TRMNL wakes, in seconds |
+| Refresh screen | Fetches its recipes' data and renders them again now, for the TRMNL's next wake |
 | Battery voltage | Off by default |
 | Temperature, humidity, CO2, pressure | Only for a TRMNL with such a sensor attached |
 

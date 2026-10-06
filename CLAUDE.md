@@ -197,7 +197,9 @@ www-data): one retained device-based discovery config per MAC address
 a JSON state, every 10 s (`LARAPAPER_LOCAL_MQTT_INTERVAL`), through LaraPaper's models,
 plus the device's current screen as image bytes when it changes. Controls (sleep mode and
 times, refresh interval, firmware install) arrive on `larapaper/<instance>/<mac>/set/<key>`
-and update the `Device` as LaraPaper's device page does. It finds deleted devices from the broker's retained configs. The
+and update the `Device` as LaraPaper's device page does; the Refresh screen button runs
+`prerender.php --device <id>` in the background (polls and renders that device's
+recipes, due or not). It finds deleted devices from the broker's retained configs. The
 broker comes from the Supervisor (`services: mqtt:want`) or `MQTT_HOST` (CI, with a
 Mosquitto container; `e2e/run.mjs --mqtt`). Its MQTT client is a minimal 3.1.1 one in
 the script (QoS 0, last will), so the image needs no Composer packages. The app option

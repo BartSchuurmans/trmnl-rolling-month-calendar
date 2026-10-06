@@ -256,6 +256,11 @@ try {
     check(!!changed, 'refresh interval set from Home Assistant');
     execFileSync('docker', ['exec', opt.mqtt, 'mosquitto_pub', '-t', `${base}/e2e2e2e2e2e2/set/refresh_interval`, '-m', '900']);
 
+    // Refresh screen: the recipe polls and renders now, though its data isn't stale
+    const pollsBeforeRefresh = requests.length;
+    execFileSync('docker', ['exec', opt.mqtt, 'mosquitto_pub', '-t', `${base}/e2e2e2e2e2e2/set/refresh`, '-m', 'PRESS']);
+    check(!!await waitFor(() => requests.length > pollsBeforeRefresh), 'Refresh screen polls the recipe again');
+
     php('device', 'add');
     check(!!await waitFor(() => configTopic('e3e3e3e3e3e3')), 'a new device gets its own discovery config');
     php('device', 'delete');

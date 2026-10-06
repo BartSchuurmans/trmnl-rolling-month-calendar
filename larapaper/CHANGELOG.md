@@ -8,6 +8,9 @@
   and **Sleep until** times, the **Refresh interval**, and **Install** on the firmware
   update. The TRMNL picks the change up the next time it wakes, as when you change it
   in LaraPaper.
+- **Refresh screen** fetches the data of the TRMNL's recipes and renders them again
+  right away, so the TRMNL shows fresh screens the next time it wakes (it can't be
+  woken from the server).
 
 ## 0.43.1-7
 

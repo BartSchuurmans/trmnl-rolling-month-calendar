@@ -12,7 +12,9 @@
 //
 // Controls (sleep mode and its times, the refresh interval, installing a firmware update)
 // arrive on <base>/<mac>/set/<key> and change the device the way LaraPaper's device page
-// does; the TRMNL picks them up at its next request.
+// does; the TRMNL picks them up at its next request. Refresh screen runs prerender.php
+// for the device in the background: its recipes poll and render now, so the TRMNL gets
+// fresh screens when it next wakes (a server can't wake it).
 //
 // Every INTERVAL seconds it builds each device's discovery config and state and
 // publishes those that changed (retained). Devices deleted in LaraPaper are removed
@@ -330,6 +332,8 @@ function snapshot(string $prefix, string $base, string $instance): array
             'sleep_mode' => ['p' => 'switch', 'name' => 'Sleep mode', 'icon' => 'mdi:sleep'] + $config,
             'sleep_from' => $time('Sleep from'),
             'sleep_to' => $time('Sleep until'),
+            'refresh' => ['p' => 'button', 'name' => 'Refresh screen', 'icon' => 'mdi:refresh',
+                'payload_press' => 'PRESS'],
             'refresh_interval' => ['p' => 'number', 'name' => 'Refresh interval', 'device_class' => 'duration',
                 'unit_of_measurement' => 's', 'min' => REFRESH_MIN, 'max' => REFRESH_MAX, 'step' => 60,
                 'mode' => 'box'] + $config,
@@ -351,10 +355,10 @@ function snapshot(string $prefix, string $base, string $instance): array
         }
         foreach ($components as $key => &$component) {
             $component['unique_id'] = "{$id}_$key";
-            if ($component['p'] !== 'image') {
+            if (! in_array($component['p'], ['image', 'button'], true)) {
                 $component['value_template'] ??= "{{ value_json.$key }}";
             }
-            if (in_array($component['p'], ['switch', 'text', 'number', 'update'], true)) {
+            if (in_array($component['p'], ['switch', 'text', 'number', 'update', 'button'], true)) {
                 $component['command_topic'] = "$topic/set/$key";
             }
         }
@@ -390,6 +394,17 @@ function command(string $mac, string $key, string $payload): void
         return;
     }
     $name = $device->name ?: $device->friendly_id;
+    if ($key === 'refresh') {
+        // A mirror shows its source's screens
+        $id = $device->mirror_device_id ?? $device->id;
+        $script = getenv('LARAPAPER_LOCAL_PRERENDER_SCRIPT') ?: '/opt/larapaper-local/prerender.php';
+        // In the background, its output in this service's log; reaped in the main loop
+        $GLOBALS['renders'][] = proc_open(['php', $script, '--device', (string) $id],
+            [0 => ['file', '/dev/null', 'r'], 1 => STDOUT, 2 => STDERR], $pipes);
+        say("$name: refreshing its screens");
+
+        return;
+    }
     $changes = match ($key) {
         'sleep_mode' => $payload === 'ON'
             ? ['sleep_mode_enabled' => true, 'sleep_mode_from' => $device->sleep_mode_from?->format('H:i') ?? SLEEP_FROM,
@@ -422,6 +437,8 @@ $published = [];
 $haRestarted = false;
 // Controls received and not yet applied: [[mac, key, payload]]
 $commands = [];
+// Running Refresh screen renders (proc_open handles)
+$renders = [];
 
 $broker = broker();
 if ($broker === null) {
@@ -456,6 +473,12 @@ while (true) {
         say('Home Assistant restarted, publishing again');
         $published = [];
         $haRestarted = false;
+    }
+    foreach ($renders as $i => $render) {
+        if (! is_resource($render) || ! proc_get_status($render)['running']) {
+            is_resource($render) && proc_close($render);
+            unset($renders[$i]);
+        }
     }
     foreach ($commands as [$mac, $key, $payload]) {
         command($mac, $key, $payload);
