@@ -190,6 +190,17 @@ turns it off, as does `LARAPAPER_LOCAL_PRERENDER=0`, which wins (CI sets it, and
 `e2e/run.mjs` runs the script by hand). It doesn't change LaraPaper's
 code; LaraPaper bugs still go upstream.
 
+**Device sensors.** The app also publishes every LaraPaper device to Home Assistant through
+MQTT discovery (`larapaper/mqtt/mqtt.php`, s6 service `larapaper-local-mqtt`, as
+www-data): one retained device-based discovery config per MAC address
+(`homeassistant/device/larapaper_<instance>_<mac>/config`, instance from the app key) and
+a JSON state, every 10 s (`LARAPAPER_LOCAL_MQTT_INTERVAL`), read-only through
+LaraPaper's models. It finds deleted devices from the broker's retained configs. The
+broker comes from the Supervisor (`services: mqtt:want`) or `MQTT_HOST` (CI, with a
+Mosquitto container; `e2e/run.mjs --mqtt`). Its MQTT client is a minimal 3.1.1 one in
+the script (QoS 0, last will), so the image needs no Composer packages. The app option
+`mqtt` turns it off, as does `LARAPAPER_LOCAL_MQTT=0`, which wins.
+
 **FullCalendar 7 and the Mono theme.** v7 has no semantic `.fc-*` classes (they are
 hashed); everything is styled through class hooks (`dayCellClass`, `listItemEventClass`,
 `rowEventInnerClass`, ...). `window.trmnlMonoTheme` in `shared.liquid` is a theme plugin

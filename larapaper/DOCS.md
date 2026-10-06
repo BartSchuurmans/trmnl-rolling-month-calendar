@@ -19,6 +19,8 @@ image with these additions:
   device's playlists shortly before its refresh interval runs out, so the TRMNL gets a
   ready screen. Mashups are still rendered when the TRMNL asks. The **Render screens
   ahead of time** option turns this off.
+- Each TRMNL shows up in Home Assistant as a device with its battery, Wi-Fi signal,
+  firmware and last check-in, through MQTT (see [Device sensors](#device-sensors)).
 
 Installing or updating the app downloads a prebuilt image
 (`ghcr.io/bartschuurmans/larapaper-local`, amd64 and aarch64), which needs internet.
@@ -53,6 +55,28 @@ listed in `assets.txt`, each checked against a pinned SHA-256.
    integration (named after its zone, e.g. `weather.home`) over Met.no
    (`weather.forecast_home`): Met.no's forecast for today leaves out the hours already
    past, so today's high drops through the day.
+
+## Device sensors
+
+With the **Mosquitto broker** app installed (and the MQTT integration set up, which
+Home Assistant offers once the broker runs), every TRMNL in LaraPaper appears under
+**Settings** → **Devices & services** → **MQTT** as its own device, named as in
+LaraPaper. Each one has:
+
+| Entity | What it shows |
+| --- | --- |
+| Battery | Charge in % (from the battery voltage the TRMNL reports) |
+| Charging, USB connected | On or off (newer firmware only) |
+| Firmware | The installed version, and an update when LaraPaper knows a newer one (installing it is still done in LaraPaper) |
+| Wi-Fi signal | In dBm |
+| Last seen | When the TRMNL last asked for its screen |
+| Online | Off once it hasn't asked for twice its refresh interval plus 5 minutes (not while it sleeps) |
+| Battery voltage, Refresh interval | Off by default |
+| Temperature, humidity, CO2, pressure | Only for a TRMNL with such a sensor attached |
+
+The values update within seconds of each check-in. A device you delete in LaraPaper is
+removed from Home Assistant too. The app finds the broker by itself; without one it
+checks again every few minutes. **Device sensors in Home Assistant** turns this off.
 
 ## The web UI
 

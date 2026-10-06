@@ -1,0 +1,22 @@
+#!/command/with-contenv sh
+# Publishes the TRMNL devices to Home Assistant over MQTT (see mqtt.php). It keeps
+# running; when it exits (no broker yet, broker gone) s6 starts it again after the sleep.
+# Off with the app's "mqtt" option, or LARAPAPER_LOCAL_MQTT=0, which wins.
+# shellcheck disable=SC2016 # PHP code, not shell expansions
+enabled="${LARAPAPER_LOCAL_MQTT:-$(php -r '$o = json_decode(@file_get_contents($argv[1]), true) ?: [];
+    echo ($o["mqtt"] ?? true) ? "1" : "0";' "${DATA_DIR:-/data}/options.json")}"
+if [ "$enabled" = 0 ]; then
+    exec sleep infinity
+fi
+cd /var/www/html || exit 1
+# As www-data, like PHP-FPM (see larapaper-local-prerender)
+if [ "$(id -u)" = 0 ]; then
+    /command/s6-setuidgid www-data php /opt/larapaper-local/mqtt.php
+else
+    php /opt/larapaper-local/mqtt.php
+fi
+# No broker: look again in a few minutes (the Mosquitto app may be installed later)
+if [ $? = 3 ]; then
+    exec sleep 300
+fi
+exec sleep 30

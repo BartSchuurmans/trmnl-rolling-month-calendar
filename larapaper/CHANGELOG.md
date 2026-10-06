@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.43.1-7
+
+- Each TRMNL shows up in Home Assistant as a device, with its battery, charging,
+  Wi-Fi signal, firmware (as an update), last check-in and any attached sensors. This
+  goes through MQTT, so it needs the **Mosquitto broker** app; the app finds it by
+  itself. Several TRMNLs each get their own device. The new **Device sensors in Home
+  Assistant** option (on by default) turns this off.
+
 ## 0.43.1-6
 
 - Screens are rendered ahead of time. LaraPaper renders a recipe only when the TRMNL
