@@ -22,7 +22,7 @@ import { execFileSync, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import * as yaml from 'js-yaml';
 
-const IMAGE = 'trmnl/trmnlp:v0.20.0';
+const IMAGE = 'trmnl/trmnlp:v0.21.0';
 // Rule IDs (as `trmnlp lint` prints them, e.g. no_opacity) of findings that don't apply
 // here, each with why; trmnlp skips them (`ignored_lint_rules`, 0.20.0). Empty since trmnlp
 // 0.15.0 counts only real style attributes in its inline-styles check (it used to count CSS
@@ -33,7 +33,10 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 // Our user in the container. One the image doesn't know (CI's) has HOME=/, which it can't
 // write: trmnlp then can't keep the transform's output for the render (no events), and
 // Firefox never starts (Net::ReadTimeout)
-const user = ['--user', `${process.getuid()}:${process.getgid()}`, '--env', 'HOME=/tmp'];
+// No daily "newer trmnlp" notice (0.21.0): the image is pinned on purpose, and
+// scripts/check-upstream.sh watches for releases
+const user = ['--user', `${process.getuid()}:${process.getgid()}`, '--env', 'HOME=/tmp',
+  '--env', 'TRMNLP_NO_UPDATE_NOTIFIER=1'];
 const [contextFile, bodyFile, size = 'full'] = process.argv.slice(2);
 if (contextFile === '--pull') {
   try {

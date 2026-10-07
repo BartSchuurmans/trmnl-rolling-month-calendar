@@ -11,9 +11,8 @@ RSpec.describe 'Rolling Month Calendar (Home Assistant)' do
   # One week fits in these, and a one-week grid has no day-number line for the forecast
   NO_FORECAST = [%w[half_horizontal og_png], %w[half_horizontal og_plus], %w[quadrant og_png],
                  %w[quadrant og_plus]].freeze
-  # Where a day has no room for a forecast's low, it wraps to a line its box hides on purpose;
-  # trmnlp's have_no_overflow (0.20.0) passes only ellipses and line clamps
-  CLIPPED = /\.trmnl-weather\b/
+  # Where a day has no room for a forecast's low, it wraps to a line its box hides on purpose
+  CLIPPED = '.trmnl-weather'
 
   # Wednesday 7 October 2026, 08:00 in Amsterdam: the second week of the sample cycle
   let(:now) { '2026-10-07T06:00:00Z' }
@@ -46,8 +45,6 @@ RSpec.describe 'Rolling Month Calendar (Home Assistant)' do
   # without error, within TRMNL's limits. The examples below check what is drawn.
   it_behaves_like 'a publishable recipe'
 
-  def overflowing(screen) = screen.overflowing.grep_v(CLIPPED)
-
   TRMNLP::Testing::PUBLISHABLE_RECIPE_VIEWS.each do |view|
     # TRMNL's devices as trmnlp's publishable-recipe checks draw them: the OG at 1 and 2 bits
     # and the TRMNL X, in landscape and portrait
@@ -61,7 +58,7 @@ RSpec.describe 'Rolling Month Calendar (Home Assistant)' do
         expect(screen).to have_text('Parent-teacher meeting')
         expect(screen).to have_css('.trmnl-weather') unless NO_FORECAST.include?([view, device])
         expect(screen).to have_no_text('Could not load')
-        expect(overflowing(screen)).to be_empty
+        expect(screen).to have_no_overflow(except: CLIPPED)
       end
     end
   end
@@ -72,7 +69,7 @@ RSpec.describe 'Rolling Month Calendar (Home Assistant)' do
         screen = trmnl.render(device: 'v2', now:, mocks:, custom_fields: custom_fields.merge(keyname => value))
 
         expect(screen).to have_text('Parent-teacher meeting')
-        expect(overflowing(screen)).to be_empty
+        expect(screen).to have_no_overflow(except: CLIPPED)
       end
     end
   end

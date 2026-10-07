@@ -26,7 +26,7 @@ permissions:
 concurrency: trmnl-com
 
 env:
-  TRMNLP_IMAGE: trmnl/trmnlp:v0.20.0 # as in preview/trmnlp.mjs
+  TRMNLP_IMAGE: trmnl/trmnlp:v0.21.0 # as in preview/trmnlp.mjs
 
 jobs:
   trmnl-com:
@@ -85,7 +85,7 @@ jobs:
           mkdir -p "$project"
           cp -R "dist/$VARIANT/src" "$project/src"
           echo 'watch: false' > "$project/.trmnlp.yml"
-          docker run --rm --user "$(id -u):$(id -g)" --env TRMNL_API_KEY --volume "$project:/plugin" \
+          docker run --rm --user "$(id -u):$(id -g)" --env TRMNL_API_KEY --env TRMNLP_NO_UPDATE_NOTIFIER=1 --volume "$project:/plugin" \
             "$TRMNLP_IMAGE" push --force --id "$TRMNL_PLUGIN_ID"
 
       - name: Compare with TRMNL.com
@@ -94,7 +94,7 @@ jobs:
           project="$RUNNER_TEMP/pull"
           mkdir -p "$project/src"
           echo 'watch: false' > "$project/.trmnlp.yml"
-          docker run --rm --user "$(id -u):$(id -g)" --env TRMNL_API_KEY --volume "$project:/plugin" \
+          docker run --rm --user "$(id -u):$(id -g)" --env TRMNL_API_KEY --env TRMNLP_NO_UPDATE_NOTIFIER=1 --volume "$project:/plugin" \
             "$TRMNLP_IMAGE" pull --force --id "$TRMNL_PLUGIN_ID"
           if ! node preview/variants.mjs diff "$VARIANT" "$project/src" > "$RUNNER_TEMP/diff.txt"; then
             cat "$RUNNER_TEMP/diff.txt"
