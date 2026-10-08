@@ -24,16 +24,14 @@ polling_url: |-
 # LaraPaper's importer turns every "=" into ":".
 polling_headers: '{% unless ics_urls contains "/" %}Authorization=Bearer {{ ha_token }}{% endunless %}'
 # No padding around the calendar (screen--no-bleed), as on TRMNL.com: more room for
-# weeks. LaraPaper's importer reads it since 0.44.0 (its "Remove bleed margin?" box);
-# before, the user ticks that box.
+# weeks. LaraPaper's importer sets its "Remove bleed margin?" box from it.
 no_screen_padding: 'yes'
 static_data: '{}'
 # Framework version this recipe is built and tested against (LaraPaper's default).
 framework_version: 3.3.1
 # Descriptions may link out (<a href class="underline" target="_blank">, as on TRMNL.com).
-# LaraPaper's form keeps only href and styles the link itself (opening in a new tab since
-# 0.44.0); before 0.44.0 it showed the About text as plain text, so its link goes in
-# github_url.
+# LaraPaper's form keeps only href (opening in a new tab) and styles the link itself.
+# The About link is in github_url.
 # group: folds fields into collapsible sections on TRMNL.com (named as in README.md's
 # Settings); LaraPaper ignores it (0.44.0) and shows one list in this order.
 custom_fields:
@@ -45,7 +43,7 @@ custom_fields:
   - keyname: ics_urls
     field_type: multi_string
     name: ICS feed URLs
-    description: One or more calendar feed links (.ics or webcal://), e.g. Google Calendar's <a href="https://support.google.com/calendar/answer/37648" class="underline" target="_blank">"Secret address in iCal format"</a>; <a href="https://github.com/BartSchuurmans/trmnl-rolling-month-calendar#3-find-your-calendars" class="underline" target="_blank">other services</a>. When set, the Home Assistant fields below are not used. ICS feeds show events up to 30 days ahead, so the grid stops at the last week that is covered.
+    description: One or more calendar feed links (.ics or webcal://), e.g. Google Calendar's <a href="https://support.google.com/calendar/answer/37648" class="underline" target="_blank">"Secret address in iCal format"</a>; <a href="https://github.com/BartSchuurmans/trmnl-rolling-month-calendar#3-find-your-calendars" class="underline" target="_blank">other services</a>. When set, the Home Assistant fields below are not used.
     placeholder: calendar.google.com/calendar/ical/.../basic.ics
     optional: true
   - keyname: ha_url

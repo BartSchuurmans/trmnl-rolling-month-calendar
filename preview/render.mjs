@@ -17,8 +17,7 @@
 // --ics serves the same events (sample, --data or live) as ICS feeds would reach the
 // recipe on LaraPaper: parsed into { ical: [...] } by its IcalResponseParser, only events
 // from 7 days back to 45 days ahead, dates as ISO strings with an offset (all-day ones
-// at midnight UTC, flagged all_day). --ics-0.43 does it as LaraPaper did before 0.44.0:
-// 30 days ahead, no all_day. Both fill in ics_urls, which switches the recipe to ICS.
+// at midnight UTC, flagged all_day). It also fills in ics_urls, which switches the recipe to ICS.
 //
 // --merge renders as TRMNL.com does with the Plugin Merge strategy: each calendar's data at
 // the top level as caldav_<id>, the "Calendar" dropdowns (calendar_1, ...) naming them, and
@@ -71,7 +70,7 @@ let dataFile = null;
 let dumpContext = null;
 let bodyFile = null;
 let strict = false;
-let ics = false; // or '0.43'
+let ics = false;
 let size = 'full';
 let merge = false;
 let mergeWeather = null;
@@ -93,7 +92,6 @@ for (let i = 0; i < args.length; i++) {
   else if (args[i] === '--tz') timeZone = args[++i];
   else if (args[i] === '--now') now = new Date(`${args[++i]}T12:00:00`);
   else if (args[i] === '--ics') ics = true;
-  else if (args[i] === '--ics-0.43') ics = '0.43';
   else if (args[i] === '--merge') merge = true;
   else if (args[i] === '--merge-weather') { merge = true; mergeWeather = args[++i]; }
   else if (args[i] === '--expect-events') expectEvents = true;
@@ -148,12 +146,12 @@ async function liveData() {
 }
 
 // HA events as LaraPaper hands over a parsed ICS feed (IcalResponseParser): uppercase
-// iCalendar keys, all-day dates at midnight in the feed's floating zone or UTC, events
-// without an end dropped, and only events overlapping 7 days back to 45 days ahead, with
-// an all_day flag (since 0.44.0; legacy: 30 days ahead, no flag).
-function toIcal(calendar, legacy) {
+// iCalendar keys, all-day dates at midnight in the feed's floating zone or UTC and flagged
+// all_day, events without an end dropped, and only events overlapping 7 days back to 45
+// days ahead.
+function toIcal(calendar) {
   if (!calendar || calendar.error || !Array.isArray(calendar.data)) return calendar;
-  const from = now.getTime() - 7 * 86400000, to = now.getTime() + (legacy ? 30 : 45) * 86400000;
+  const from = now.getTime() - 7 * 86400000, to = now.getTime() + 45 * 86400000;
   const at = (t) => (t.dateTime ? new Date(t.dateTime) : new Date(`${t.date}T00:00:00Z`));
   const atom = (t) => (t.dateTime ? t.dateTime : `${t.date}T00:00:00+00:00`);
   const ical = calendar.data.filter((e) => e.end).filter((e) => {
@@ -163,7 +161,7 @@ function toIcal(calendar, legacy) {
     UID: e.uid || undefined, DTSTART: atom(e.start), DTEND: atom(e.end),
     ...(e.summary ? { SUMMARY: e.summary } : {}), ...(e.description ? { DESCRIPTION: e.description } : {}),
     ...(e.location ? { LOCATION: e.location } : {}),
-    ...(legacy ? {} : { all_day: !e.start.dateTime }),
+    all_day: !e.start.dateTime,
   }));
   return { ical };
 }
@@ -209,9 +207,8 @@ if (merge) {
 }
 if (ics) {
   const idx = Object.keys(payload).filter((k) => /^IDX_\d+$/.test(k));
-  const legacy = ics === '0.43';
-  payload = idx.length ? Object.fromEntries(idx.map((k) => [k, toIcal(payload[k], legacy)]))
-    : toIcal(Array.isArray(payload) ? { data: payload } : payload, legacy);
+  payload = idx.length ? Object.fromEntries(idx.map((k) => [k, toIcal(payload[k])]))
+    : toIcal(Array.isArray(payload) ? { data: payload } : payload);
   if (!overrides.ics_urls) {
     customFields.ics_urls = (idx.length ? idx : ['IDX_0']).map((_, i) => `https://calendar.example/${i + 1}.ics`).join(',');
   }
