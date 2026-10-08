@@ -1,0 +1,23 @@
+<!doctype html>
+<!-- Source of docs/social-preview.png, the GitHub social preview (Settings > General > Social preview; upload by hand).
+     Uses docs/preview.png, so regenerate after docs-images.sh changes it:
+     headless_shell --hide-scrollbars --window-size=1280,640 --screenshot=social-preview.png social-preview.html
+     Needs the Inter font installed. (Playwright's chrome-headless-shell; full Chromium's new headless mode crops the page.) -->
+<html><head><meta charset="utf-8"><style>
+html,body{margin:0}
+body{width:1280px;height:640px;overflow:hidden;background:#efeeeb;font-family:Inter,sans-serif;color:#111;position:relative}
+.text{position:absolute;left:96px;top:0;bottom:0;width:430px;display:flex;flex-direction:column;justify-content:center}
+.logo{width:96px;height:96px;margin-bottom:28px;border-radius:20px;box-shadow:0 2px 10px rgba(0,0,0,.12)}
+h1{font-size:62px;line-height:1.02;font-weight:800;letter-spacing:-1.5px;margin:0}
+h2{font-size:30px;font-weight:600;color:#555;margin:14px 0 26px}
+p{font-size:20px;line-height:1.45;color:#333;margin:0}
+.device{position:absolute;right:64px;top:50%;transform:translateY(-50%);height:540px;filter:drop-shadow(0 10px 24px rgba(0,0,0,.18))}
+</style></head><body>
+<div class="text">
+  <img class="logo" src="logo.svg">
+  <h1>Rolling Month Calendar</h1>
+  <h2>for TRMNL e-ink displays</h2>
+  <p>The current week and the weeks after it in one grid, from TRMNL.com calendars, ICS feeds or Home Assistant.</p>
+</div>
+<img class="device" src="preview.png">
+</body></html>
