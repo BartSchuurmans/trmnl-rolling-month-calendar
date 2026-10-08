@@ -167,7 +167,7 @@
   }
 
   /* ---------------------------------------------------------------------------------------
-     TRMNL adapter: the theme's variables from the framework's palette and --ui-scale; fonts,
+     TRMNL adapter: the theme's variables from the framework's colours and --ui-scale; fonts,
      text sizes and the greys of each bit depth come from framework classes the JS adds
      through the same hooks (text--small, bg--gray-*, text--muted).
      --------------------------------------------------------------------------------------- */
@@ -185,17 +185,19 @@
   }
   .trmnl-calendar.mono {
     --mono-u: var(--ui-scale, 1);
-    --mono-ink: var(--black);
-    --mono-paper: var(--white);
+    /* ink and paper are the framework's text and canvas colours, which dark mode (and a
+       theme) swap; the raw palette (--black, --white) stays as it is */
+    --mono-ink: var(--framework-text-primary, var(--black));
+    --mono-paper: var(--framework-canvas-bg, var(--white));
     --mono-line: var(--gray-50);
-    --mono-muted: var(--gray-30);
+    --mono-muted: var(--framework-text-secondary, var(--gray-30));
     --mono-weekend: transparent;      /* bg--gray-75 on the cells, see shadeClass */
     --mono-bar: transparent;          /* bg--gray-50, see listItemEventBeforeClass */
     --mono-fill: transparent;         /* bg--* on the event, see paintEvent */
   }
   /* 1-/2-bit can't print grey lines (dotted black instead) or grey text (solid black) */
   .screen--1bit .trmnl-calendar.mono,
-  .screen--2bit .trmnl-calendar.mono { --mono-line: var(--black); --mono-line-style: dotted; --mono-muted: var(--black); }
+  .screen--2bit .trmnl-calendar.mono { --mono-line: var(--mono-ink); --mono-line-style: dotted; --mono-muted: var(--mono-ink); }
   /* "Highlight today" off: no pill */
   .trmnl-calendar:not(.highlight-today) .mono-day--today .mono-day-number { background: none; color: inherit; font-weight: inherit; }
 
@@ -204,24 +206,26 @@
      invert/brightness/invert mixes every pixel 40% towards white, like 60% opacity on a
      white cell; TRMNL's publish check rejects the opacity property. */
   .screen--4bit .trmnl-calendar.fade-past .mono-event--past { filter: invert(1) brightness(0.6) invert(1); }
+  /* in dark mode, 40% towards black */
+  .screen--4bit.screen--dark-mode .trmnl-calendar.fade-past .mono-event--past { filter: brightness(0.6); }
 
   /* a white calendar colour has no edge on a white cell: outline it like the grid lines,
      open (not pointed, which would cut the outline) where it continues in another week */
-  .trmnl-calendar .trmnl-event--white { clip-path: none; --mono-cut-start: 0px; --mono-cut-end: 0px; border: 1px solid var(--gray-50); }
+  .trmnl-calendar .trmnl-event--white { clip-path: none; --mono-cut-start: 0px; --mono-cut-end: 0px; border: 1px solid var(--mono-line); }
   .screen--1bit .trmnl-calendar .trmnl-event--white,
-  .screen--2bit .trmnl-calendar .trmnl-event--white { border: 1px dotted var(--black); }
+  .screen--2bit .trmnl-calendar .trmnl-event--white { border: 1px dotted var(--mono-ink); }
   .trmnl-calendar .trmnl-event--white:not(.mono-event--start) { border-inline-start-style: none; }
   .trmnl-calendar .trmnl-event--white:not(.mono-event--end) { border-inline-end-style: none; }
 
-  /* patterned weekend cells make small text hard to read: back it with white */
+  /* patterned weekend cells make small text hard to read: back it with the paper colour */
   .screen--1bit .trmnl-calendar .mono-day-number,
   .screen--2bit .trmnl-calendar .mono-day-number,
   .screen--1bit .trmnl-calendar .mono-month,
   .screen--2bit .trmnl-calendar .mono-month,
   .screen--1bit .trmnl-calendar .mono-event--bar,
-  .screen--2bit .trmnl-calendar .mono-event--bar { background-color: var(--white); }
+  .screen--2bit .trmnl-calendar .mono-event--bar { background-color: var(--mono-paper); }
   .screen--1bit .trmnl-calendar.highlight-today .mono-day--today .mono-day-number,
-  .screen--2bit .trmnl-calendar.highlight-today .mono-day--today .mono-day-number { background-color: var(--black); }
+  .screen--2bit .trmnl-calendar.highlight-today .mono-day--today .mono-day-number { background-color: var(--mono-ink); }
 
   /* weather (weather_entity): icon and high at the left of the day's number line, after
      the week number where that sits. It wraps onto a hidden second line where the line
@@ -232,7 +236,7 @@
   .trmnl-calendar .trmnl-weather {
     display: inline-flex; flex: 0 1 auto; flex-wrap: wrap; align-items: center; align-content: flex-start;
     min-width: 0; height: 1.25em; overflow: hidden; column-gap: calc(3px * var(--mono-u));
-    margin-right: auto; padding-right: 0.25em; color: var(--black); white-space: nowrap;
+    margin-right: auto; padding-right: 0.25em; color: var(--mono-ink); white-space: nowrap;
   }
   .trmnl-calendar .trmnl-weather--after-week { padding-left: 3em; }
   .trmnl-calendar .trmnl-weather-icon { width: 1.25em; height: 1.25em; flex: none; }
@@ -750,18 +754,20 @@
 
         // Band events (multi-day, or from a coloured calendar): a light grey band, or the
         // calendar's colour, painted with its bg--* class (solid on 4-bit, dither pattern on
-        // 1-/2-bit); a hex colour as-is. Text is black or white by lightness on screens that
-        // print greys solid; on 1-/2-bit the fill is a dither pattern, so black text with the
+        // 1-/2-bit); a hex colour as-is. Text is black or white by the lightness the class
+        // paints (--bg-<token>-color, which dark mode changes) on screens that print greys
+        // solid; on 1-/2-bit the fill is a dither pattern, so text in the ink colour with the
         // framework's contrast outline (text-stroke), like upstream's adaptiveEventStroke.
         built.events.forEach(function(ev) {
           var color = ev.extendedProps.color || { token: 'gray-70' };
           var raw = color.hex || screenStyles.getPropertyValue('--' + color.token).trim();
+          var painted = color.hex || screenStyles.getPropertyValue('--bg-' + color.token + '-color').trim() || raw;
           var classes = [];
           if (color.hex) ev.color = color.hex;
           else classes.push('bg--' + color.token);
           if (color.token === 'white' || /^#f{3}(f{3})?$/i.test(raw)) classes.push('trmnl-event--white');
           var patterned = depth <= 2 && color.token && color.token !== 'black' && color.token !== 'white';
-          ev.contrastColor = patterned || !isDark(raw) ? 'var(--black)' : 'var(--white)';
+          ev.contrastColor = patterned ? 'var(--mono-ink)' : !isDark(painted) ? 'var(--black)' : 'var(--white)';
           if (patterned) classes.push('text-stroke', 'text-stroke--small');
           ev.extendedProps.fillClass = classes.join(' ');
         });
