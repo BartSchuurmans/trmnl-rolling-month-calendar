@@ -1,6 +1,6 @@
 <?php
-// Renders plugin/src/{shared,full}.liquid with keepsuit/liquid 0.12.0, the Liquid engine
-// and version LaraPaper 0.43.0 uses, and checks the polling URLs and headers (Home
+// Renders plugin/src/{shared,full}.liquid with keepsuit/liquid 0.12.1, the Liquid engine
+// and version LaraPaper 0.44.0 uses, and checks the polling URLs and headers (Home
 // Assistant and ICS) the way LaraPaper resolves them (Plugin::resolveLiquidVariables).
 //
 //   php render.php <context.json> > body.html      (context from render.mjs --dump-context)

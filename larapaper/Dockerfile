@@ -2,7 +2,7 @@
 # would otherwise fetch from the internet.
 # The official LaraPaper image is multi-arch (linux/amd64 + linux/arm64). To update
 # LaraPaper, bump this tag and the version in config.yaml.
-ARG BUILD_FROM=ghcr.io/usetrmnl/larapaper:0.43.1
+ARG BUILD_FROM=ghcr.io/usetrmnl/larapaper:0.44.0
 FROM ${BUILD_FROM}
 
 LABEL org.opencontainers.image.title="LaraPaper (local)" \
@@ -26,15 +26,12 @@ RUN for dir in trmnl-framework fonts rolling-month-calendar; do \
         ln -sfn "/opt/rolling-month-calendar-assets/$dir" "/var/www/html/public/$dir"; \
     done
 
-# Point LaraPaper at the bundled framework instead of trmnl.com, and drop the Inter
-# stylesheet from fonts.bunny.net (the framework ships Inter itself). OPcache on, as in
-# LaraPaper's own docker-compose.
+# Point LaraPaper at the bundled framework instead of trmnl.com (the explicit URLs win
+# over TRMNL_BLADE_FRAMEWORK_BASE_URL and the recipe's framework_version). OPcache on, as
+# in LaraPaper's own docker-compose.
 ENV TRMNL_BLADE_FRAMEWORK_CSS_URL=/trmnl-framework/3.3.1/plugins.min.css \
     TRMNL_BLADE_FRAMEWORK_JS_URL=/trmnl-framework/3.3.1/plugins.min.js \
     PHP_OPCACHE_ENABLE=1
-RUN view=/var/www/html/resources/views/vendor/trmnl/components/screen.blade.php \
-    && sed -i '/fonts\.bunny\.net/d' "$view" \
-    && ! grep -q 'fonts\.bunny\.net' "$view"
 
 COPY rootfs /
 RUN chmod +x /etc/entrypoint.d/10-ha-calendar.sh /etc/s6-overlay/s6-rc.d/larapaper-local-prerender/run \

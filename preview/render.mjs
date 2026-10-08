@@ -16,8 +16,8 @@
 //
 // --ics serves the same events (sample, --data or live) as ICS feeds would reach the
 // recipe on LaraPaper: parsed into { ical: [...] } by its IcalResponseParser, only events
-// from 7 days back to 30 days ahead, dates as ISO strings with an offset (all-day ones
-// at midnight UTC). It also fills in ics_urls, which switches the recipe to ICS.
+// from 7 days back to 45 days ahead, dates as ISO strings with an offset (all-day ones
+// at midnight UTC, flagged all_day). It also fills in ics_urls, which switches the recipe to ICS.
 //
 // --merge renders as TRMNL.com does with the Plugin Merge strategy: each calendar's data at
 // the top level as caldav_<id>, the "Calendar" dropdowns (calendar_1, ...) naming them, and
@@ -146,11 +146,12 @@ async function liveData() {
 }
 
 // HA events as LaraPaper hands over a parsed ICS feed (IcalResponseParser): uppercase
-// iCalendar keys, all-day dates at midnight in the server's zone (UTC), events without
-// an end dropped, and only events overlapping 7 days back to 30 days ahead.
+// iCalendar keys, all-day dates at midnight in the feed's floating zone or UTC and flagged
+// all_day, events without an end dropped, and only events overlapping 7 days back to 45
+// days ahead.
 function toIcal(calendar) {
   if (!calendar || calendar.error || !Array.isArray(calendar.data)) return calendar;
-  const from = now.getTime() - 7 * 86400000, to = now.getTime() + 30 * 86400000;
+  const from = now.getTime() - 7 * 86400000, to = now.getTime() + 45 * 86400000;
   const at = (t) => (t.dateTime ? new Date(t.dateTime) : new Date(`${t.date}T00:00:00Z`));
   const atom = (t) => (t.dateTime ? t.dateTime : `${t.date}T00:00:00+00:00`);
   const ical = calendar.data.filter((e) => e.end).filter((e) => {
@@ -160,6 +161,7 @@ function toIcal(calendar) {
     UID: e.uid || undefined, DTSTART: atom(e.start), DTEND: atom(e.end),
     ...(e.summary ? { SUMMARY: e.summary } : {}), ...(e.description ? { DESCRIPTION: e.description } : {}),
     ...(e.location ? { LOCATION: e.location } : {}),
+    all_day: !e.start.dateTime,
   }));
   return { ical };
 }

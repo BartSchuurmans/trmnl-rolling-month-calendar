@@ -96,7 +96,7 @@ render off-x --set highlight_today=false --set shade_weekends=false --set includ
 render options-x --set locale=nl --set first_day=0 --set show_week_numbers=yes --set time_format=am/pm \
     --set display_event_end=no --set rolling_advancement=day --set include_past_events=no
 
-# The sample as ICS feeds, as LaraPaper hands them over (30 days ahead: fewer weeks)
+# The sample as ICS feeds, as LaraPaper hands them over
 render ics-x --ics
 render ics-og --device og --ics --set calendar_colors=black,-,gray-50 --set calendar_labels=-,M:,S:
 render ics-options-x --ics --set rolling_advancement=day --set first_day=0 --set week_overflow=more

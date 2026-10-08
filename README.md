@@ -182,10 +182,6 @@ With the Home Assistant app you can also fill in **Home Assistant weather entity
 `weather.forecast_home`, for each day's forecast next to its day number (see
 [Weather](#weather)).
 
-Under **Screen Settings**, tick **Remove bleed margin?**: the calendar is made to run to
-the screen's edges, as it does on TRMNL.com (LaraPaper doesn't take that from the recipe
-when installing it).
-
 Add the recipe to the device's playlist (**Add to Playlist** on the recipe page).
 
 **Updating:** installing from the catalog again adds a second copy. To update in place
@@ -201,10 +197,8 @@ way.
 
 LaraPaper fetches each feed on every refresh and parses it itself: recurring events are
 expanded and times are converted from the feed's time zones. It keeps only events from
-7 days back to 30 days ahead, so with ICS feeds the grid ends at the last whole week
-before that, usually 4 weeks and sometimes 5. A later day would otherwise look free
-while its events are simply not in the data. Home Assistant is asked for 6 weeks ahead
-and has no such limit.
+7 days back to 45 days ahead, which covers the 6 weeks the calendar shows. Home
+Assistant is asked for 6 weeks ahead.
 
 A `webcal://` link is fetched over `https://`. The Home Assistant token is never sent
 to the feeds.

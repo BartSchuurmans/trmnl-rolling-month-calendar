@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.44.0-1
+
+- LaraPaper 0.44.0. Among its changes: saving a recipe's settings shows the new screen
+  right away, ICS feeds reach 45 days ahead (the calendar now shows 6 weeks of them) and
+  mark all-day events, recipes set **Remove bleed margin?** themselves, and links in
+  recipe settings open in a new tab.
+
 ## 0.43.1-8
 
 - Each TRMNL's device in Home Assistant now also shows the **Screen** it was last given,
