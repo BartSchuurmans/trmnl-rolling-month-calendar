@@ -27,7 +27,7 @@ polling_headers: Authorization=Bearer {{ ha_token }}
 no_screen_padding: 'yes'
 dark_mode: 'no'
 static_data: ''
-framework_version: 3.3.1
+framework_version: 3.4.0
 custom_fields:
   - keyname: about
     field_type: author_bio

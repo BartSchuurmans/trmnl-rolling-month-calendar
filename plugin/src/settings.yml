@@ -29,7 +29,7 @@ polling_headers: '{% unless ics_urls contains "/" %}Authorization=Bearer {{ ha_t
 no_screen_padding: 'yes'
 static_data: '{}'
 # Framework version this recipe is built and tested against (LaraPaper's default).
-framework_version: 3.3.1
+framework_version: 3.4.0
 # Descriptions may link out (<a href class="underline" target="_blank">, as on TRMNL.com).
 # LaraPaper's form keeps only href and styles the link itself (opening in a new tab since
 # 0.44.0); before 0.44.0 it showed the About text as plain text, so its link goes in

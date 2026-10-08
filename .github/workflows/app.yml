@@ -160,11 +160,11 @@ jobs:
       - name: Check the render paths, framework settings and options
         run: |
           # screens render from a file:// page, so the assets must exist at the filesystem root
-          docker exec app sh -c 'test -s /trmnl-framework/3.3.1/plugins.min.css && test -s /fonts/Inter.ttf && test -s /rolling-month-calendar/fullcalendar/7.1.0/all/global.js && test -s /rolling-month-calendar/fullcalendar/7.1.0/skeleton.css'
-          docker exec app sh -c 'for f in /trmnl-framework/3.3.1/LICENSE /fonts/OFL-trmnl.txt /fonts/OFL-classic.txt /fonts/CC-BY-3.0.txt /rolling-month-calendar/fullcalendar/7.1.0/LICENSE.md; do test -s "$f" || { echo "missing $f"; exit 1; }; done'
+          docker exec app sh -c 'test -s /trmnl-framework/3.4.0/plugins.min.css && test -s /fonts/Inter.ttf && test -s /rolling-month-calendar/fullcalendar/7.1.0/all/global.js && test -s /rolling-month-calendar/fullcalendar/7.1.0/skeleton.css'
+          docker exec app sh -c 'for f in /trmnl-framework/3.4.0/LICENSE /fonts/OFL-trmnl.txt /fonts/OFL-classic.txt /fonts/CC-BY-3.0.txt /rolling-month-calendar/fullcalendar/7.1.0/LICENSE.md; do test -s "$f" || { echo "missing $f"; exit 1; }; done'
           docker exec app sh -c '! grep -q "fonts.bunny.net" /var/www/html/resources/views/vendor/trmnl/components/screen.blade.php'
-          docker exec app printenv TRMNL_BLADE_FRAMEWORK_CSS_URL | grep -qx '/trmnl-framework/3.3.1/plugins.min.css'
-          docker exec app sh -c 'f=/var/www/html/bootstrap/cache/config.php; ! test -f "$f" || grep -q "/trmnl-framework/3.3.1/plugins.min.css" "$f"'
+          docker exec app printenv TRMNL_BLADE_FRAMEWORK_CSS_URL | grep -qx '/trmnl-framework/3.4.0/plugins.min.css'
+          docker exec app sh -c 'f=/var/www/html/bootstrap/cache/config.php; ! test -f "$f" || grep -q "/trmnl-framework/3.4.0/plugins.min.css" "$f"'
           docker exec app grep -qx 'APP_URL=http://localhost:4567' /var/www/html/.env
           docker exec app grep -qx 'REGISTRATION_ENABLED=0' /var/www/html/.env
           docker exec app grep -qx 'APP_TIMEZONE=Europe/Amsterdam' /var/www/html/.env

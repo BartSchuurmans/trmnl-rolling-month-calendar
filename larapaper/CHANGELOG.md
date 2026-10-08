@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.44.0-2
+
+### Home Assistant app
+
+- The bundled TRMNL framework is now 3.4.0, the version LaraPaper 0.44.0 uses by default,
+  so recipes render the same here as in LaraPaper elsewhere and on trmnl.com.
+
 ## 0.44.0-1
 
 ### LaraPaper 0.44.0

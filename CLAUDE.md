@@ -78,7 +78,7 @@ plugin; see README.md for setup and UPSTREAM.md for what differs from upstream.
 ## Things that are easy to get wrong
 
 **Rendering environment.** LaraPaper renders recipes with Browsershot (headless
-Chromium) inside TRMNL framework 3.3.1 (`framework_version` in settings.yml). On the
+Chromium) inside TRMNL framework 3.4.0 (`framework_version` in settings.yml). On the
 TRMNL X it uses a 1872×1404 window at 1×, classes `screen--v2 screen--4bit
 screen--scale-xxlarge`. The framework lays that out at 1040×780 and applies
 `transform: scale(1.8)` to `.screen`, plus `--ui-scale: 1.5`. `render.mjs` reproduces

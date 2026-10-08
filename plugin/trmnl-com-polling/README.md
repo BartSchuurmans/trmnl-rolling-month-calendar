@@ -25,7 +25,7 @@ The tests poll and draw it through trmnlp, as TRMNL does.
 
 ## Built from the repo
 
-This folder holds `settings.yml` (polling URL and header, framework 3.3.1, bleed margin
+This folder holds `settings.yml` (polling URL and header, framework 3.4.0, bleed margin
 removed, its form fields) and `transform.js`.
 `scripts/build-variant.sh trmnl-com-polling` builds the plugin, and releases upload it to
 TRMNL.com once the `TRMNL_PLUGIN_ID_POLLING` variable names its plugin; see [the variants

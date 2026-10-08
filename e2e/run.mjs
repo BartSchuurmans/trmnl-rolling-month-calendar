@@ -99,7 +99,7 @@ const { server, requests } = await startFakeHa(8123);
 try {
   const setup = php('setup', zip, opt.ha, TOKEN);
   console.log(`imported "${setup.name}" (framework ${setup.framework_version}) for a ${setup.device_model}`);
-  check(setup.framework_version === '3.3.1', 'recipe framework_version is imported');
+  check(setup.framework_version === '3.4.0', 'recipe framework_version is imported');
 
   const scenarios = [
     { name: 'two-calendars', config: { calendars: 'calendar.family,calendar.work', calendar_colors: '-,black' },
