@@ -718,17 +718,18 @@
         // events on top of it: there the weekend is shaded in the header row only.
         var patternedGreys = depth <= 2;
         // On high-density screens (the TRMNL X) the framework's small text is Inter at 13px
-        // times the screen's scale, which differs per server: LaraPaper's X is xxlarge (1.5),
-        // a TRMNL.com device regular (1) unless its owner picks another. The calendar keeps
-        // one size there, like upstream: 16px, scaled by the device and the "text scale"
-        // setting only. Pixel fonts (low-density screens) only come in their own sizes and
-        // stay as they are.
+        // times --text-ui-scale (device x Scale x Text Scale). The calendar uses 16px, like
+        // upstream. On TRMNL.com (textFollowsScale, plugin/<variant>/text-scale.liquid) it
+        // follows --text-ui-scale like any framework text. LaraPaper derives Scale from the
+        // screen width (its X is always xxlarge, 1.5; upstream item 40), so there it is scaled
+        // by the device and Text Scale only, and "Event text size" makes events smaller.
+        // Pixel fonts (low-density screens) only come in their own sizes and stay as they are.
         if (screenStyles.getPropertyValue('--font-small-font-smoothing').trim() !== 'none') {
-          var textScale = 'var(--device-ui-scale, 1) * var(--modifier-text-scale, 1)';
+          var textScale = settings.textFollowsScale ? 'var(--text-ui-scale, 1)' : 'var(--device-ui-scale, 1) * var(--modifier-text-scale, 1)';
           node.style.setProperty('--font-small-font-size', 'calc(16px * ' + textScale + ')');
           node.style.setProperty('--font-small-line-height', 'calc(22px * ' + textScale + ')');
-          // "Event text size": events a size or two below the rest (14 or 12px at that scale)
-          var eventScale = { small: 0.875, xsmall: 0.75 }[settings.eventTextSize];
+          // "Event text size" (LaraPaper only): events a size or two below the rest (14 or 12px at that scale)
+          var eventScale = !settings.textFollowsScale && { small: 0.875, xsmall: 0.75 }[settings.eventTextSize];
           if (eventScale) {
             node.classList.add('trmnl-calendar--event-text');
             node.style.setProperty('--mono-event-font-size', 'calc(' + 16 * eventScale + 'px * ' + textScale + ')');
@@ -948,6 +949,7 @@
          "weekOverflow": {{ s.week_overflow | default: "fewer_weeks" | json | escape }},
          "firstDay": {{ s.first_day | default: 1 | plus: 0 }},
          "eventTextSize": {{ s.event_text_size | default: "regular" | json | escape }},
+         "textFollowsScale": {% if text_follows_scale %}true{% else %}false{% endif %},
          "hour12": {% if s.time_format == "am/pm" %}true{% else %}false{% endif %},
          "displayEventTime": {% if on_include_event_time %}true{% else %}false{% endif %},
          "displayEventEnd": {% if on_display_event_end %}true{% else %}false{% endif %},

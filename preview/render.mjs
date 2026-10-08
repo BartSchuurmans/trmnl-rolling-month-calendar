@@ -22,7 +22,8 @@
 //
 // --merge renders as TRMNL.com does with the Plugin Merge strategy: each calendar's data at
 // the top level as caldav_<id>, the "Calendar" dropdowns (calendar_1, ...) naming them, and
-// plugin/trmnl-com-merge/merge.liquid prepended to the shared markup.
+// plugin/trmnl-com-merge/merge.liquid and text-scale.liquid (text follows Scale) prepended to the
+// shared markup.
 //
 // --merge-weather trmnl|open-meteo adds a forecast in the Weather dropdown (weather_plugin):
 // TRMNL's Weather plugin (today and tomorrow) or a recipe polling Open-Meteo (Daily Weather).
@@ -256,7 +257,7 @@ const engine = new Liquid();
 const MASHUPS = { full: null, half_horizontal: 'mashup--1Tx1B', half_vertical: 'mashup--1Lx1R', quadrant: 'mashup--2x2' };
 if (!(size in MASHUPS)) throw new Error(`unknown size ${size}`);
 const view = `<div class="view view--${size}">\n${fs.readFileSync(path.join(src, `${size}.liquid`), 'utf8')}\n</div>`;
-const shared = (merge ? fs.readFileSync(path.join(src, '..', 'trmnl-com-merge', 'merge.liquid'), 'utf8') + '\n' : '')
+const shared = (merge ? ['merge.liquid', 'text-scale.liquid'].map((name) => fs.readFileSync(path.join(src, '..', 'trmnl-com-merge', name), 'utf8') + '\n').join('') : '')
   + fs.readFileSync(path.join(src, 'shared.liquid'), 'utf8');
 const markup = shared + '\n' + (MASHUPS[size]
   // A half or quadrant is one view in a mashup; the others are left empty here
