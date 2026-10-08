@@ -97,6 +97,10 @@
 
   /* events: the title (up to two lines, then an ellipsis) above the time */
   .mono-event { margin-bottom: calc(2px * var(--mono-u)); line-height: 1.25; }
+  .trmnl-calendar--event-text .mono-event {
+    --font-small-font-size: var(--mono-event-font-size);
+    --font-small-line-height: var(--mono-event-line-height);
+  }
   .mono-event-inner { display: flex; flex-direction: column; min-width: 0; }
   .mono-event-title {
     order: -1;
@@ -723,6 +727,13 @@
           var textScale = 'var(--device-ui-scale, 1) * var(--modifier-text-scale, 1)';
           node.style.setProperty('--font-small-font-size', 'calc(16px * ' + textScale + ')');
           node.style.setProperty('--font-small-line-height', 'calc(22px * ' + textScale + ')');
+          // "Event text size": events a size or two below the rest (14 or 12px at that scale)
+          var eventScale = { small: 0.875, xsmall: 0.75 }[settings.eventTextSize];
+          if (eventScale) {
+            node.classList.add('trmnl-calendar--event-text');
+            node.style.setProperty('--mono-event-font-size', 'calc(' + 16 * eventScale + 'px * ' + textScale + ')');
+            node.style.setProperty('--mono-event-line-height', 'calc(' + 22 * eventScale + 'px * ' + textScale + ')');
+          }
         }
         var shadeClass = function(info) {
           return (info.dow === 0 || info.dow === 6) && settings.shadeWeekends ? 'bg--gray-75' : '';
@@ -936,6 +947,7 @@
          "rollingAdvancement": {{ s.rolling_advancement | default: "week" | json | escape }},
          "weekOverflow": {{ s.week_overflow | default: "fewer_weeks" | json | escape }},
          "firstDay": {{ s.first_day | default: 1 | plus: 0 }},
+         "eventTextSize": {{ s.event_text_size | default: "regular" | json | escape }},
          "hour12": {% if s.time_format == "am/pm" %}true{% else %}false{% endif %},
          "displayEventTime": {% if on_include_event_time %}true{% else %}false{% endif %},
          "displayEventEnd": {% if on_display_event_end %}true{% else %}false{% endif %},

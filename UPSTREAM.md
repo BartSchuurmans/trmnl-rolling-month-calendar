@@ -55,7 +55,8 @@ treats its native plugins as source-available and is fine with them being remixe
   (FullCalendar shows the whole range, below the title, in every week). Narrow views keep
   the start time below the title.
   Titles differ too: every title, of any kind of event, wraps over at most two lines and
-  then ends in an ellipsis, where upstream wraps timed titles in full.
+  then ends in an ellipsis, where upstream wraps timed titles in full. The
+  `event_text_size` setting (new here) can make event text smaller than upstream's 16px.
   Grid lines are thin grey (dotted on 1-/2-bit), headers are centred and bold with the
   weekend shaded, and day numbers are small.
 - **Busy weeks**: upstream keeps at least 4 weeks, so a very busy month is cut off at

@@ -104,7 +104,7 @@ render options-x --set locale=nl --set first_day=0 --set show_week_numbers=yes -
 # 30 days ahead and no all-day flag: fewer weeks)
 render ics-x --ics
 render ics-og --device og --ics-0.43 --set calendar_colors=black,-,gray-50 --set calendar_labels=-,M:,S:
-render ics-options-x --ics --set rolling_advancement=day --set first_day=0 --set week_overflow=more
+render ics-options-x --ics --set rolling_advancement=day --set first_day=0 --set week_overflow=more --set event_text_size=small
 
 # A weather entity's forecast next to the day numbers (sample forecast)
 render weather-x --set weather_entity=weather.forecast_home --set show_week_numbers=true --set month_header=true
@@ -113,8 +113,8 @@ render weather-ics-half-vertical-x --ics --size half_vertical --set weather_enti
 
 # The sample as TRMNL.com's Plugin Merge dropdowns (plugin/trmnl-com-merge/merge.liquid)
 render merge-x --merge --expect-events --set calendar_colors=black,-,gray-50 --set calendar_labels=-,M:,S:
-# ... at TRMNL.com's default screen scale (regular; LaraPaper's X is xxlarge)
-render merge-regular-x --merge --scale regular --expect-events
+# ... at TRMNL.com's default screen scale (regular; LaraPaper's X is xxlarge), with smaller events
+render merge-regular-x --merge --scale regular --expect-events --set event_text_size=xsmall
 # ... with a forecast from the Weather dropdown: TRMNL's Weather plugin, an Open-Meteo recipe
 render merge-weather-trmnl-x --merge-weather trmnl --expect-events --set weather_temperatures=high_low \
     --dump-context "$out/context-merge-weather.json"

@@ -126,6 +126,16 @@ custom_fields:
     group: Grid
     description: TRMNL title bar at the bottom with the recipe name and the visible date range.
     default: 'false'
+  - keyname: event_text_size
+    field_type: select
+    name: Event text size
+    group: Events
+    description: Smaller text fits more of each title (titles get up to two lines, then an ellipsis). On the TRMNL X and other screens with smooth fonts; pixel fonts (TRMNL OG) only come in one size.
+    options:
+    - Regular: regular
+    - Small: small
+    - Extra small: xsmall
+    default: regular
   - keyname: time_format
     field_type: select
     name: Time format
