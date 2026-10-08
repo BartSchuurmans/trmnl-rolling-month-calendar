@@ -3,7 +3,7 @@
 {% assign merge_weather = false %}
 {% comment %} Field names spelled out: TRMNL's publish check flags fields it can't find in the markup.
    The weather plugin goes last, after the calendars (buildEvents in shared.liquid). {% endcomment %}
-{% assign merge_fields = "calendar_1,calendar_2,calendar_3,calendar_4" | split: "," %}
+{% assign merge_fields = "calendar_1,calendar_2,calendar_3,calendar_4,calendar_5,calendar_6,calendar_7,calendar_8" | split: "," %}
 {% assign merge_weather_key = merge_values.weather_plugin | default: "" | strip %}
 {% capture merge_json %}{
 {%- for merge_field in merge_fields -%}

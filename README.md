@@ -31,9 +31,9 @@ for anyone who wants to change it.
      of its own, shorter view;
    - keep it in a playlist, or its events stop refreshing. It doesn't have to show:
      hiding it in the playlist is fine.
-2. **Install the recipe**: find **Rolling Month Calendar (TRMNL calendars)** among
+2. **Install the recipe**: find **Rolling Month Calendar** among
    TRMNL's recipes and install it.
-3. **Pick your calendars** in its **Calendar** dropdowns, up to four. The dropdowns list
+3. **Pick your calendars** in its **Calendar** dropdowns, up to eight. The dropdowns list
    all your plugins, so choose the calendar ones. Set the other [settings](#settings)
    as you like.
 4. **Add it to your playlist.**
@@ -372,7 +372,7 @@ The recipe is a fork of TRMNL's native calendar plugin
 `rolling_month` layout only. The FullCalendar view, the 4–6 week fitting and the event
 filtering work as upstream. What changed:
 
-- **Several sources instead of one Google Calendar.** On TRMNL.com, up to four of your
+- **Several sources instead of one Google Calendar.** On TRMNL.com, up to eight of your
   TRMNL calendar plugins in one grid. On LaraPaper, any calendar's ICS feed link, which
   LaraPaper fetches and parses, or HA's `/api/calendars/<entity>` endpoint, so any HA
   calendar integration works. All are turned into FullCalendar events in the browser,
