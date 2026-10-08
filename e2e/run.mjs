@@ -145,9 +145,9 @@ try {
       check(polled.length === s.feeds.length && s.feeds.every((f) => polled.some((r) => r.feed === f)),
         `fetched feeds ${s.feeds.join(', ')} (${polled.map((r) => r.feed ?? r.entity).join(', ')})`);
       check(polled.every((r) => !r.authorization), 'sent no access token to the feeds');
-      // what LaraPaper's IcalResponseParser keeps: events overlapping 7 days back to 30
+      // what LaraPaper's IcalResponseParser keeps: events overlapping 7 days back to 45
       // days ahead, recurrences expanded (±1 for an occurrence right on the edge)
-      const from = Date.now() - 7 * 86400000, to = Date.now() + 30 * 86400000;
+      const from = Date.now() - 7 * 86400000, to = Date.now() + 45 * 86400000;
       s.feeds.forEach((f, i) => {
         const want = FEEDS[f].occurrences().filter((o) => (o.start >= from && o.start < to)
           || (o.end > from && o.end <= to) || (from >= o.start && to <= o.end)).length;

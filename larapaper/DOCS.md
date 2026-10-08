@@ -7,7 +7,6 @@ image with these additions:
 - **TRMNL framework 3.3.1** (CSS, JS and fonts) and **FullCalendar 7.1.0** (and 6.1.21 for recipe versions up to v1.9.0) are built
   into the image. LaraPaper normally loads the framework from trmnl.com, and the
   calendar recipe loads FullCalendar from jsDelivr, every time a screen renders.
-- The Inter stylesheet from fonts.bunny.net is removed. The framework ships Inter itself.
 - The database, generated screens and app key are kept in `/data`, so they survive
   updates and are part of Home Assistant backups.
 - The calendar recipe reads Home Assistant through `http://127.0.0.1:8124`, which

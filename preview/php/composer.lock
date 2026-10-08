@@ -4,20 +4,20 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "3e490a3bac7093558cc74d98d4dc5ec3",
+    "content-hash": "84b9093ab5279f060bffc737b9469b96",
     "packages": [
         {
             "name": "keepsuit/liquid",
-            "version": "v0.12.0",
+            "version": "v0.12.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/keepsuit/php-liquid.git",
-                "reference": "f91f238054d4430d56e0e390ccabfe1faab95dd5"
+                "reference": "3b7b9ab816ea6fa573884cfbaa89b48fefd55ef1"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/keepsuit/php-liquid/zipball/f91f238054d4430d56e0e390ccabfe1faab95dd5",
-                "reference": "f91f238054d4430d56e0e390ccabfe1faab95dd5",
+                "url": "https://api.github.com/repos/keepsuit/php-liquid/zipball/3b7b9ab816ea6fa573884cfbaa89b48fefd55ef1",
+                "reference": "3b7b9ab816ea6fa573884cfbaa89b48fefd55ef1",
                 "shasum": ""
             },
             "require": {
@@ -62,9 +62,9 @@
             ],
             "support": {
                 "issues": "https://github.com/keepsuit/php-liquid/issues",
-                "source": "https://github.com/keepsuit/php-liquid/tree/v0.12.0"
+                "source": "https://github.com/keepsuit/php-liquid/tree/v0.12.1"
             },
-            "time": "2026-08-04T14:37:07+00:00"
+            "time": "2026-09-30T10:10:25+00:00"
         },
         {
             "name": "symfony/deprecation-contracts",
