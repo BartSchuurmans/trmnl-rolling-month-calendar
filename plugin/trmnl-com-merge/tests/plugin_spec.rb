@@ -51,9 +51,20 @@ RSpec.describe 'Rolling Month Calendar (TRMNL calendars)' do
     end
   end
 
+  it 'draws every Calendar dropdown chosen' do
+    # the sample calendars again in the dropdowns they leave empty: the same events, merged once
+    calendars = variables.keys.grep(/\Acaldav_/)
+    chosen = (1..8).to_h { |n| ["calendar_#{n}", calendars[(n - 1) % calendars.size]] }
+    screen = trmnl.render(device: 'v2', now:, variables:, custom_fields: custom_fields.merge(chosen))
+
+    expect(screen).to have_text('Swimming lessons')
+    expect(screen).to have_css('.trmnl-weather')
+    expect(screen).to have_no_problems
+  end
+
   it 'draws an empty grid when no calendar is chosen' do
     screen = trmnl.render(device: 'v2', now:, variables:,
-                          custom_fields: custom_fields.reject { |key, _| key.match?(/\Acalendar_\d\z/) })
+                          custom_fields: custom_fields.reject { |key, _| key.match?(/\Acalendar_\d+\z/) })
 
     expect(screen).to have_css('.trmnl-calendar')
     expect(screen).to have_no_problems

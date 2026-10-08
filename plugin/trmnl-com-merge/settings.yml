@@ -22,7 +22,7 @@ custom_fields:
     field_type: author_bio
     name: About
     category: calendar
-    description: "All your TRMNL calendar plugins in one rolling month grid, with what the built-in layout lacks:<br/>• up to four calendars from different accounts and providers (Google, Outlook, CalDAV, ...) in one grid<br/>• a color and a prefix per calendar<br/>• half and quadrant views for mashups<br/>• busy weeks never cut off: fewer weeks, or \"+N more\"<br/>• finished events faded<br/>• the weather forecast next to the day numbers (optional)<br/>Setup: set each calendar plugin's layout to Rolling Month, keep it in a playlist (it can be hidden), then pick it below."
+    description: "All your TRMNL calendar plugins in one rolling month grid, with what the built-in layout lacks:<br/>• up to eight calendars from different accounts and providers (Google, Outlook, CalDAV, ...) in one grid<br/>• a color and a prefix per calendar<br/>• half and quadrant views for mashups<br/>• busy weeks never cut off: fewer weeks, or \"+N more\"<br/>• finished events faded<br/>• the weather forecast next to the day numbers (optional)<br/>Setup: set each calendar plugin's layout to Rolling Month, keep it in a playlist (it can be hidden), then pick it below."
     github_url: https://github.com/BartSchuurmans/trmnl-rolling-month-calendar
     email_address: bart@minnozz.com
   - keyname: calendar_1
@@ -42,6 +42,26 @@ custom_fields:
   - keyname: calendar_4
     field_type: plugin_instance_select
     name: Calendar 4
+    description: 'Optional: another calendar plugin, set up the same way.'
+    optional: true
+  - keyname: calendar_5
+    field_type: plugin_instance_select
+    name: Calendar 5
+    description: 'Optional: another calendar plugin, set up the same way.'
+    optional: true
+  - keyname: calendar_6
+    field_type: plugin_instance_select
+    name: Calendar 6
+    description: 'Optional: another calendar plugin, set up the same way.'
+    optional: true
+  - keyname: calendar_7
+    field_type: plugin_instance_select
+    name: Calendar 7
+    description: 'Optional: another calendar plugin, set up the same way.'
+    optional: true
+  - keyname: calendar_8
+    field_type: plugin_instance_select
+    name: Calendar 8
     description: 'Optional: another calendar plugin, set up the same way.'
     optional: true
   - keyname: calendar_labels
