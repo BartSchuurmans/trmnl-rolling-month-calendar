@@ -98,6 +98,10 @@ flowchart LR
 
 <sub>With Docker Compose instead of the app, the LaraPaper container runs on any machine that can reach Home Assistant.</sub>
 
+The recipe is tested with LaraPaper 0.44.0 (the app's version) and still works with
+0.43: there, ICS feeds show fewer weeks (see [ICS feeds](#ics-feeds)) and you tick
+**Remove bleed margin?** yourself.
+
 ### 1. Run LaraPaper
 
 **As a Home Assistant app (recommended).** This repository is an app repository. Go to
@@ -182,6 +186,10 @@ With the Home Assistant app you can also fill in **Home Assistant weather entity
 `weather.forecast_home`, for each day's forecast next to its day number (see
 [Weather](#weather)).
 
+The calendar is made to run to the screen's edges, as it does on TRMNL.com. LaraPaper
+0.44.0 and later take that from the recipe; on an older LaraPaper, tick **Remove bleed
+margin?** under **Screen Settings**.
+
 Add the recipe to the device's playlist (**Add to Playlist** on the recipe page).
 
 **Updating:** installing from the catalog again adds a second copy. To update in place
@@ -197,8 +205,10 @@ way.
 
 LaraPaper fetches each feed on every refresh and parses it itself: recurring events are
 expanded and times are converted from the feed's time zones. It keeps only events from
-7 days back to 45 days ahead, which covers the 6 weeks the calendar shows. Home
-Assistant is asked for 6 weeks ahead.
+7 days back to 45 days ahead (30 before LaraPaper 0.44.0), so with ICS feeds the grid
+ends at the last whole week before that: 6 weeks, or on an older LaraPaper usually 4
+and sometimes 5. A later day would otherwise look free while its events are simply not
+in the data. Home Assistant is asked for 6 weeks ahead and has no such limit.
 
 A `webcal://` link is fetched over `https://`. The Home Assistant token is never sent
 to the feeds.
