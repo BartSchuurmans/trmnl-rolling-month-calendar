@@ -64,6 +64,44 @@ jobs:
             exit 1
           fi
 
+      # The entry for the current version is what Home Assistant's update dialog shows:
+      # the LaraPaper release's own notes (on <LaraPaper version>-1) under "### LaraPaper
+      # <version>", then the app's changes under "### Home Assistant app". The job summary
+      # carries LaraPaper's notes as scripts/larapaper-release-notes.sh writes them.
+      - name: Changelog entry has the LaraPaper notes and the app's changes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version="$(yq '.version' larapaper/config.yaml)"
+          tag="$(sed -n 's/^ARG BUILD_FROM=.*://p' larapaper/Dockerfile)"
+          entry="$(awk -v h="## $version" '$0 == h { on = 1; next } on && /^## / { exit } on' larapaper/CHANGELOG.md)"
+          if [ -z "$entry" ]; then
+            echo "::error file=larapaper/CHANGELOG.md::no \"## $version\" entry in larapaper/CHANGELOG.md"
+            exit 1
+          fi
+          status=0
+          if ! printf '%s\n' "$entry" | grep -qxF '### Home Assistant app'; then
+            echo "::error file=larapaper/CHANGELOG.md::the \"## $version\" entry has no \"### Home Assistant app\" section"
+            status=1
+          fi
+          [ "$version" = "$tag-1" ] || exit "$status"
+          if ! printf '%s\n' "$entry" | grep -qxF "### LaraPaper $tag"; then
+            echo "::error file=larapaper/CHANGELOG.md::the \"## $version\" entry has no \"### LaraPaper $tag\" section; generate it with: sh scripts/larapaper-release-notes.sh $tag"
+            status=1
+          fi
+          if notes="$(sh scripts/larapaper-release-notes.sh "$tag")"; then
+            printf '## LaraPaper %s release notes for larapaper/CHANGELOG.md\n\n```markdown\n%s\n```\n' "$tag" "$notes" >> "$GITHUB_STEP_SUMMARY"
+            echo "::group::LaraPaper $tag release notes"; printf '%s\n' "$notes"; echo "::endgroup::"
+            have="$(printf '%s\n' "$entry" | awk -v h="### LaraPaper $tag" '$0 == h { on = 1 } on && /^### / && $0 != h { exit } on' | sed -e :a -e '/^\n*$/{$d;N;ba' -e '}')"
+            # Upstream can edit its notes later, and an entry can trim them: a warning only
+            if [ "$have" != "$notes" ]; then
+              echo "::warning file=larapaper/CHANGELOG.md::the \"### LaraPaper $tag\" section differs from LaraPaper's release notes (see the job summary)"
+            fi
+          else
+            echo "::warning::couldn't fetch LaraPaper $tag's release notes"
+          fi
+          exit "$status"
+
   lint:
     runs-on: ubuntu-latest
     steps:

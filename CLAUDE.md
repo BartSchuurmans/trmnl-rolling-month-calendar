@@ -258,7 +258,11 @@ dates with `getUTC*`.
 - Home Assistant app: bump `version` in `larapaper/config.yaml` (`<LaraPaper
   version>-N`) with any change to the image; `app.yml` fails PRs that change app files
   other than DOCS.md/translations without a bump. Add an entry to
-  `larapaper/CHANGELOG.md` (shown in HA's update dialog). HA offers the update once
+  `larapaper/CHANGELOG.md` (shown in HA's update dialog): on `<LaraPaper version>-1`,
+  LaraPaper's own release notes first, as `sh scripts/larapaper-release-notes.sh
+  <version>` prints them (`### LaraPaper <version>`; `app.yml` puts them in its job
+  summary too), then always `### Home Assistant app` with the app's own changes
+  (`app.yml` checks both headings). HA offers the update once
   it's on main; `app.yml` then publishes the image (amd64 + aarch64, `image:` in
   config.yaml) to GHCR, skipping versions that already exist. HA pulls that image, it
   doesn't build locally, so a version on main without a published image can't install.
