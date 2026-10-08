@@ -5,7 +5,7 @@
 # in Firefox. The merged data is the render context of `render.mjs --merge-weather trmnl
 # --dump-context` (ci.sh's), copied next to this file as context.json: the sample calendars
 # as TRMNL's calendar plugins share them, and TRMNL's Weather plugin.
-RSpec.describe 'Rolling Month Calendar (TRMNL calendars)' do
+RSpec.describe 'Rolling Month Calendar' do
   # Where a day has no room for a forecast's low, it wraps to a line its box hides on purpose
   CLIPPED = '.trmnl-weather'
 

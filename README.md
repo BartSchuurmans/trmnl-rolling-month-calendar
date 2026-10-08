@@ -31,7 +31,7 @@ for anyone who wants to change it.
      of its own, shorter view;
    - keep it in a playlist, or its events stop refreshing. It doesn't have to show:
      hiding it in the playlist is fine.
-2. **Install the recipe**: find **Rolling Month Calendar (TRMNL calendars)** among
+2. **Install the recipe**: find **Rolling Month Calendar** among
    TRMNL's recipes and install it.
 3. **Pick your calendars** in its **Calendar** dropdowns, up to eight. The dropdowns list
    all your plugins, so choose the calendar ones. Set the other [settings](#settings)

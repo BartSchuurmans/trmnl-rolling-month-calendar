@@ -10,7 +10,7 @@
 # TRMNL.com can't use (ICS feeds need a server that parses them, Home Assistant would have
 # to be public), with "Calendar" dropdowns instead of plugin IDs and an API key. preview/variants.mjs checks that the settings both have
 # match in type, name, options, default and order.
-name: Rolling Month Calendar (TRMNL calendars)
+name: Rolling Month Calendar
 refresh_interval: 15
 strategy: plugin_merge
 no_screen_padding: 'yes'
