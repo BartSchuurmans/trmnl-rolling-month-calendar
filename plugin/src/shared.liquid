@@ -371,17 +371,27 @@
       return null;
     }
 
-    // LaraPaper parses an ICS feed into { ical: [{ SUMMARY, DTSTART, DTEND, all_day, ... }] },
-    // with recurring events expanded, events from 7 days back to 45 days ahead (more than
-    // the 6 weeks the grid shows), and every date as an ISO string with an offset; all-day
-    // events are at midnight, their dates read as written.
+    // LaraPaper parses an ICS feed into { ical: [{ SUMMARY, DTSTART, DTEND, ... }] }, with
+    // recurring events expanded and every date as an ISO string with an offset. Since
+    // 0.44.0 it keeps events from 7 days back to 45 days ahead and flags all-day events
+    // (all_day, their dates at midnight as written); before, 30 days ahead and no flag:
+    // all-day events are the ones running midnight to midnight. An event with the flag
+    // tells which, so icsDaysAhead says how far the feed reaches (30 when there's none).
     // Turned into HA's shape here, so the rest treats both sources alike.
     var DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/;
+    var MIDNIGHT = /^\d{4}-\d{2}-\d{2}T00:00(:00(\.0+)?)?(Z|[+-]\d{2}:?\d{2})?$/;
+    var icsDaysAhead = 30;
     function fromIcal(ev) {
       if (!ev || typeof ev !== 'object' || !ev.DTSTART) return null;
       if (String(ev.STATUS || '').toUpperCase() === 'CANCELLED') return null;
       var start = String(ev.DTSTART), end = ev.DTEND ? String(ev.DTEND) : null;
-      var allDay = ev.all_day === true || DATE_ONLY.test(start);
+      var allDay;
+      if (typeof ev.all_day === 'boolean') {
+        allDay = ev.all_day;
+        icsDaysAhead = 45;
+      } else {
+        allDay = DATE_ONLY.test(start) || (MIDNIGHT.test(start) && (!end || MIDNIGHT.test(end)) && (!end || end.slice(0, 10) > start.slice(0, 10)));
+      }
       var text = function(v) { return v == null ? '' : Array.isArray(v) ? v.join(' ') : String(v); };
       return {
         start: allDay ? { date: start.slice(0, 10) } : { dateTime: start },
@@ -557,6 +567,7 @@
       var events = [];
       var weather = {};
 
+      icsDaysAhead = 30;
       var calendars = payloadToCalendars(payload);
       calendars.forEach(function(cal, i) {
         // the forecast is the last URL polled (polling_url in settings.yml), or the last
@@ -597,7 +608,7 @@
       });
 
       events.sort(function(a, b) { return a.start < b.start ? -1 : a.start > b.start ? 1 : 0; });
-      return { events: events, errors: errors, weather: weather };
+      return { events: events, errors: errors, weather: weather, icsDaysAhead: icsDaysAhead };
     }
 
     return { splitList: splitList, splitAligned: splitAligned, wallClock: wallClock, buildEvents: buildEvents };
@@ -774,9 +785,18 @@
 
         // Rolling month fills the screen with as many whole weeks as actually fit.
         // Render the max first — 6, because only 6 weeks of events are fetched ahead
-        // (polling_url in settings.yml; ICS feeds hold 45 days, see fromIcal); further rows
-        // would be blank.
+        // (polling_url in settings.yml); further rows would be blank. ICS feeds only hold
+        // events up to 45 days ahead, or 30 before LaraPaper 0.44.0 (see fromIcal), so
+        // there the grid stops at the last whole week before that: a later day would look
+        // free when it may not be.
         var maxWeeks = 6;
+        if (settings.source === 'ics') {
+          var gridStart = new Date(settings.today + 'T00:00:00Z');
+          if (settings.rollingAdvancement !== 'day') gridStart.setUTCDate(gridStart.getUTCDate() - (gridStart.getUTCDay() - settings.firstDay + 7) % 7);
+          // the feed is cut icsDaysAhead days after the poll, so the day before is the last one complete
+          var coveredDays = Math.round((Date.parse(settings.today + 'T00:00:00Z') - gridStart.getTime()) / 86400000) + built.icsDaysAhead;
+          maxWeeks = Math.max(1, Math.min(6, Math.floor(coveredDays / 7)));
+        }
         var rollingMonth = cfg.initialView === 'rollingMonth' && cfg.views && cfg.views.rollingMonth;
         // Capped rows stretch to share the height, so every week count "fits" and counting
         // them proves nothing — a capped grid keeps the weeks the server asked for.

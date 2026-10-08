@@ -87,7 +87,7 @@ Roman, wrong sizes). TRMNL.com renders the X at the scale its owner picked (regu
 `--ui-scale: 1`, by default; `render.mjs --scale regular`), so the calendar's text size
 doesn't follow `--ui-scale` (see the `--font-small-font-size` override in `shared.liquid`).
 Every recipe sets `no_screen_padding: 'yes'` (`screen--no-bleed`, which `render.mjs` adds);
-LaraPaper's importer reads it too (its "Remove bleed margin?" box).
+LaraPaper's importer reads it since 0.44.0 (before, the user ticks "Remove bleed margin?").
 
 **FullCalendar under the transform.** FullCalendar 7 sizes the grid from ResizeObserver
 border boxes, which ignore the transform, so it lays out correctly without help. (v6
@@ -132,10 +132,12 @@ next to output (see `plugin/trmnl-com-polling/settings.yml`). LaraPaper's import
 
 **ICS feeds.** Set `ics_urls` and they replace the HA entities (URL, no token). LaraPaper
 parses a feed into `{ical: [{DTSTART, DTEND, SUMMARY, ...}]}` (`IcalResponseParser`):
-recurrences expanded, only events from 7 days back to 45 days ahead (enough for the 6
-weeks shown), all-day events as midnight timestamps flagged `all_day`. `fromIcal` in
-`shared.liquid` maps that to HA's shape. `render.mjs --ics` fakes that shape;
-`e2e/fake-ha.mjs` serves real feeds.
+recurrences expanded, only events from 7 days back to 45 days ahead, all-day events as
+midnight timestamps flagged `all_day` (before 0.44.0: 30 days ahead, no flag, all-day
+events inferred from midnight-to-midnight). `fromIcal` in `shared.liquid` maps that to
+HA's shape, and the grid stops at the last week the feed covers (45 days once an event
+carries `all_day`, else 30). `render.mjs --ics` fakes that shape (`--ics-0.43` the old
+one); `e2e/fake-ha.mjs` serves real feeds.
 
 **TRMNL calendar plugins.** Only on TRMNL.com (`plugin/trmnl-com-merge/`, Plugin Merge):
 "Calendar" dropdowns store the merged data's name (`caldav_<id>`), which `merge.liquid`
@@ -161,8 +163,9 @@ so the output must be a shape `shared.liquid` already reads. trmnlp runs it too:
 
 **Links in the form.** Field descriptions may hold `<a href="..." class="underline"
 target="_blank">` (TRMNL.com allows `a`, `b`, `i` with those attributes). LaraPaper
-purifies them down to `href` (opening in a new tab); the About (`author_bio`) text is
-purified HTML too, but its link stays in `github_url`.
+purifies them down to `href` (since 0.44.0 opening in a new tab, and the About
+(`author_bio`) text is purified HTML too; before, it was escaped, so links there go in
+`github_url`/`learn_more_url`).
 
 **Home Assistant access.** In the app, the recipe's default URL `http://127.0.0.1:8124`
 is an nginx proxy written by `larapaper/rootfs/etc/entrypoint.d/10-ha-calendar.sh`: it
@@ -267,6 +270,9 @@ dates with `getUTC*`.
   dark mode, themes, deprecations) in github.com/usetrmnl/trmnl-agent-skills. That repo's
   `agent_prompt.md` is for TRMNL's in-app assistant; its rules (no `<style>` blocks, its
   workflows and voice) don't apply here, as FullCalendar needs this recipe's own CSS.
+- The recipe (and its variants) runs on servers of various versions: keep older LaraPaper
+  versions working unless that needs ugly workarounds, and document any version cutoff in
+  README.md. The app (`larapaper/`) only has to work with the LaraPaper it bundles.
 - Keep upstream's behaviour and comments where the code is forked (see UPSTREAM.md) and
   update UPSTREAM.md when diverging.
 - Sizes in CSS scale with `--mono-u` (`--ui-scale`); colours use framework vars (see Dark mode).
