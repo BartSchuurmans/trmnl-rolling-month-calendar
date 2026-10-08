@@ -12,7 +12,7 @@ LABEL org.opencontainers.image.title="LaraPaper (local)" \
 # PHP-FPM workers still run as www-data (serversideup-php images support this).
 USER root
 
-# TRMNL framework 3.3.1 (LaraPaper's default version) with its fonts, and FullCalendar.
+# TRMNL framework 3.4.0 (LaraPaper's default version) with its fonts, and FullCalendar.
 # Each file is pinned by SHA-256 in assets.txt.
 COPY assets.txt fetch-assets.sh /tmp/rolling-month-calendar/
 RUN sh /tmp/rolling-month-calendar/fetch-assets.sh /tmp/rolling-month-calendar/assets.txt /opt/rolling-month-calendar-assets \
@@ -29,8 +29,8 @@ RUN for dir in trmnl-framework fonts rolling-month-calendar; do \
 # Point LaraPaper at the bundled framework instead of trmnl.com (the explicit URLs win
 # over TRMNL_BLADE_FRAMEWORK_BASE_URL and the recipe's framework_version). OPcache on, as
 # in LaraPaper's own docker-compose.
-ENV TRMNL_BLADE_FRAMEWORK_CSS_URL=/trmnl-framework/3.3.1/plugins.min.css \
-    TRMNL_BLADE_FRAMEWORK_JS_URL=/trmnl-framework/3.3.1/plugins.min.js \
+ENV TRMNL_BLADE_FRAMEWORK_CSS_URL=/trmnl-framework/3.4.0/plugins.min.css \
+    TRMNL_BLADE_FRAMEWORK_JS_URL=/trmnl-framework/3.4.0/plugins.min.js \
     PHP_OPCACHE_ENABLE=1
 
 COPY rootfs /

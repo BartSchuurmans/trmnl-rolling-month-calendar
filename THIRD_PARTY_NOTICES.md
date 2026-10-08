@@ -21,7 +21,7 @@ The Home Assistant app image adds these files to the official LaraPaper image
 
 | Files | Copyright | License | Text in the image |
 |---|---|---|---|
-| TRMNL framework 3.3.1 (`plugins.min.css`, `plugins.min.js`) | TRMNL | MIT | `/trmnl-framework/3.3.1/LICENSE` |
+| TRMNL framework 3.4.0 (`plugins.min.css`, `plugins.min.js`) | TRMNL | MIT | `/trmnl-framework/3.4.0/LICENSE` |
 | TRMNL12, TRMNL16, TRMNL21 fonts | Heavyweight Digital Type Foundry s.r.o. | SIL OFL 1.1 | `/fonts/OFL-trmnl.txt` |
 | Inter (`Inter.ttf`, `Inter-Italic.ttf`) | The Inter Project Authors | SIL OFL 1.1 | `/fonts/OFL-trmnl.txt`, `/fonts/OFL-classic.txt` |
 | NicoPups, NicoClean fonts | Emily Huo | SIL OFL 1.1 | `/fonts/OFL-classic.txt` |
@@ -30,7 +30,7 @@ The Home Assistant app image adds these files to the official LaraPaper image
 | FullCalendar 7.1.0 (`all/global.js`, `locales-all/global.js`, `skeleton.css`) | Adam Shaw | MIT | `/rolling-month-calendar/fullcalendar/7.1.0/LICENSE.md` |
 
 The fonts come unmodified from the TRMNL framework's
-[font bundles](https://github.com/usetrmnl/trmnl-framework/tree/v3.3.1/public/fonts/bundles),
+[font bundles](https://github.com/usetrmnl/trmnl-framework/tree/v3.4.0/public/fonts/bundles),
 which also carry per-font details. BlockKie is by
 [JoohnFonts](https://fontstruct.com/fontstructors/show/1669437/joohnfonts), used under
 [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/), unmodified.

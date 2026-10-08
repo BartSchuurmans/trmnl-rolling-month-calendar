@@ -435,7 +435,7 @@ the changes in detail.
 ## TRMNL framework
 
 The recipe renders inside the [TRMNL framework](https://github.com/usetrmnl/trmnl-framework)
-(`framework_version: 3.3.1` in `settings.yml`, LaraPaper's default). The plugin uses it for:
+(`framework_version: 3.4.0` in `settings.yml`, LaraPaper's default). The plugin uses it for:
 
 - **Text**: `text--small` / `text--base` on FullCalendar's elements. That's Inter at the
   device's scale on the TRMNL X, and TRMNL pixel fonts on low-density 1-bit screens.
@@ -473,7 +473,7 @@ The preview uses the same window size, screen classes and framework version as
 LaraPaper. It loads the framework from trmnl.com; to work offline, point
 `FRAMEWORK_DIR` at the `public/` folder of a
 [trmnl-framework](https://github.com/usetrmnl/trmnl-framework) checkout at the matching
-tag (`git checkout v3.3.1`). Templates are rendered with [liquidjs](https://liquidjs.com)
+tag (`git checkout v3.4.0`). Templates are rendered with [liquidjs](https://liquidjs.com)
 instead of LaraPaper's PHP Liquid, so small differences are possible.
 
 ## CI

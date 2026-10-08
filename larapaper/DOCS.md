@@ -4,7 +4,7 @@
 up so that rendering a screen needs no internet access. It is the official LaraPaper
 image with these additions:
 
-- **TRMNL framework 3.3.1** (CSS, JS and fonts) and **FullCalendar 7.1.0** (and 6.1.21 for recipe versions up to v1.9.0) are built
+- **TRMNL framework 3.4.0** (CSS, JS and fonts) and **FullCalendar 7.1.0** (and 6.1.21 for recipe versions up to v1.9.0) are built
   into the image. LaraPaper normally loads the framework from trmnl.com, and the
   calendar recipe loads FullCalendar from jsDelivr, every time a screen renders.
 - The database, generated screens and app key are kept in `/data`, so they survive
