@@ -57,7 +57,8 @@ plugin; see README.md for setup and UPSTREAM.md for what differs from upstream.
   FullCalendar from jsDelivr, so it needs internet access); its report, with every screen
   drawn, is the `trmnlp-test-report` artifact (`preview/out/ci/trmnlp-test/`).
 - `node preview/render.mjs --device x|og|og2 --set key=value ...` for one-off renders;
-  `--size half_horizontal|half_vertical|quadrant` renders that view inside a mashup.
+  `--size half_horizontal|half_vertical|quadrant` renders that view inside a mashup;
+  `--dark` renders in dark mode (`screen--dark-mode`).
 - `node preview/variants.mjs check` (in `ci.sh`) — each variant's `settings.yml` in step
   with `plugin/src/settings.yml`. A new setting goes in every variant, or in that variant's
   `leftOut` in `VARIANTS` there.
@@ -222,6 +223,15 @@ grid has no day numbers (FullCalendar shows them from two weeks on).
 own rendering (solid on 4-bit, dither patterns on 1-/2-bit, pixel fonts on low-density
 screens).
 
+**Dark mode.** The plugin's `dark_mode` setting (TRMNL.com, LaraPaper 0.44+) adds
+`screen--dark-mode`, which swaps the framework's semantic colours
+(`--framework-text-primary`, `--framework-canvas-bg`, ...) and what `bg--*`/`text--*` paint
+(`--bg-<token>-color`), but not the raw palette (`--black`, `--white`, `--gray-*`). So
+CSS takes ink and paper from `--mono-ink`/`--mono-paper` (the semantic colours), never
+`var(--black)` or `var(--white)`, and the JS reads a fill's lightness from
+`--bg-<token>-color`. `ci.sh` renders dark mode (`dark-*`); look at those after colour
+changes.
+
 **Time zones.** HA sends timed events with offsets; they are converted to wall-clock
 time in the configured zone and given to FullCalendar with `timeZone: 'UTC'`. Read
 dates with `getUTC*`.
@@ -252,9 +262,14 @@ dates with `getUTC*`.
 
 ## Conventions
 
+- TRMNL framework reference: `skills/trmnl/references/template_guide.md` (classes,
+  layouts, engines, custom fields, transforms) and `framework_v3_guide.md` (v3 colours,
+  dark mode, themes, deprecations) in github.com/usetrmnl/trmnl-agent-skills. That repo's
+  `agent_prompt.md` is for TRMNL's in-app assistant; its rules (no `<style>` blocks, its
+  workflows and voice) don't apply here, as FullCalendar needs this recipe's own CSS.
 - Keep upstream's behaviour and comments where the code is forked (see UPSTREAM.md) and
   update UPSTREAM.md when diverging.
-- Sizes in CSS scale with `--mono-u` (`--ui-scale`); colours use framework palette vars.
+- Sizes in CSS scale with `--mono-u` (`--ui-scale`); colours use framework vars (see Dark mode).
 - After a change that alters how the calendar looks, regenerate the README screenshots
   in `docs/` with `sh preview/docs-images.sh` and commit them in the same PR.
 - After changing `plugin/src/`, rebuild with `scripts/build-zip.sh`; re-importing the
