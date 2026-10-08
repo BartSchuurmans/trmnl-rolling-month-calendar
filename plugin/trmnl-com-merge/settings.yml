@@ -50,12 +50,14 @@ custom_fields:
     group: Calendars
     description: Optional text shown before each event title, one per calendar in the same order as the calendars above (e.g. W:, Kids). Use - for a calendar without one.
     optional: true
+    default: '-'
   - keyname: calendar_colors
     field_type: multi_string
     name: Calendar colors
     group: Calendars
     description: Optional event background, one per calendar in the same order as the calendars above. A <a href="https://trmnl.com/framework/docs/3.3/colors" class="underline" target="_blank">TRMNL color name</a> (black, gray-10 … gray-75, red, blue-40, …) or a hex color. Names become solid greys on the TRMNL X and dither patterns on 1-bit screens. Use - for a calendar without one.
     optional: true
+    default: '-'
   - keyname: weather_plugin
     field_type: plugin_instance_select
     name: Weather

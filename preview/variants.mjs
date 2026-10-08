@@ -23,6 +23,10 @@ import * as yaml from 'js-yaml';
 // TRMNL.com applies the owner's Scale and Text Scale, which the calendar's text follows there
 // (text-scale.liquid); event_text_size stands in for them on LaraPaper
 const TEXT_SCALE = 'the device\'s Scale and Text Scale size the text on TRMNL.com; LaraPaper derives Scale from the screen width';
+// TRMNL.com shows a default as a hint in the empty field (it doesn't fill it in, and ignores
+// placeholder), so '-' reminds owners how to skip a calendar; LaraPaper fills the field with
+// its default, which would leave a stray '-' there (harmless: '-' means none)
+const SKIP_HINT = 'TRMNL.com shows the default \'-\' as a hint for skipping a calendar; LaraPaper would fill it in';
 
 // Per variant: the plugin/src settings it leaves out (and why), the settings only it has,
 // and (optional) properties of shared settings it sets its own way (and why)
@@ -39,6 +43,8 @@ const VARIANTS = {
     own: /^(calendar_\d+|weather_plugin)$/,
     differs: {
       name: 'its own recipe on TRMNL.com, named after its data source (TRMNL\'s calendar plugins)',
+      'calendar_labels.default': SKIP_HINT,
+      'calendar_colors.default': SKIP_HINT,
     },
   },
   'trmnl-com-polling': {
@@ -53,6 +59,8 @@ const VARIANTS = {
       'ha_url.optional': 'Home Assistant is the only source here',
       'ha_token.optional': 'TRMNL.com reaches Home Assistant from the internet, always with a token',
       'calendars.optional': 'Home Assistant is the only source here',
+      'calendar_labels.default': SKIP_HINT,
+      'calendar_colors.default': SKIP_HINT,
     },
   },
 };
