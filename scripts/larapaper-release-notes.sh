@@ -37,4 +37,4 @@ printf '%s\n' "$body" | tr -d '\r' | awk '
     -e "s#(^|[[:space:]])($repo/compare/([^[:space:])]+))#\\1[\\3](\\2)#g" \
     -e 's#(^|[[:space:]])@([A-Za-z0-9][A-Za-z0-9-]*)\[bot\]#\1[@\2](https://github.com/apps/\2)#g' \
     -e 's#(^|[[:space:]])@([A-Za-z0-9][A-Za-z0-9-]*)#\1[@\2](https://github.com/\2)#g' \
-    | cat -s | sed -e :a -e '/^\n*$/{$d;N;ba' -e '}'
+    | sed -e 's/[[:space:]]*$//' | cat -s | sed -e :a -e '/^\n*$/{$d;N;ba' -e '}'
