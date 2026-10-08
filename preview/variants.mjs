@@ -20,6 +20,10 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as yaml from 'js-yaml';
 
+// TRMNL.com applies the owner's Scale and Text Scale, which the calendar's text follows there
+// (text-scale.liquid); event_text_size stands in for them on LaraPaper
+const TEXT_SCALE = 'the device\'s Scale and Text Scale size the text on TRMNL.com; LaraPaper derives Scale from the screen width';
+
 // Per variant: the plugin/src settings it leaves out (and why), the settings only it has,
 // and (optional) properties of shared settings it sets its own way (and why)
 const VARIANTS = {
@@ -30,6 +34,7 @@ const VARIANTS = {
       ha_token: 'Home Assistant would have to be reachable from the internet',
       calendars: 'Home Assistant entities; replaced by the calendar_N dropdowns',
       weather_entity: 'needs the LaraPaper (local) app\'s Home Assistant proxy; replaced by the weather_plugin dropdown',
+      event_text_size: TEXT_SCALE,
     },
     own: /^(calendar_\d+|weather_plugin)$/,
     differs: {
@@ -39,6 +44,7 @@ const VARIANTS = {
   'trmnl-com-polling': {
     leftOut: {
       ics_urls: 'TRMNL.com polls JSON only; an .ics feed fails as "Malformed JSON"',
+      event_text_size: TEXT_SCALE,
     },
     own: /^$/,
     differs: {

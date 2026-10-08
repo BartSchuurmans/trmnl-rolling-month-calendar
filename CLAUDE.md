@@ -84,8 +84,11 @@ screen--scale-xxlarge`. The framework lays that out at 1040×780 and applies
 `transform: scale(1.8)` to `.screen`, plus `--ui-scale: 1.5`. `render.mjs` reproduces
 this; previews without the framework loaded are misleading (no fonts → Times New
 Roman, wrong sizes). TRMNL.com renders the X at the scale its owner picked (regular,
-`--ui-scale: 1`, by default; `render.mjs --scale regular`), so the calendar's text size
-doesn't follow `--ui-scale` (see the `--font-small-font-size` override in `shared.liquid`).
+`--ui-scale: 1`, by default; `render.mjs --scale regular`). Scale is meant as the owner's
+preference, not density, so on TRMNL.com the calendar's text follows `--text-ui-scale`
+(`plugin/<variant>/text-scale.liquid`); on LaraPaper it doesn't follow Scale (see the
+`--font-small-font-size` override in `shared.liquid`) and `event_text_size` (LaraPaper only)
+makes it smaller.
 Every recipe sets `no_screen_padding: 'yes'` (`screen--no-bleed`, which `render.mjs` adds);
 LaraPaper's importer reads it since 0.44.0 (before, the user ticks "Remove bleed margin?").
 

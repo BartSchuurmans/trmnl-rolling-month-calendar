@@ -55,8 +55,11 @@ treats its native plugins as source-available and is fine with them being remixe
   (FullCalendar shows the whole range, below the title, in every week). Narrow views keep
   the start time below the title.
   Titles differ too: every title, of any kind of event, wraps over at most two lines and
-  then ends in an ellipsis, where upstream wraps timed titles in full. The
-  `event_text_size` setting (new here) can make event text smaller than upstream's 16px.
+  then ends in an ellipsis, where upstream wraps timed titles in full.
+- **Text size**: 16px like upstream, but on TRMNL.com it follows the device's Scale and
+  Text Scale (`--text-ui-scale`). LaraPaper derives Scale from the screen width (the X is
+  always xxlarge), so there it follows the device and Text Scale only, and the
+  `event_text_size` setting (new here, LaraPaper only) can make event text smaller.
   Grid lines are thin grey (dotted on 1-/2-bit), headers are centred and bold with the
   weekend shaded, and day numbers are small.
 - **Busy weeks**: upstream keeps at least 4 weeks, so a very busy month is cut off at

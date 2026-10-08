@@ -294,7 +294,7 @@ toggles.
 
 | Setting | Default | Notes |
 |---|---|---|
-| Event text size | Regular | `Small` or `Extra small` fits more of each title, and often more weeks. TRMNL X and other screens with smooth fonts; pixel fonts (TRMNL OG) come in one size |
+| Event text size (*LaraPaper*) | Regular | `Small` or `Extra small` fits more of each title, and often more weeks. TRMNL X and other screens with smooth fonts; pixel fonts (TRMNL OG) come in one size. On TRMNL.com the text follows the device's Scale and Text Scale instead |
 | Time format | 24 hour | |
 | Show event times / end times | on / on | Times go on their own line below the title. End times only show with event times on |
 | Show past events | on | Earlier days of the current week |

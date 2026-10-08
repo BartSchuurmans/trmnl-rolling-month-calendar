@@ -113,8 +113,10 @@ render weather-ics-half-vertical-x --ics --size half_vertical --set weather_enti
 
 # The sample as TRMNL.com's Plugin Merge dropdowns (plugin/trmnl-com-merge/merge.liquid)
 render merge-x --merge --expect-events --set calendar_colors=black,-,gray-50 --set calendar_labels=-,M:,S:
-# ... at TRMNL.com's default screen scale (regular; LaraPaper's X is xxlarge), with smaller events
-render merge-regular-x --merge --scale regular --expect-events --set event_text_size=xsmall
+# ... at TRMNL.com's default screen scale (regular; LaraPaper's X is xxlarge), and at small,
+# where the text follows the Scale (text-scale.liquid)
+render merge-regular-x --merge --scale regular --expect-events
+render merge-small-x --merge --scale small --expect-events
 # ... with a forecast from the Weather dropdown: TRMNL's Weather plugin, an Open-Meteo recipe
 render merge-weather-trmnl-x --merge-weather trmnl --expect-events --set weather_temperatures=high_low \
     --dump-context "$out/context-merge-weather.json"
