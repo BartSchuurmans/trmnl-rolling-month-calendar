@@ -33,8 +33,8 @@ for anyone who wants to change it.
      range at its next refresh (or use **Force refresh** on it);
    - turn on its past events if you want **Show past events** to fill the days of
      this week before today: without them, the plugin shares nothing before today;
-   - keep it in a playlist, or its events stop refreshing. It doesn't have to show:
-     hiding it in the playlist is fine.
+   - keep it in a playlist, or its events stop refreshing. It doesn't have to show on
+     its own: hide it in the playlist, and only this recipe shows its events.
 2. **Install the recipe**: find **Rolling Month Calendar** among
    TRMNL's recipes and install it.
 3. **Pick your calendars** in its **Calendar** dropdowns, up to eight. The dropdowns list
