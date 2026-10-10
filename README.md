@@ -27,10 +27,14 @@ for anyone who wants to change it.
 
 1. **Connect your calendars as TRMNL calendar plugins** on trmnl.com, if you haven't
    already (Google Calendar, Outlook, Apple, CalDAV…). In each one's settings:
-   - set the layout to **Rolling Month**; with another layout it only shares the events
-     of its own, shorter view;
-   - keep it in a playlist, or its events stop refreshing. It doesn't have to show:
-     hiding it in the playlist is fine.
+   - set **Layout** to **Rolling Month**. This matters: a calendar plugin only shares the
+     days its own layout shows, so with the default layout the recipe gets about a week
+     of events, and with Today only a single day. A plugin you change picks up the longer
+     range at its next refresh (or use **Force refresh** on it);
+   - turn on its past events if you want **Show past events** to fill the days of
+     this week before today: without them, the plugin shares nothing before today;
+   - keep it in a playlist, or its events stop refreshing. It doesn't have to show on
+     its own: hide it in the playlist, and only this recipe shows its events.
 2. **Install the recipe**: find **Rolling Month Calendar** among
    TRMNL's recipes and install it.
 3. **Pick your calendars** in its **Calendar** dropdowns, up to eight. The dropdowns list
