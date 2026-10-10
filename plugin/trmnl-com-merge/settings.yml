@@ -22,13 +22,13 @@ custom_fields:
     field_type: author_bio
     name: About
     category: calendar
-    description: "All your TRMNL calendar plugins in one rolling month grid, with what the built-in layout lacks:<br/>• up to eight calendars from different accounts and providers (Google, Outlook, CalDAV, ...) in one grid<br/>• a color and a prefix per calendar<br/>• half and quadrant views for mashups<br/>• busy weeks never cut off: fewer weeks, or \"+N more\"<br/>• finished events faded<br/>• the weather forecast next to the day numbers (optional)<br/><b>Setup, or you only see a week of events:</b> in each calendar plugin's own settings, set Layout to Rolling Month (a calendar plugin only shares the days its layout shows: about a week with the default layout, one day with Today only) and keep it in a playlist (it can be hidden). Then pick it below."
+    description: "All your TRMNL calendar plugins in one rolling month grid, with what the built-in layout lacks:<br/>• up to eight calendars from different accounts and providers (Google, Outlook, CalDAV, ...) in one grid<br/>• a color and a prefix per calendar<br/>• half and quadrant views for mashups<br/>• busy weeks never cut off: fewer weeks, or \"+N more\"<br/>• finished events faded<br/>• the weather forecast next to the day numbers (optional)<br/><b>Setup, or you only see a week of events:</b> in each calendar plugin's own settings, set Layout to Rolling Month (a calendar plugin only shares the days its layout shows: about a week with the default layout, one day with Today only), turn on its past events if you want earlier days of the week filled, and keep it in a playlist (it can be hidden). Then pick it below."
     github_url: https://github.com/BartSchuurmans/trmnl-rolling-month-calendar
     email_address: bart@minnozz.com
   - keyname: calendar_1
     field_type: plugin_instance_select
     name: Calendar
-    description: '<b>First set this plugin''s Layout to Rolling Month</b> (in its own settings), or only its next few days show: a calendar plugin shares only the days its own layout shows. One of your TRMNL calendar plugins (Google, Outlook, Apple, CalDAV, ...); the list shows all your plugins. Keep it in a playlist (it can be hidden), or its events stop refreshing.'
+    description: '<b>First set this plugin''s Layout to Rolling Month</b> (in its own settings), or only its next few days show: a calendar plugin shares only the days its own layout shows. For events earlier this week, also turn on its past events. One of your TRMNL calendar plugins (Google, Outlook, Apple, CalDAV, ...); the list shows all your plugins. Keep it in a playlist (it can be hidden), or its events stop refreshing.'
   - keyname: calendar_2
     field_type: plugin_instance_select
     name: Calendar 2
@@ -163,7 +163,7 @@ custom_fields:
     field_type: boolean
     name: Show past events
     group: Events
-    description: Show events on days before today that are still in the grid.
+    description: Show events on days before today that are still in the grid. A calendar plugin shares them only with its own past events turned on.
     default: 'true'
   - keyname: fade_past_events
     field_type: boolean

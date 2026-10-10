@@ -31,6 +31,8 @@ for anyone who wants to change it.
      days its own layout shows, so with the default layout the recipe gets about a week
      of events, and with Today only a single day. A plugin you change picks up the longer
      range at its next refresh (or use **Force refresh** on it);
+   - turn on its past events if you want **Show past events** to fill the days of
+     this week before today: without them, the plugin shares nothing before today;
    - keep it in a playlist, or its events stop refreshing. It doesn't have to show:
      hiding it in the playlist is fine.
 2. **Install the recipe**: find **Rolling Month Calendar** among
