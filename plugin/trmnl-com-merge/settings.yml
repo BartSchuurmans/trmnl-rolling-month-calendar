@@ -22,47 +22,47 @@ custom_fields:
     field_type: author_bio
     name: About
     category: calendar
-    description: "All your TRMNL calendar plugins in one rolling month grid, with what the built-in layout lacks:<br/>• up to eight calendars from different accounts and providers (Google, Outlook, CalDAV, ...) in one grid<br/>• a color and a prefix per calendar<br/>• half and quadrant views for mashups<br/>• busy weeks never cut off: fewer weeks, or \"+N more\"<br/>• finished events faded<br/>• the weather forecast next to the day numbers (optional)<br/>Setup: set each calendar plugin's layout to Rolling Month, keep it in a playlist (it can be hidden), then pick it below."
+    description: "All your TRMNL calendar plugins in one rolling month grid, with what the built-in layout lacks:<br/>• up to eight calendars from different accounts and providers (Google, Outlook, CalDAV, ...) in one grid<br/>• a color and a prefix per calendar<br/>• half and quadrant views for mashups<br/>• busy weeks never cut off: fewer weeks, or \"+N more\"<br/>• finished events faded<br/>• the weather forecast next to the day numbers (optional)<br/><b>Setup, or you only see a week of events:</b> in each calendar plugin's own settings, set Layout to Rolling Month (a calendar plugin only shares the days its layout shows: about a week with the default layout, one day with Today only) and keep it in a playlist (it can be hidden). Then pick it below."
     github_url: https://github.com/BartSchuurmans/trmnl-rolling-month-calendar
     email_address: bart@minnozz.com
   - keyname: calendar_1
     field_type: plugin_instance_select
     name: Calendar
-    description: One of your TRMNL calendar plugins (Google, Outlook, Apple, CalDAV, ...); the list shows all your plugins. Set its layout to Rolling Month, or it only shares the events of its own, shorter view. Keep it in a playlist (it can be hidden), or its events stop refreshing.
+    description: '<b>First set this plugin''s Layout to Rolling Month</b> (in its own settings), or only its next few days show: a calendar plugin shares only the days its own layout shows. One of your TRMNL calendar plugins (Google, Outlook, Apple, CalDAV, ...); the list shows all your plugins. Keep it in a playlist (it can be hidden), or its events stop refreshing.'
   - keyname: calendar_2
     field_type: plugin_instance_select
     name: Calendar 2
-    description: 'Optional: another calendar plugin, set up the same way.'
+    description: 'Optional: another calendar plugin, also with its Layout set to Rolling Month and kept in a playlist.'
     optional: true
   - keyname: calendar_3
     field_type: plugin_instance_select
     name: Calendar 3
-    description: 'Optional: another calendar plugin, set up the same way.'
+    description: 'Optional: another calendar plugin, also with its Layout set to Rolling Month and kept in a playlist.'
     optional: true
   - keyname: calendar_4
     field_type: plugin_instance_select
     name: Calendar 4
-    description: 'Optional: another calendar plugin, set up the same way.'
+    description: 'Optional: another calendar plugin, also with its Layout set to Rolling Month and kept in a playlist.'
     optional: true
   - keyname: calendar_5
     field_type: plugin_instance_select
     name: Calendar 5
-    description: 'Optional: another calendar plugin, set up the same way.'
+    description: 'Optional: another calendar plugin, also with its Layout set to Rolling Month and kept in a playlist.'
     optional: true
   - keyname: calendar_6
     field_type: plugin_instance_select
     name: Calendar 6
-    description: 'Optional: another calendar plugin, set up the same way.'
+    description: 'Optional: another calendar plugin, also with its Layout set to Rolling Month and kept in a playlist.'
     optional: true
   - keyname: calendar_7
     field_type: plugin_instance_select
     name: Calendar 7
-    description: 'Optional: another calendar plugin, set up the same way.'
+    description: 'Optional: another calendar plugin, also with its Layout set to Rolling Month and kept in a playlist.'
     optional: true
   - keyname: calendar_8
     field_type: plugin_instance_select
     name: Calendar 8
-    description: 'Optional: another calendar plugin, set up the same way.'
+    description: 'Optional: another calendar plugin, also with its Layout set to Rolling Month and kept in a playlist.'
     optional: true
   - keyname: calendar_labels
     field_type: multi_string
