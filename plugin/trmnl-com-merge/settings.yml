@@ -82,7 +82,7 @@ custom_fields:
     field_type: plugin_instance_select
     name: Weather
     group: Weather
-    description: 'Optional: a weather forecast next to each day number, from today on. Pick TRMNL''s Weather plugin (today and tomorrow) or the <a href="https://trmnl.com/recipes/150460" class="underline" target="_blank">Daily Weather</a> recipe (about a week). Keep it in a playlist (it can be hidden), or the forecast stops refreshing.'
+    description: 'Optional: a weather forecast next to each day number, from today on. <b>TRMNL''s own Weather plugin only shares today and tomorrow</b>; for about a week, install the <a href="https://trmnl.com/recipes/150460" class="underline" target="_blank">Daily Weather</a> recipe and pick that. Keep it in a playlist (it can be hidden), or the forecast stops refreshing.'
     optional: true
   - keyname: weather_temperatures
     field_type: select
