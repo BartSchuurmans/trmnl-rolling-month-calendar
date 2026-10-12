@@ -15,15 +15,18 @@ log() { echo "cloud-setup: $*" >&2; }
 [ -d "$root/preview/node_modules" ] || { log "npm ci"; (cd "$root/preview" && npm ci --silent >&2); }
 [ -d "$root/preview/php/vendor" ] || { log "composer install"; (cd "$root/preview/php" && composer install -q --no-interaction >&2); }
 
-# TRMNL framework, pinned in larapaper/assets.txt, laid out as render.yml does
+# TRMNL framework, pinned in larapaper/assets.txt (themes in preview/assets.txt), laid out as
+# render.yml does
 version="$(sed -n "s/^framework_version: *['\"]*\([^'\"]*\).*/\1/p" "$root/plugin/src/settings.yml")"
 fw="$cache/framework"
-if [ ! -e "$fw/css/$version/plugins.css" ]; then
+if [ ! -e "$fw/css/$version/themes" ]; then
     log "fetching assets (framework $version)"
     sh "$root/larapaper/fetch-assets.sh" "$root/larapaper/assets.txt" "$cache/assets" >/dev/null
+    sh "$root/larapaper/fetch-assets.sh" "$root/preview/assets.txt" "$cache/assets" >/dev/null
     mkdir -p "$fw/css/$version" "$fw/js/$version"
     ln -sfn "$cache/assets/trmnl-framework/$version/plugins.min.css" "$fw/css/$version/plugins.css"
     ln -sfn "$cache/assets/trmnl-framework/$version/plugins.min.js" "$fw/js/$version/plugins.js"
+    ln -sfn "$cache/assets/trmnl-framework/$version/themes" "$fw/css/$version/themes"
     ln -sfn "$cache/assets/fonts" "$fw/fonts"
 fi
 

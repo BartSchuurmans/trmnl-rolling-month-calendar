@@ -1,0 +1,5 @@
+# TRMNL framework themes (screen--theme-*), for the preview renders only (render.mjs --theme):
+# TRMNL.com applies them, LaraPaper doesn't. Same format as larapaper/assets.txt (fetch-assets.sh).
+36bd44c064cebc75c0a7a821d86d33b7ad3d9d36886fdcbc30bdbb451e9dc437  trmnl-framework/3.4.0/themes/black-and-yellow-theme.css  https://raw.githubusercontent.com/usetrmnl/trmnl-framework/v3.4.0/public/css/3.4.0/themes/black-and-yellow-theme.css
+3e0dde2ad5c51f7c87a02e78c8537c5207f28ae646aaa6d74e08d52bb8bcabed  trmnl-framework/3.4.0/themes/dark-theme.css  https://raw.githubusercontent.com/usetrmnl/trmnl-framework/v3.4.0/public/css/3.4.0/themes/dark-theme.css
+38c73a498a9e56fc479d433a8d94488f17c09f7ac3b0dcf1d2675358ec4e1c92  trmnl-framework/3.4.0/themes/white-and-red-theme.css  https://raw.githubusercontent.com/usetrmnl/trmnl-framework/v3.4.0/public/css/3.4.0/themes/white-and-red-theme.css

@@ -46,14 +46,16 @@ jobs:
         working-directory: preview/php
         run: composer install --no-interaction --no-progress
 
-      - name: TRMNL framework (pinned in larapaper/assets.txt)
+      - name: TRMNL framework (pinned in larapaper/assets.txt, themes in preview/assets.txt)
         run: |
           version="$(yq '.framework_version' plugin/src/settings.yml)"
           sh larapaper/fetch-assets.sh larapaper/assets.txt "$RUNNER_TEMP/assets" > /dev/null
+          sh larapaper/fetch-assets.sh preview/assets.txt "$RUNNER_TEMP/assets" > /dev/null
           fw="$RUNNER_TEMP/framework"
           mkdir -p "$fw/css/$version" "$fw/js/$version"
           ln -s "$RUNNER_TEMP/assets/trmnl-framework/$version/plugins.min.css" "$fw/css/$version/plugins.css"
           ln -s "$RUNNER_TEMP/assets/trmnl-framework/$version/plugins.min.js" "$fw/js/$version/plugins.js"
+          ln -s "$RUNNER_TEMP/assets/trmnl-framework/$version/themes" "$fw/css/$version/themes"
           ln -s "$RUNNER_TEMP/assets/fonts" "$fw/fonts"
           echo "FRAMEWORK_DIR=$fw" >> "$GITHUB_ENV"
 

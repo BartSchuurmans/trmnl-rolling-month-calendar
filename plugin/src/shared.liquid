@@ -618,11 +618,17 @@
     return { splitList: splitList, splitAligned: splitAligned, wallClock: wallClock, buildEvents: buildEvents };
   })();
 
+  // a hex colour, or a computed one (rgb()/rgba())
   function isDark(color) {
-    var m = /^#?([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(String(color).trim());
-    if (!m) return true;
-    var h = m[1].length === 3 ? m[1].replace(/./g, '$&$&') : m[1];
-    var r = parseInt(h.slice(0, 2), 16), g = parseInt(h.slice(2, 4), 16), b = parseInt(h.slice(4, 6), 16);
+    var r, g, b, c = String(color).trim();
+    var m = /^#?([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(c);
+    var rgb = /^rgba?\(\s*(\d+)[\s,]+(\d+)[\s,]+(\d+)/i.exec(c);
+    if (m) {
+      var h = m[1].length === 3 ? m[1].replace(/./g, '$&$&') : m[1];
+      r = parseInt(h.slice(0, 2), 16); g = parseInt(h.slice(2, 4), 16); b = parseInt(h.slice(4, 6), 16);
+    } else if (rgb) {
+      r = +rgb[1]; g = +rgb[2]; b = +rgb[3];
+    } else return true;
     return (0.299 * r + 0.587 * g + 0.114 * b) < 140;
   }
 
@@ -777,13 +783,27 @@
         // Band events (multi-day, or from a coloured calendar): a light grey band, or the
         // calendar's colour, painted with its bg--* class (solid on 4-bit, dither pattern on
         // 1-/2-bit); a hex colour as-is. Text is black or white by the lightness the class
-        // paints (--bg-<token>-color, which dark mode changes) on screens that print greys
-        // solid; on 1-/2-bit the fill is a dither pattern, so text in the ink colour with the
-        // framework's contrast outline (text-stroke), like upstream's adaptiveEventStroke.
+        // actually paints on screens that print greys solid: dark mode changes the colour
+        // behind bg--* (--bg-<token>-color), a theme (screen--theme-*) remaps the class itself
+        // (Dark paints bg--white black), so it is read from a probe element. On 1-/2-bit the
+        // fill is a dither pattern, so text in the ink colour with the framework's contrast
+        // outline (text-stroke), like upstream's adaptiveEventStroke.
+        var probe = document.createElement('div');
+        probe.style.display = 'none';
+        node.appendChild(probe);
+        var paintedBy = {};
+        var paintOf = function(token) {
+          if (!(token in paintedBy)) {
+            probe.className = 'bg--' + token;
+            var paint = getComputedStyle(probe).backgroundColor;
+            paintedBy[token] = /^rgba\(.*,\s*0\)$/.test(paint) ? '' : paint;  // no such class
+          }
+          return paintedBy[token];
+        };
         built.events.forEach(function(ev) {
           var color = ev.extendedProps.color || { token: 'gray-70' };
           var raw = color.hex || screenStyles.getPropertyValue('--' + color.token).trim();
-          var painted = color.hex || screenStyles.getPropertyValue('--bg-' + color.token + '-color').trim() || raw;
+          var painted = color.hex || paintOf(color.token) || raw;
           var classes = [];
           if (color.hex) ev.color = color.hex;
           else classes.push('bg--' + color.token);
@@ -793,6 +813,7 @@
           if (patterned) classes.push('text-stroke', 'text-stroke--small');
           ev.extendedProps.fillClass = classes.join(' ');
         });
+        node.removeChild(probe);
         baseOpts.rowEventClass = function(info) { return info.event.extendedProps.fillClass; };
 
         // Rolling month fills the screen with as many whole weeks as actually fit.

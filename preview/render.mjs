@@ -33,6 +33,10 @@
 // --dark renders in dark mode (screen--dark-mode), as TRMNL.com and LaraPaper do with the
 // plugin's dark_mode setting on.
 //
+// --theme dark|white-and-red|black-and-yellow renders in that framework theme
+// (screen--theme-* plus its stylesheet), as TRMNL.com does with a theme picked for the device
+// or playlist item. LaraPaper has no themes.
+//
 // --expect-events fails the render when no event made it onto the grid.
 //
 // --scale regular|large|... renders at that screen scale (screen--scale-*) instead of the
@@ -82,6 +86,7 @@ let mergeWeather = null;
 let expectEvents = false;
 let scale = null;
 let dark = false;
+let theme = '';
 let now = new Date();
 let out = path.join(outDir, 'preview.png');
 let timeZone = process.env.TZ_NAME || Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -104,6 +109,7 @@ for (let i = 0; i < args.length; i++) {
   else if (args[i] === '--expect-events') expectEvents = true;
   else if (args[i] === '--scale') scale = args[++i];
   else if (args[i] === '--dark') dark = true;
+  else if (args[i] === '--theme') theme = args[++i];
 }
 const device = DEVICES[deviceName];
 if (device && scale) device.classes = device.classes.replace(/ screen--scale-\S+|$/, ` screen--scale-${scale}`);
@@ -114,6 +120,7 @@ const settings = yaml.load(fs.readFileSync(path.join(src, 'settings.yml'), 'utf8
 // LaraPaper (its "Remove bleed margin?" box)
 if (settings.no_screen_padding === 'yes') device.classes += ' screen--no-bleed';
 if (dark) device.classes += ' screen--dark-mode';
+if (theme) device.classes += ` screen--theme-${theme}`;
 // --set takes only the recipe's settings (with --merge, the merge variant's too), so a
 // setting that's gone can't linger in a check that no longer tests anything
 const known = new Set(settings.custom_fields.map((f) => f.keyname));
@@ -269,7 +276,7 @@ const fw = settings.framework_version || '3.4.0';
 const vars = { '--screen-w': `${device.width}px`, '--screen-h': `${device.height}px`, ...device.vars };
 const html = `<!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8">
-<link rel="stylesheet" href="https://trmnl.com/css/${fw}/plugins.css">
+<link rel="stylesheet" href="https://trmnl.com/css/${fw}/plugins.css">${theme ? `\n<link rel="stylesheet" href="https://trmnl.com/css/${fw}/themes/${theme}-theme.css">` : ''}
 <script src="https://trmnl.com/js/${fw}/plugins.js"></script>
 <style>:root { ${Object.entries(vars).map(([k, v]) => `${k}: ${v};`).join(' ')} }</style>
 </head><body class="environment trmnl"><div class="screen ${device.classes}">${body}</div></body></html>`;

@@ -93,6 +93,11 @@ render colors-x --set calendar_colors=black,-,gray-65 --set calendar_labels=-,M:
 render dark-x --dark --set calendar_colors=gray-35,white,gray-60 --set calendar_labels=-,M:,S: --set weather_entity=weather.forecast_home
 render dark-og --device og --dark --set calendar_colors=gray-35,white,gray-60 --set calendar_labels=-,M:,S:
 render dark-og-2bit --device og2 --dark --set calendar_colors=black,-,gray-50 --set highlight_today=true
+# Framework themes (TRMNL.com): Dark remaps bg--* classes rather than their colours, the others
+# put light ink on a coloured canvas
+render theme-dark-x --theme dark --set calendar_colors=gray-35,white,gray-60 --set calendar_labels=-,M:,S: --set weather_entity=weather.forecast_home
+render theme-dark-og --device og --theme dark --set calendar_colors=gray-35,white,gray-60 --set calendar_labels=-,M:,S:
+render theme-white-and-red-x --theme white-and-red --set calendar_colors=gray-35,white,gray-60 --set calendar_labels=-,M:,S:
 # The settings that are on by default turned off, and events hidden by title
 render off-x --set highlight_today=false --set shade_weekends=false --set include_event_time=false \
     --set fade_past_events=false --set ignored_phrases=Gym --set ignored_phrases_exact_match=Standup
