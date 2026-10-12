@@ -58,7 +58,8 @@ plugin; see README.md for setup and UPSTREAM.md for what differs from upstream.
   drawn, is the `trmnlp-test-report` artifact (`preview/out/ci/trmnlp-test/`).
 - `node preview/render.mjs --device x|og|og2 --set key=value ...` for one-off renders;
   `--size half_horizontal|half_vertical|quadrant` renders that view inside a mashup;
-  `--dark` renders in dark mode (`screen--dark-mode`).
+  `--dark` renders in dark mode (`screen--dark-mode`); `--theme dark|white-and-red|black-and-yellow`
+  in a framework theme (stylesheets pinned in `preview/assets.txt`).
 - `node preview/variants.mjs check` (in `ci.sh`) — each variant's `settings.yml` in step
   with `plugin/src/settings.yml`. A new setting goes in every variant, or in that variant's
   `leftOut` in `VARIANTS` there.
@@ -234,9 +235,17 @@ screens).
 (`--framework-text-primary`, `--framework-canvas-bg`, ...) and what `bg--*`/`text--*` paint
 (`--bg-<token>-color`), but not the raw palette (`--black`, `--white`, `--gray-*`). So
 CSS takes ink and paper from `--mono-ink`/`--mono-paper` (the semantic colours), never
-`var(--black)` or `var(--white)`, and the JS reads a fill's lightness from
-`--bg-<token>-color`. `ci.sh` renders dark mode (`dark-*`); look at those after colour
+`var(--black)` or `var(--white)`, and the JS reads a fill's lightness from what its
+`bg--<token>` class paints (see Themes). `ci.sh` renders dark mode (`dark-*`); look at those after colour
 changes.
+
+**Themes.** TRMNL.com applies a framework theme (`screen--theme-*` plus its stylesheet, picked
+per device or playlist item) to plugins on framework 3.2+; LaraPaper has none. A theme sets
+every colour, so `screen--dark-mode` does nothing there, and it remaps what `bg--*`/`text--*`
+classes paint without changing `--bg-<token>-color` (Dark paints `bg--white` black). So the JS
+reads a fill from a probe element's computed `background-color`, not from the variable.
+`ci.sh` renders `theme-*`, and the polling variant's spec checks events stay readable in each
+built-in theme.
 
 **Time zones.** HA sends timed events with offsets; they are converted to wall-clock
 time in the configured zone and given to FullCalendar with `timeZone: 'UTC'`. Read

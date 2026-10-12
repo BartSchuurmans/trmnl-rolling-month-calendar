@@ -63,6 +63,29 @@ RSpec.describe 'Rolling Month Calendar (Home Assistant)' do
     end
   end
 
+  # Events whose text is hardly lighter or darker than their fill, as [title, fill, text]
+  UNREADABLE_EVENTS = <<~JS
+    [...document.querySelectorAll('.mono-event')].map(function(el) {
+      var title = el.querySelector('.mono-event-title') || el;
+      var fill = getComputedStyle(el).backgroundColor, text = getComputedStyle(title).color;
+      var lum = function(c) { var v = c.match(/[\\d.]+/g).map(Number); return 0.299 * v[0] + 0.587 * v[1] + 0.114 * v[2]; };
+      return [title.textContent, fill, text, Math.abs(lum(fill) - lum(text))];
+    }).filter(function(e) { return e[3] < 100; }).map(function(e) { return e.slice(0, 3); })
+  JS
+
+  # TRMNL's themes (a device's or playlist item's Theme) restyle the framework's classes: Dark
+  # paints bg--white black, so Mark's white calendar needs white text there
+  TRMNLP::FrameworkVersion::THEMES.each_key do |theme|
+    it "draws readable events in the #{theme} theme" do
+      colors = custom_fields.merge(calendar_colors: 'gray-35,white,gray-60')
+      screen = trmnl.render(device: 'v2', theme:, now:, custom_fields: colors, mocks:)
+
+      expect(screen).to have_text('Parent-teacher meeting')
+      expect(screen.evaluate(UNREADABLE_EVENTS)).to eq([])
+      expect(screen).to have_no_overflow(except: CLIPPED)
+    end
+  end
+
   TRMNLP::Testing.select_field_values.each do |keyname, values|
     values.each do |value|
       it "draws the full view with #{keyname} set to #{value}" do
