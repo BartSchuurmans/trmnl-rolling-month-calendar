@@ -116,6 +116,12 @@ render weather-x --set weather_entity=weather.forecast_home --set show_week_numb
 render weather-lows-og --device og --set weather_entity=weather.forecast_home --set weather_temperatures=high_low
 render weather-ics-half-vertical-x --ics --size half_vertical --set weather_entity=weather.forecast_home --set show_week_numbers=true --expect-events
 
+# "Show only changes" on a work calendar (render.mjs --work): its usual days hidden, days
+# off crossed out, through each source
+render changes-only-x --work --expect-events --set calendar_labels=-,M:,S:,W: --set calendar_changes_only=-,-,-,yes
+render changes-only-ics-og --device og --ics --work --expect-events --set calendar_labels=-,M:,S:,W: --set calendar_changes_only=-,-,-,yes
+render changes-only-merge-x --merge --work --expect-events --set calendar_labels=-,M:,S:,W: --set calendar_changes_only=-,-,-,yes --set include_past_events=false
+
 # The sample as TRMNL.com's Plugin Merge dropdowns (plugin/trmnl-com-merge/merge.liquid)
 render merge-x --merge --expect-events --set calendar_colors=black,-,gray-50 --set calendar_labels=-,M:,S:
 # ... at TRMNL.com's default screen scale (regular; LaraPaper's X is xxlarge), and at small,

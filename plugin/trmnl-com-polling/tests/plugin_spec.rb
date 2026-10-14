@@ -97,6 +97,17 @@ RSpec.describe 'Rolling Month Calendar (Home Assistant)' do
     end
   end
 
+  # Mark's gym, every Tuesday at 7, is his routine
+  it "hides a calendar's usual events with Show only changes" do
+    routine = custom_fields.merge(calendar_changes_only: '-,-,yes')
+    screen = trmnl.render(device: 'v2', now:, mocks:, custom_fields: routine)
+
+    expect(screen).to have_text('Parent-teacher meeting')
+    expect(screen).to have_text('Offsite')
+    expect(screen).to have_no_text('Gym')
+    expect(trmnl.render(device: 'v2', now:, mocks:, custom_fields:)).to have_text('Gym')
+  end
+
   TRMNLP::Testing::PUBLISHABLE_RECIPE_API_FAILURES.each do |failure, answer|
     it "says so when Home Assistant #{failure}" do
       screen = trmnl.render(device: 'v2', now:, custom_fields:, mocks: { '*' => answer })

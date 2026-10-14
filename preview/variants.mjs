@@ -45,6 +45,7 @@ const VARIANTS = {
       name: 'its own recipe on TRMNL.com, named after its data source (TRMNL\'s calendar plugins)',
       'calendar_labels.default': SKIP_HINT,
       'calendar_colors.default': SKIP_HINT,
+      'calendar_changes_only.default': SKIP_HINT,
     },
   },
   'trmnl-com-polling': {
@@ -61,6 +62,7 @@ const VARIANTS = {
       'calendars.optional': 'Home Assistant is the only source here',
       'calendar_labels.default': SKIP_HINT,
       'calendar_colors.default': SKIP_HINT,
+      'calendar_changes_only.default': SKIP_HINT,
     },
   },
 };

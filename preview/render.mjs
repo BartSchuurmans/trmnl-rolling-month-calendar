@@ -37,6 +37,9 @@
 // (screen--theme-* plus its stylesheet), as TRMNL.com does with a theme picked for the device
 // or playlist item. LaraPaper has no themes.
 //
+// --work adds a work calendar (sampleWork in sample-data.mjs) to the sample calendars, last,
+// for "Show only changes" (calendar_changes_only).
+//
 // --expect-events fails the render when no event made it onto the grid.
 //
 // --scale regular|large|... renders at that screen scale (screen--scale-*) instead of the
@@ -57,7 +60,7 @@ import { fileURLToPath } from 'node:url';
 import { Liquid } from 'liquidjs';
 import * as yaml from 'js-yaml';
 import { chromium } from 'playwright-core';
-import { sampleData, sampleForecast, sampleOpenMeteo, sampleTrmnlWeather } from './sample-data.mjs';
+import { sampleData, sampleForecast, sampleWork, sampleOpenMeteo, sampleTrmnlWeather } from './sample-data.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const src = path.join(here, '..', 'plugin', 'src');
@@ -80,6 +83,7 @@ let dumpContext = null;
 let bodyFile = null;
 let strict = false;
 let ics = false; // or '0.43'
+let work = false;
 let size = 'full';
 let merge = false;
 let mergeWeather = null;
@@ -107,6 +111,7 @@ for (let i = 0; i < args.length; i++) {
   else if (args[i] === '--merge') merge = true;
   else if (args[i] === '--merge-weather') { merge = true; mergeWeather = args[++i]; }
   else if (args[i] === '--expect-events') expectEvents = true;
+  else if (args[i] === '--work') work = true;
   else if (args[i] === '--scale') scale = args[++i];
   else if (args[i] === '--dark') dark = true;
   else if (args[i] === '--theme') theme = args[++i];
@@ -202,6 +207,10 @@ let payload = dataFile ? JSON.parse(fs.readFileSync(dataFile, 'utf8'))
   : process.env.HA_URL ? await liveData()
   : sampleData(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`, timeZone);
 if (!dataFile && !process.env.HA_URL && !overrides.calendars) customFields.calendars = 'calendar.family,calendar.mark,calendar.sara';
+if (work) {
+  payload[`IDX_${Object.keys(payload).filter((k) => /^IDX_\d+$/.test(k)).length}`] = sampleWork(todayYmd, timeZone);
+  if (!overrides.calendars) customFields.calendars += ',calendar.work';
+}
 // Plugin Merge: no polled payload, the chosen plugins' data sits at the top level
 let merged = {};
 if (merge) {

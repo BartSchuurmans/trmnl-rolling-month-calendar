@@ -109,6 +109,32 @@ export function sampleData(today, zone) {
   return Object.fromEntries(Object.keys(CALENDARS).map((name, i) => [`IDX_${i}`, { data: haEvents(name, from, to, zone) }]));
 }
 
+// A work calendar for "Show only changes" (calendar_changes_only), as rendered with
+// render.mjs --work: Monday to Thursday 8:30-17:00, apart from a few changes in the cycle
+// (a later Wednesday, Thursday swapped for Friday, the family's holiday week off, a short
+// Tuesday). Like sampleData, a week before `today` to seven weeks after it, in HA's
+// format; not one of the published sample calendars.
+const WORK_CHANGES = {
+  '1-Wed': ['12:00', '20:00'], '2-Thu': null, '2-Fri': ['08:30', '17:00'],
+  '3-Mon': null, '3-Tue': null, '3-Wed': null, '3-Thu': null, '5-Tue': ['08:30', '13:00'],
+};
+export function sampleWork(today, zone) {
+  const from = Date.parse(`${today}T00:00:00Z`) - 7 * DAY_MS, anchor = Date.parse(`${ANCHOR}T00:00:00Z`);
+  const names = Object.keys(DAYS);
+  const events = [];
+  for (let t = from; t < from + 8 * 7 * DAY_MS; t += DAY_MS) {
+    const days = Math.round((t - anchor) / DAY_MS);
+    const week = ((Math.floor(days / 7) % CYCLE) + CYCLE) % CYCLE, day = names[((days % 7) + 7) % 7];
+    const change = `${week}-${day}`;
+    const times = change in WORK_CHANGES ? WORK_CHANGES[change] : DAYS[day] < 4 && ['08:30', '17:00'];
+    if (!times) continue;
+    const date = ymd(t);
+    events.push({ start: { dateTime: `${date}T${times[0]}:00${offset(date, zone)}` }, end: { dateTime: `${date}T${times[1]}:00${offset(date, zone)}` },
+      summary: 'Work', description: null, location: null, uid: `work-${date}`, recurrence_id: null, rrule: null });
+  }
+  return { data: events };
+}
+
 // docs/sample-ha/api/calendars/calendar.<name>: the cycle's start to SAMPLE_HA_END, in
 // Amsterdam time, one event per line
 export function sampleHa(name) {
