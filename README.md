@@ -273,7 +273,7 @@ toggles.
 |---|---|---|
 | Calendar prefixes | – | Text shown before each event title, per calendar (e.g. `W:`) |
 | Calendar colors | – | Event background per calendar: a TRMNL color name (`black`, `gray-10` … `gray-75`, `red`, `blue-40`, …) or a hex color |
-| Show only changes | – | `yes` per calendar that follows a weekly routine (e.g. working hours): only what differs from it is shown, see [Only changes](#only-changes) |
+| Usual week | – | Per calendar with a weekly routine (e.g. working hours), such as `Mon-Thu 08:30-17:00`: only what differs from it is shown, see [Usual week](#usual-week) |
 
 #### Weather
 
@@ -370,30 +370,35 @@ show, with a weather forecast and **Weather temperatures** on `High and low` (se
   first week (`14:00 –`), when it ends in its last (`– 11:00`), and no time in between.
 - Titles wrap over at most two lines, then end in an ellipsis, for every kind of event.
 
-### Only changes
+### Usual week
 
 A calendar that follows a weekly routine, such as one with your working hours, mostly
-repeats what everyone knows already. Put `yes` in its place in **Show only changes**
-(matched by position, like the prefixes; `-` for the other calendars) and it shows only
-what differs from the routine:
+repeats what everyone knows already. Write that routine in its place in **Usual week**
+(matched by position, like the prefixes; `-` for the other calendars) and the calendar
+shows only what differs from it:
 
-- Its usual events are hidden: an event is usual when the same title, at the same times
-  (or all day), falls on that weekday in at least half of the weeks, and on at least two
-  days.
+- Its events on a usual day at the usual times are hidden, whatever their title.
 - Anything else shows as normal: a shifted day with its new times, an extra day, an event
   over several days.
-- A day off (a usual day without any of the calendar's events, such as a holiday) shows
-  the usual event crossed out.
+- A usual day without any of the calendar's events (a day off, a holiday) shows the usual
+  event crossed out, as an all-day event, so a holiday of any length stays visible.
 
-The routine is worked out from the calendar's own events around today (a week back, six
-weeks ahead), so nothing needs to be kept up to date when it changes. It only finds a
-weekly routine: something every other week, half of the weeks, may count as usual and
-then shows crossed out in the other weeks. Days after the calendar's last event never
-count as days off, so a schedule entered a few weeks ahead is fine.
+The usual week is one or more rules separated by `;`, each weekdays and times:
 
-<sub>The sample calendars with a work calendar (`W:`, Monday to Thursday 8:30–17:00) on
-`yes`: a later Wednesday, a Thursday swapped for Friday, and the holiday week off.</sub><br>
-<img src="docs/changes-only.png" width="100%">
+| Usual week | Means |
+|---|---|
+| `Mon-Thu 08:30-17:00` | Monday to Thursday, 8:30 to 17:00 |
+| `Mon-Thu 08:30-17:00; Fri 08:30-12:00` | and Friday mornings |
+| `Mon Wed Fri 22:00-06:00` | night shifts, ending the next morning |
+| `Sat Sun` | an all-day event every weekend day |
+
+Weekdays are English (`Mon` … `Sun`, or written in full), times are 24-hour, and there
+are no commas in it (they separate the calendars). A crossed-out day takes the title the
+calendar's usual events have (with its prefix), or the prefix alone when none are in view.
+
+<sub>The sample calendars with a work calendar (`W:`) on `Mon-Thu 08:30-17:00`: a later
+Wednesday, a Thursday swapped for Friday, and the holiday week off.</sub><br>
+<img src="docs/usual-week.png" width="100%">
 
 ## Differences from upstream
 

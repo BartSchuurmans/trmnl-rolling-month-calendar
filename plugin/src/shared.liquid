@@ -215,7 +215,7 @@
 
   /* a white calendar colour has no edge on a white cell: outline it like the grid lines,
      open (not pointed, which would cut the outline) where it continues in another week */
-  /* "Show only changes": a usual event that doesn't happen (a day off), crossed out */
+  /* "Usual week": a usual event that doesn't happen (a day off), crossed out */
   .trmnl-calendar .trmnl-event--off .mono-event-title,
   .trmnl-calendar .trmnl-event--off .mono-event-time { text-decoration: line-through; }
   .trmnl-calendar .trmnl-event--white { clip-path: none; --mono-cut-start: 0px; --mono-cut-end: 0px; border: 1px solid var(--mono-line); }
@@ -567,67 +567,85 @@
       };
     }
 
-    // "Show only changes" (calendar_changes_only): a calendar that follows a weekly routine
-    // (working hours) keeps only what differs from it. An event is routine when the same
-    // title at the same times (or all day) falls on that weekday in at least half of the
-    // weeks the calendar's data covers, and on at least two days: those events are hidden.
-    // A covered day with none of the calendar's events at all where the routine has one (a
-    // day off, a holiday) gets the usual event back, crossed out (trmnl-event--off). Events
-    // over several days are never routine. Works on dates and times alone, so on every
-    // source (recurrence ids and rules differ per source, and some lose them).
-    // Only days between `from` and `to` (when given) count, and only from the calendar's first
-    // event to its last: a schedule entered a few weeks ahead has no days off after that.
-    function onlyChanges(events, from, to) {
+    // "Usual week" (calendar_usual_week): a calendar that follows a weekly routine (working
+    // hours) shows only what differs from it. The routine is written as one or more rules
+    // separated by ";", each weekdays (Mon … Sun in English, ranges like Mon-Thu, or full names)
+    // and 24-hour times (08:30-17:00; an end before the start ends the next day), or no times
+    // for an all-day event. Unreadable rules are skipped.
+    var WEEKDAYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    // a weekday's number for its name or the start of it (two letters or more), else -1
+    function weekday(token) {
+      for (var d = 0; d < 7; d++) if (token.length >= 2 && WEEKDAYS[d].indexOf(token) === 0) return d;
+      return -1;
+    }
+    function parseUsualWeek(text) {
+      return String(text || '').split(';').map(function(part) {
+        var time = part.match(/(\d{1,2})[:.](\d{2})\s*[-–]\s*(\d{1,2})[:.](\d{2})/);
+        // 24:00 is midnight at the end of the day
+        var pad = function(h, m) { return +h === 24 && +m === 0 ? '00:00' : (h.length < 2 ? '0' : '') + h + ':' + m; };
+        var days = {}, any = false;
+        (time ? part.replace(time[0], ' ') : part).toLowerCase().split(/[\s\/&+]+/).filter(Boolean).forEach(function(token) {
+          var range = token.split(/[-–]/), from = weekday(range[0]), to = weekday(range[1] || range[0]);
+          if (from === -1 || to === -1 || range.length > 2) { any = null; return; }
+          for (var d = from; ; d = (d + 1) % 7) { days[d] = true; if (d === to) break; }
+          if (any !== null) any = true;
+        });
+        if (!any || (time && (+time[1] > 23 || +time[2] > 59 || +time[3] > 24 || +time[4] > 59 || (+time[3] === 24 && +time[4] > 0)))) return null;
+        return { days: days, start: time ? pad(time[1], time[2]) : null, end: time ? pad(time[3], time[4]) : null };
+      }).filter(Boolean);
+    }
+
+    // Hides the calendar's events that match its usual week, and on a day of the usual week
+    // without any of the calendar's events (a day off, a holiday) adds the usual event back as
+    // an all-day one, crossed out (extendedProps.off, trmnl-event--off). Its title is the one
+    // its rule's events mostly have, else the calendar's usual events', else the calendar's
+    // prefix alone. Days off only count from `from` to `to`, the days the calendar's data is
+    // complete for; unknown (null), from its first event to its last.
+    function applyUsualWeek(events, rules, from, to, prefix, color) {
+      if (!rules.length) return events;
       var dayOf = function(d) { return new Date(d.slice(0, 10) + 'T00:00:00Z').getUTCDay(); };
-      // the event's routine key, or null for one over several days
-      var keyOf = function(ev) {
+      var daysBetween = function(a, b) { return Math.round((Date.parse(b.slice(0, 10) + 'T00:00:00Z') - Date.parse(a.slice(0, 10) + 'T00:00:00Z')) / 864e5); };
+      // the rule an event is the usual one of, if any
+      var ruleOf = function(ev) {
         var date = ev.start.slice(0, 10);
-        if (ev.allDay) return isSingleDay(date, ev.end) ? 'all-day\u0000' + ev.extendedProps.summary : null;
-        var end = ev.end || ev.start;
-        var endDays = Math.round((Date.parse(end.slice(0, 10) + 'T00:00:00Z') - Date.parse(date + 'T00:00:00Z')) / 864e5);
-        // until midnight still counts as that day
-        if (endDays !== 0 && !(endDays === 1 && end.slice(11, 16) === '00:00')) return null;
-        return [ev.start.slice(11, 16), ev.end ? endDays + end.slice(11, 16) : '', ev.extendedProps.summary].join('\u0000');
+        return rules.filter(function(rule) {
+          if (!rule.days[dayOf(date)]) return false;
+          if (!rule.start) return ev.allDay && isSingleDay(date, ev.end);
+          if (ev.allDay || !ev.end || ev.start.slice(11, 16) !== rule.start || ev.end.slice(11, 16) !== rule.end) return false;
+          return daysBetween(date, ev.end) === (rule.end <= rule.start ? 1 : 0);
+        })[0] || null;
       };
-      if (!events.length) return events;
+      var titles = rules.map(function() { return {}; }), allTitles = {}, busy = {};
       var starts = events.map(function(ev) { return ev.start.slice(0, 10); }).sort();
-      var firstDay = from && from > starts[0] ? from : starts[0];
-      var lastDay = to && to < starts[starts.length - 1] ? to : starts[starts.length - 1];
-      if (lastDay < firstDay) return events;
-      // per weekday: how many of its days are covered, and on how many of them each key falls
-      var covered = [0, 0, 0, 0, 0, 0, 0], counts = [{}, {}, {}, {}, {}, {}, {}], sample = {}, busy = {};
-      for (var day = firstDay; day <= lastDay; day = addDays(day, 1)) covered[dayOf(day)]++;
-      var seenOn = {};
-      events.forEach(function(ev) {
-        var date = ev.start.slice(0, 10), key = keyOf(ev);
-        // the days the event touches (an end at midnight doesn't touch the next day)
-        var until = ev.end ? (ev.allDay ? addDays(ev.end.slice(0, 10), -1) : ev.end.slice(11) === '00:00:00' ? addDays(ev.end.slice(0, 10), -1) : ev.end.slice(0, 10)) : date;
-        for (var d = date < firstDay ? firstDay : date; d <= until && d <= lastDay; d = addDays(d, 1)) busy[d] = true;
-        if (key === null || date < firstDay || date > lastDay || seenOn[date + '\u0000' + key]) return;
-        seenOn[date + '\u0000' + key] = true;
-        var c = counts[dayOf(date)];
-        c[key] = (c[key] || 0) + 1;
-        sample[key] = sample[key] || ev;
-      });
-      var routine = counts.map(function(c, dow) {
-        var keys = {};
-        Object.keys(c).forEach(function(key) { if (c[key] >= 2 && c[key] * 2 >= covered[dow]) keys[key] = true; });
-        return keys;
-      });
+      var firstDay = from || starts[0], lastDay = to || starts[starts.length - 1];
       var kept = events.filter(function(ev) {
-        var key = keyOf(ev);
-        return key === null || !routine[dayOf(ev.start)][key];
+        // the days the event touches (an end at midnight doesn't touch the next day)
+        var date = ev.start.slice(0, 10);
+        var until = ev.end ? (ev.allDay || ev.end.slice(11) === '00:00:00' ? addDays(ev.end.slice(0, 10), -1) : ev.end.slice(0, 10)) : date;
+        for (var d = date; d <= until; d = addDays(d, 1)) busy[d] = true;
+        var rule = ruleOf(ev);
+        if (!rule) return true;
+        var t = titles[rules.indexOf(rule)];
+        t[ev.title] = (t[ev.title] || 0) + 1;
+        allTitles[ev.title] = (allTitles[ev.title] || 0) + 1;
+        return false;
       });
-      // the days off: the routine's events, crossed out, on covered days the calendar left free
+      var mostCommon = function(t) { return Object.keys(t).sort(function(a, b) { return t[b] - t[a]; })[0]; };
+      if (!firstDay || !lastDay) return kept;
+      // a day off is a whole day: the crossed-out event is all-day, once per title
       for (var date = firstDay; date <= lastDay; date = addDays(date, 1)) {
         if (busy[date]) continue;
-        Object.keys(routine[dayOf(date)]).forEach(function(key) {
-          var ev = sample[key], shift = function(t) { return t && date + t.slice(10); };
-          var end = ev.end && (ev.allDay ? addDays(date, 1) : addDays(date, Math.round((Date.parse(ev.end.slice(0, 10) + 'T00:00:00Z') - Date.parse(ev.start.slice(0, 10) + 'T00:00:00Z')) / 864e5)) + ev.end.slice(10));
-          kept.push(Object.assign({}, ev, {
-            start: ev.allDay ? date : shift(ev.start), end: end,
-            extendedProps: Object.assign({}, ev.extendedProps, { off: true })
-          }));
+        var added = {};
+        rules.forEach(function(rule, r) {
+          if (!rule.days[dayOf(date)]) return;
+          var title = mostCommon(titles[r]) || mostCommon(allTitles) || prefix || '';
+          if (added[title]) return;
+          added[title] = true;
+          kept.push({
+            title: title, start: date, end: addDays(date, 1), allDay: true,
+            display: color ? 'block' : 'list-item',
+            extendedProps: { summary: title, description: '', location: '', color: color, off: true }
+          });
         });
       }
       return kept;
@@ -671,11 +689,10 @@
         // the days the calendar's data is complete for, as polled: Home Assistant from 6 days
         // back to 43 days ahead, end exclusive (polling_url in settings.yml), an ICS feed
         // from 7 days back to icsDaysAhead days after the poll; TRMNL's plugins: unknown
-        if (cfg.calendarChangesOnly[i]) {
-          calEvents = onlyChanges(calEvents,
-            cfg.source === 'ha' ? addDays(today, -6) : cfg.source === 'ics' ? addDays(today, -7) : null,
-            cfg.source === 'ha' ? addDays(today, 42) : cfg.source === 'ics' ? addDays(today, icsDaysAhead - 1) : null);
-        }
+        calEvents = applyUsualWeek(calEvents, parseUsualWeek(cfg.calendarUsualWeeks[i]),
+          cfg.source === 'ha' ? addDays(today, -6) : cfg.source === 'ics' ? addDays(today, -7) : null,
+          cfg.source === 'ha' ? addDays(today, 42) : cfg.source === 'ics' ? addDays(today, icsDaysAhead - 1) : null,
+          cfg.calendarPrefixes[i], parseColor(cfg.calendarColors[i]));
         calEvents.forEach(function(ev) {
           var raw = ev.extendedProps;
           if (!cfg.includePastEvents) {
@@ -749,8 +766,7 @@
         settings.calendarEntities = window.trmnlRollingCalendar.splitList(settings.calendarEntities);
         settings.calendarPrefixes = window.trmnlRollingCalendar.splitAligned(settings.calendarPrefixes);
         settings.calendarColors = window.trmnlRollingCalendar.splitAligned(settings.calendarColors);
-        settings.calendarChangesOnly = window.trmnlRollingCalendar.splitAligned(settings.calendarChangesOnly)
-          .map(function(v) { return /^(yes|y|true|on|1)$/i.test(v); });
+        settings.calendarUsualWeeks = window.trmnlRollingCalendar.splitAligned(settings.calendarUsualWeeks);
         settings.ignoredPhrases = window.trmnlRollingCalendar.splitList(settings.ignoredPhrases);
         settings.ignoredPhrasesExactMatch = window.trmnlRollingCalendar.splitList(settings.ignoredPhrasesExactMatch);
         var built = window.trmnlRollingCalendar.buildEvents(payload, settings);
@@ -1042,7 +1058,7 @@
          "calendarEntities": {% if source != "ha" %}""{% else %}{{ s.calendars | default: "" | json | escape }}{% endif %},
          "calendarPrefixes": {{ s.calendar_labels | default: "" | json | escape }},
          "calendarColors": {{ s.calendar_colors | default: "" | json | escape }},
-         "calendarChangesOnly": {{ s.calendar_changes_only | default: "" | json | escape }},
+         "calendarUsualWeeks": {{ s.calendar_usual_week | default: "" | json | escape }},
          "weatherEntity": {% if source != "merge" and s.weather_entity contains "weather." %}{{ s.weather_entity | strip | json | escape }}{% else %}""{% endif %},
          "weatherPlugin": {% if merge_weather %}true{% else %}false{% endif %},
          "weatherLows": {% if s.weather_temperatures == "high_low" %}true{% else %}false{% endif %},

@@ -109,7 +109,7 @@ export function sampleData(today, zone) {
   return Object.fromEntries(Object.keys(CALENDARS).map((name, i) => [`IDX_${i}`, { data: haEvents(name, from, to, zone) }]));
 }
 
-// A work calendar for "Show only changes" (calendar_changes_only), as rendered with
+// A work calendar for "Usual week" (calendar_usual_week), as rendered with
 // render.mjs --work: Monday to Thursday 8:30-17:00, apart from a few changes in the cycle
 // (a later Wednesday, Thursday swapped for Friday, the family's holiday week off, a short
 // Tuesday). Like sampleData, a week before `today` to seven weeks after it, in HA's

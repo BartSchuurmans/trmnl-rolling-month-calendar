@@ -38,7 +38,7 @@
 // or playlist item. LaraPaper has no themes.
 //
 // --work adds a work calendar (sampleWork in sample-data.mjs) to the sample calendars, last,
-// for "Show only changes" (calendar_changes_only).
+// for "Usual week" (calendar_usual_week).
 //
 // --expect-events fails the render when no event made it onto the grid.
 //

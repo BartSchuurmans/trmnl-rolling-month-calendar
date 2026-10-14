@@ -78,11 +78,11 @@ custom_fields:
     description: Optional event background, one per calendar in the same order as the calendars above. A <a href="https://trmnl.com/framework/docs/3.3/colors" class="underline" target="_blank">TRMNL color name</a> (black, gray-10 … gray-75, red, blue-40, …) or a hex color. Names become solid greys on the TRMNL X and dither patterns on 1-bit screens. Use - for a calendar without one.
     optional: true
     default: '-'
-  - keyname: calendar_changes_only
+  - keyname: calendar_usual_week
     field_type: multi_string
-    name: Show only changes
+    name: Usual week
     group: Calendars
-    description: For a calendar that follows a weekly routine, such as working hours. One per calendar in the same order as the calendars above; yes hides the events that recur on the same weekday at the same times, so only changes show; a day off is shown as the usual event crossed out. Use - for a calendar that shows all its events.
+    description: 'Optional, for a calendar with a weekly routine such as working hours: its usual week, one per calendar in the same order as the calendars above. Weekdays in English and 24-hour times, e.g. Mon-Thu 08:30-17:00, several separated by ; (Mon-Thu 08:30-17:00; Fri 08:30-12:00), or weekdays alone for all-day events. Events at those times are hidden, so only changes show; a usual day without any of its events (a day off) shows it crossed out. No commas inside; use - for a calendar without one.'
     optional: true
     default: '-'
   - keyname: weather_plugin
