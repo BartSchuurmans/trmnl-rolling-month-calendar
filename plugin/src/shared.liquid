@@ -571,7 +571,7 @@
     // hours) shows only what differs from it. The routine is written as one or more rules
     // separated by ";", each weekdays (Mon … Sun in English, ranges like Mon-Thu, or full names)
     // and 24-hour times (08:30-17:00; an end before the start ends the next day), or no times
-    // for an all-day event. Unreadable rules are skipped.
+    // for an all-day event, then optionally the event's title. Unreadable rules are skipped.
     var WEEKDAYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
     // a weekday's number for its name or the start of it (two letters or more), else -1
     function weekday(token) {
@@ -583,24 +583,35 @@
         var time = part.match(/(\d{1,2})[:.](\d{2})\s*[-–]\s*(\d{1,2})[:.](\d{2})/);
         // 24:00 is midnight at the end of the day
         var pad = function(h, m) { return +h === 24 && +m === 0 ? '00:00' : (h.length < 2 ? '0' : '') + h + ':' + m; };
-        var days = {}, any = false;
-        (time ? part.replace(time[0], ' ') : part).toLowerCase().split(/[\s\/&+]+/).filter(Boolean).forEach(function(token) {
-          var range = token.split(/[-–]/), from = weekday(range[0]), to = weekday(range[1] || range[0]);
-          if (from === -1 || to === -1 || range.length > 2) { any = null; return; }
-          for (var d = from; ; d = (d + 1) % 7) { days[d] = true; if (d === to) break; }
-          if (any !== null) any = true;
-        });
-        if (!any || (time && (+time[1] > 23 || +time[2] > 59 || +time[3] > 24 || +time[4] > 59 || (+time[3] === 24 && +time[4] > 0)))) return null;
-        return { days: days, start: time ? pad(time[1], time[2]) : null, end: time ? pad(time[3], time[4]) : null };
+        if (time && (+time[1] > 23 || +time[2] > 59 || +time[3] > 24 || +time[4] > 59 || (+time[3] === 24 && +time[4] > 0))) return null;
+        // weekdays first, then the times, then the title if any: before the times only
+        // weekdays; without times, whatever follows the weekdays is the title
+        var words = (time ? part.slice(0, time.index) : part).trim().split(/\s+/).filter(Boolean);
+        var days = {}, count = 0;
+        for (; count < words.length; count++) {
+          var dayWords = words[count].toLowerCase().split(/[\/&+]/).filter(Boolean);
+          var parsed = dayWords.map(function(token) {
+            var range = token.split(/[-–]/), from = weekday(range[0]), to = weekday(range[1] || range[0]);
+            return from === -1 || to === -1 || range.length > 2 ? null : [from, to];
+          });
+          if (!parsed.length || parsed.indexOf(null) !== -1) break;
+          parsed.forEach(function(range) {
+            for (var d = range[0]; ; d = (d + 1) % 7) { days[d] = true; if (d === range[1]) break; }
+          });
+        }
+        if (!count || (time && count < words.length)) return null;
+        var title = (time ? part.slice(time.index + time[0].length) : words.slice(count).join(' ')).trim();
+        return { days: days, start: time ? pad(time[1], time[2]) : null, end: time ? pad(time[3], time[4]) : null, title: title };
       }).filter(Boolean);
     }
 
-    // Hides the calendar's events that match its usual week, and on a day of the usual week
-    // without any of the calendar's events (a day off, a holiday) adds the usual event back as
-    // an all-day one, crossed out (extendedProps.off, trmnl-event--off). Its title is the one
-    // its rule's events mostly have, else the calendar's usual events', else the calendar's
-    // prefix alone. Days off only count from `from` to `to`, the days the calendar's data is
-    // complete for; unknown (null), from its first event to its last.
+    // Hides the calendar's events that match its usual week (and the rule's title, if it has
+    // one, in any case), and on a day of the usual week without any of the calendar's events
+    // (a day off, a holiday) adds the usual event back as an all-day one, crossed out (extendedProps.off, trmnl-event--off). Its title is the one
+    // its rule's events mostly have, else the rule's own, else the calendar's other usual
+    // events', else the calendar's prefix alone. Days off only count from `from` to `to`, the
+    // days the calendar's data is complete for; unknown (null), from its first event to its
+    // last.
     function applyUsualWeek(events, rules, from, to, prefix, color) {
       if (!rules.length) return events;
       var dayOf = function(d) { return new Date(d.slice(0, 10) + 'T00:00:00Z').getUTCDay(); };
@@ -610,6 +621,7 @@
         var date = ev.start.slice(0, 10);
         return rules.filter(function(rule) {
           if (!rule.days[dayOf(date)]) return false;
+          if (rule.title && rule.title.toLowerCase() !== String(ev.extendedProps.summary || '').trim().toLowerCase()) return false;
           if (!rule.start) return ev.allDay && isSingleDay(date, ev.end);
           if (ev.allDay || !ev.end || ev.start.slice(11, 16) !== rule.start || ev.end.slice(11, 16) !== rule.end) return false;
           return daysBetween(date, ev.end) === (rule.end <= rule.start ? 1 : 0);
@@ -638,7 +650,8 @@
         var added = {};
         rules.forEach(function(rule, r) {
           if (!rule.days[dayOf(date)]) return;
-          var title = mostCommon(titles[r]) || mostCommon(allTitles) || prefix || '';
+          var title = mostCommon(titles[r]) ||
+            (rule.title ? (prefix ? prefix + ' ' : '') + rule.title : mostCommon(allTitles) || prefix || '');
           if (added[title]) return;
           added[title] = true;
           kept.push({

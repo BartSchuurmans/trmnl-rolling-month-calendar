@@ -119,7 +119,7 @@ render weather-ics-half-vertical-x --ics --size half_vertical --set weather_enti
 # "Usual week" on a work calendar (render.mjs --work): its usual days hidden, days off
 # crossed out, through each source
 render usual-week-x --work --expect-events --set calendar_labels=-,M:,S:,W: --set "calendar_usual_week=-,-,-,Mon-Thu 08:30-17:00"
-render usual-week-ics-og --device og --ics --work --expect-events --set calendar_labels=-,M:,S:,W: --set "calendar_usual_week=-,-,-,Mon-Thu 08:30-17:00"
+render usual-week-ics-og --device og --ics --work --expect-events --set calendar_labels=-,M:,S:,W: --set "calendar_usual_week=-,-,-,Mon-Thu 08:30-17:00 Work"
 render usual-week-merge-x --merge --work --expect-events --set calendar_labels=-,M:,S:,W: --set "calendar_usual_week=-,-,-,Mon-Thu 08:30-17:00" --set include_past_events=false
 
 # The sample as TRMNL.com's Plugin Merge dropdowns (plugin/trmnl-com-merge/merge.liquid)

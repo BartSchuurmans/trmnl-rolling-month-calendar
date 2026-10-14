@@ -100,7 +100,7 @@ RSpec.describe 'Rolling Month Calendar (Home Assistant)' do
   # Mark's gym, every Tuesday at 7, as his usual week, which also says Fridays: those
   # show the gym crossed out
   it "hides a calendar's usual week and crosses out a day off" do
-    routine = custom_fields.merge(calendar_usual_week: '-,-,Tue 07:00-08:00; Fri 07:00-08:00')
+    routine = custom_fields.merge(calendar_usual_week: '-,-,Tue 07:00-08:00 gym; Fri 07:00-08:00')
     screen = trmnl.render(device: 'v2', now:, mocks:, custom_fields: routine)
 
     expect(screen).to have_text('Parent-teacher meeting')
