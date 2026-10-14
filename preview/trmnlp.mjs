@@ -22,12 +22,17 @@ import { execFileSync, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import * as yaml from 'js-yaml';
 
-const IMAGE = 'trmnl/trmnlp:v0.26.0';
+const IMAGE = 'trmnl/trmnlp:v0.29.0';
 // Rule IDs (as `trmnlp lint` prints them, e.g. no_opacity) of findings that don't apply
-// here, each with why; trmnlp skips them (`ignored_lint_rules`, 0.20.0). Empty since trmnlp
-// 0.15.0 counts only real style attributes in its inline-styles check (it used to count CSS
-// words in shared.liquid's stylesheet).
-const LINT_ALLOWED = [];
+// here, each with why; trmnlp skips them (`ignored_lint_rules`, 0.20.0).
+const LINT_ALLOWED = [
+  // Since 0.28.0: event titles clamp with -webkit-line-clamp, where it asks for data-clamp.
+  // The framework clamps data-clamp text once, when the page loads, by rewriting it; event
+  // titles are drawn later by FullCalendar (which owns those nodes), and week fitting needs
+  // CSS's clamp to measure. The rule can only be skipped whole, which also skips its px
+  // font-size and orientation checks (upstream item 41).
+  'no_style_restyling_framework',
+];
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 // Our user in the container. One the image doesn't know (CI's) has HOME=/, which it can't
