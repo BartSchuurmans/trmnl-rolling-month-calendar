@@ -403,8 +403,9 @@ are no commas in it (they separate the calendars). A crossed-out day takes the t
 (with the calendar's prefix), else the rule's title, else that of the calendar's other
 usual events, else the prefix alone.
 
-<sub>The sample calendars with a work calendar (`W:`) on `Mon-Thu 08:30-17:00`: a later
-Wednesday, a Thursday swapped for Friday, and the holiday week off.</sub><br>
+<sub>The sample calendars with Mark's work calendar (same `M:` prefix and color) on
+`Mon-Thu 08:30-17:00`: a later Wednesday, a Thursday swapped for Friday, and the holiday
+week off.</sub><br>
 <img src="docs/usual-week.png" width="100%">
 
 ## Differences from upstream
