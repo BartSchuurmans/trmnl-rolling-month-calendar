@@ -22,7 +22,7 @@ import { execFileSync, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import * as yaml from 'js-yaml';
 
-const IMAGE = 'trmnl/trmnlp:v0.29.0';
+const IMAGE = 'trmnl/trmnlp:v0.31.0';
 // Rule IDs (as `trmnlp lint` prints them, e.g. no_opacity) of findings that don't apply
 // here, each with why; trmnlp skips them (`ignored_lint_rules`, 0.20.0).
 const LINT_ALLOWED = [

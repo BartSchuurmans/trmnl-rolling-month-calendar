@@ -86,7 +86,7 @@ RSpec.describe 'Rolling Month Calendar (Home Assistant)' do
     end
   end
 
-  TRMNLP::Testing.select_field_values.each do |keyname, values|
+  TRMNLP::Testing.option_field_values.each do |keyname, values|
     values.each do |value|
       it "draws the full view with #{keyname} set to #{value}" do
         screen = trmnl.render(device: 'v2', now:, mocks:, custom_fields: custom_fields.merge(keyname => value))
