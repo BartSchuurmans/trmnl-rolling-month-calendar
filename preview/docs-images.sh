@@ -18,8 +18,13 @@ node render.mjs $common --out "$raw/preview.png"
 node render.mjs $common --device og --out "$raw/preview-1bit.png"
 # shellcheck disable=SC2086
 node render.mjs $common --device og2 --out "$raw/preview-2bit.png"
-rm -f "$raw"/preview*.html
+# "Usual week" with a work calendar (render.mjs --work)
+# shellcheck disable=SC2086
+node render.mjs $common --work --set calendar_labels=-,M:,S:,M: --set calendar_colors=gray-35,white,gray-60,white \
+    --set "calendar_usual_week=-,-,-,Mon-Thu 08:30-17:00" --out "$raw/usual-week.png"
+rm -f "$raw"/preview*.html "$raw"/usual-week*.html
 
 node frame.mjs --model x "$raw/preview.png" "$docs/preview.png"
 node frame.mjs --model og "$raw/preview-1bit.png" "$docs/preview-1bit.png"
 node frame.mjs --model og "$raw/preview-2bit.png" "$docs/preview-2bit.png"
+node frame.mjs --model x "$raw/usual-week.png" "$docs/usual-week.png"

@@ -273,6 +273,8 @@ toggles.
 |---|---|---|
 | Calendar prefixes | – | Text shown before each event title, per calendar (e.g. `W:`) |
 | Calendar colors | – | Event background per calendar: a TRMNL color name (`black`, `gray-10` … `gray-75`, `red`, `blue-40`, …) or a hex color |
+| Usual week | – | Per calendar with a weekly routine (e.g. working hours), such as `Mon-Thu 08:30-17:00 Work`: only what differs from it is shown, see [Usual week](#usual-week) |
+| Usual events | Hidden | `Without times` keeps the events that match a Usual week, without their times |
 
 #### Weather
 
@@ -368,6 +370,43 @@ show, with a weather forecast and **Weather temperatures** on `High and low` (se
   pointed end on that side. A timed event over several weeks shows when it starts in its
   first week (`14:00 –`), when it ends in its last (`– 11:00`), and no time in between.
 - Titles wrap over at most two lines, then end in an ellipsis, for every kind of event.
+
+### Usual week
+
+A calendar that follows a weekly routine, such as one with your working hours, mostly
+repeats what everyone knows already. Write that routine in its place in **Usual week**
+(matched by position, like the prefixes; `-` for the other calendars) and the calendar
+shows only what differs from it:
+
+- Its events on a usual day at the usual times are hidden; with a title in the rule, only
+  events with that title (in any case). With **Usual events** on `Without times` they stay,
+  without their times: the routine stays visible in less space.
+- Anything else shows as normal: a shifted day with its new times, an extra day, an event
+  over several days.
+- A usual day without any of the calendar's events (a day off, a holiday) shows the usual
+  event crossed out, as an all-day event, so a holiday of any length stays visible.
+
+The usual week is one or more rules separated by `;`, each weekdays, times and
+optionally the title:
+
+| Usual week | Means |
+|---|---|
+| `Mon-Thu 08:30-17:00` | Monday to Thursday, 8:30 to 17:00 |
+| `Mon-Thu 08:30-17:00 Work` | the same, only events titled Work (so a training day at those times still shows) |
+| `Mon-Thu 08:30-17:00; Fri 08:30-12:00` | and Friday mornings |
+| `Mon Wed Fri 22:00-06:00` | night shifts, ending the next morning |
+| `Sat Sun` | an all-day event every weekend day |
+| `Sat Sun On call` | an all-day event titled On call every weekend day |
+
+Weekdays are English (`Mon` … `Sun`, or written in full), times are 24-hour, and there
+are no commas in it (they separate the calendars). A crossed-out day takes the title of the rule's events in view
+(with the calendar's prefix), else the rule's title, else that of the calendar's other
+usual events, else the prefix alone.
+
+<sub>The sample calendars with Mark's work calendar (same `M:` prefix and color) on
+`Mon-Thu 08:30-17:00`: a later Wednesday, a Thursday swapped for Friday, and the holiday
+week off.</sub><br>
+<img src="docs/usual-week.png" width="100%">
 
 ## Differences from upstream
 

@@ -215,6 +215,11 @@
 
   /* a white calendar colour has no edge on a white cell: outline it like the grid lines,
      open (not pointed, which would cut the outline) where it continues in another week */
+  /* "Usual week": a usual event that doesn't happen (a day off), crossed out */
+  .trmnl-calendar .trmnl-event--off .mono-event-title,
+  .trmnl-calendar .trmnl-event--off .mono-event-time { text-decoration: line-through; }
+  /* "Usual events" set to "Without times": a usual event without its times */
+  .trmnl-calendar .trmnl-event--usual .mono-event-time { display: none; }
   .trmnl-calendar .trmnl-event--white { clip-path: none; --mono-cut-start: 0px; --mono-cut-end: 0px; border: 1px solid var(--mono-line); }
   .screen--1bit .trmnl-calendar .trmnl-event--white,
   .screen--2bit .trmnl-calendar .trmnl-event--white { border: 1px dotted var(--mono-ink); }
@@ -564,6 +569,106 @@
       };
     }
 
+    // "Usual week" (calendar_usual_week): a calendar that follows a weekly routine (working
+    // hours) shows only what differs from it. The routine is written as one or more rules
+    // separated by ";", each weekdays (Mon … Sun in English, ranges like Mon-Thu, or full names)
+    // and 24-hour times (08:30-17:00; an end before the start ends the next day), or no times
+    // for an all-day event, then optionally the event's title. Unreadable rules are skipped.
+    var WEEKDAYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    // a weekday's number for its name or the start of it (two letters or more), else -1
+    function weekday(token) {
+      for (var d = 0; d < 7; d++) if (token.length >= 2 && WEEKDAYS[d].indexOf(token) === 0) return d;
+      return -1;
+    }
+    function parseUsualWeek(text) {
+      return String(text || '').split(';').map(function(part) {
+        var time = part.match(/(\d{1,2})[:.](\d{2})\s*[-–]\s*(\d{1,2})[:.](\d{2})/);
+        // 24:00 is midnight at the end of the day
+        var pad = function(h, m) { return +h === 24 && +m === 0 ? '00:00' : (h.length < 2 ? '0' : '') + h + ':' + m; };
+        if (time && (+time[1] > 23 || +time[2] > 59 || +time[3] > 24 || +time[4] > 59 || (+time[3] === 24 && +time[4] > 0))) return null;
+        // weekdays first, then the times, then the title if any: before the times only
+        // weekdays; without times, whatever follows the weekdays is the title
+        var words = (time ? part.slice(0, time.index) : part).trim().split(/\s+/).filter(Boolean);
+        var days = {}, count = 0;
+        for (; count < words.length; count++) {
+          var dayWords = words[count].toLowerCase().split(/[\/&+]/).filter(Boolean);
+          var parsed = dayWords.map(function(token) {
+            var range = token.split(/[-–]/), from = weekday(range[0]), to = weekday(range[1] || range[0]);
+            return from === -1 || to === -1 || range.length > 2 ? null : [from, to];
+          });
+          if (!parsed.length || parsed.indexOf(null) !== -1) break;
+          parsed.forEach(function(range) {
+            for (var d = range[0]; ; d = (d + 1) % 7) { days[d] = true; if (d === range[1]) break; }
+          });
+        }
+        if (!count || (time && count < words.length)) return null;
+        var title = (time ? part.slice(time.index + time[0].length) : words.slice(count).join(' ')).trim();
+        return { days: days, start: time ? pad(time[1], time[2]) : null, end: time ? pad(time[3], time[4]) : null, title: title };
+      }).filter(Boolean);
+    }
+
+    // Hides the calendar's events that match its usual week (and the rule's title, if it has
+    // one, in any case), and on a day of the usual week without any of the calendar's events
+    // (a day off, a holiday) adds the usual event back as an all-day one, crossed out (extendedProps.off, trmnl-event--off). Its title is the one
+    // its rule's events mostly have, else the rule's own, else the calendar's other usual
+    // events', else the calendar's prefix alone. Days off only count from `from` to `to`, the
+    // days the calendar's data is complete for; unknown (null), from its first event to its
+    // last.
+    // keepTimeless: usual events stay, without their times (extendedProps.usual,
+    // trmnl-event--usual), instead of being hidden.
+    function applyUsualWeek(events, rules, from, to, prefix, color, keepTimeless) {
+      if (!rules.length) return events;
+      var dayOf = function(d) { return new Date(d.slice(0, 10) + 'T00:00:00Z').getUTCDay(); };
+      var daysBetween = function(a, b) { return Math.round((Date.parse(b.slice(0, 10) + 'T00:00:00Z') - Date.parse(a.slice(0, 10) + 'T00:00:00Z')) / 864e5); };
+      // the rule an event is the usual one of, if any
+      var ruleOf = function(ev) {
+        var date = ev.start.slice(0, 10);
+        return rules.filter(function(rule) {
+          if (!rule.days[dayOf(date)]) return false;
+          if (rule.title && rule.title.toLowerCase() !== String(ev.extendedProps.summary || '').trim().toLowerCase()) return false;
+          if (!rule.start) return ev.allDay && isSingleDay(date, ev.end);
+          if (ev.allDay || !ev.end || ev.start.slice(11, 16) !== rule.start || ev.end.slice(11, 16) !== rule.end) return false;
+          return daysBetween(date, ev.end) === (rule.end <= rule.start ? 1 : 0);
+        })[0] || null;
+      };
+      var titles = rules.map(function() { return {}; }), allTitles = {}, busy = {};
+      var starts = events.map(function(ev) { return ev.start.slice(0, 10); }).sort();
+      var firstDay = from || starts[0], lastDay = to || starts[starts.length - 1];
+      var kept = events.filter(function(ev) {
+        // the days the event touches (an end at midnight doesn't touch the next day)
+        var date = ev.start.slice(0, 10);
+        var until = ev.end ? (ev.allDay || ev.end.slice(11) === '00:00:00' ? addDays(ev.end.slice(0, 10), -1) : ev.end.slice(0, 10)) : date;
+        for (var d = date; d <= until; d = addDays(d, 1)) busy[d] = true;
+        var rule = ruleOf(ev);
+        if (!rule) return true;
+        var t = titles[rules.indexOf(rule)];
+        t[ev.title] = (t[ev.title] || 0) + 1;
+        allTitles[ev.title] = (allTitles[ev.title] || 0) + 1;
+        if (keepTimeless) ev.extendedProps.usual = true;
+        return keepTimeless;
+      });
+      var mostCommon = function(t) { return Object.keys(t).sort(function(a, b) { return t[b] - t[a]; })[0]; };
+      if (!firstDay || !lastDay) return kept;
+      // a day off is a whole day: the crossed-out event is all-day, once per title
+      for (var date = firstDay; date <= lastDay; date = addDays(date, 1)) {
+        if (busy[date]) continue;
+        var added = {};
+        rules.forEach(function(rule, r) {
+          if (!rule.days[dayOf(date)]) return;
+          var title = mostCommon(titles[r]) ||
+            (rule.title ? (prefix ? prefix + ' ' : '') + rule.title : mostCommon(allTitles) || prefix || '');
+          if (added[title]) return;
+          added[title] = true;
+          kept.push({
+            title: title, start: date, end: addDays(date, 1), allDay: true,
+            display: color ? 'block' : 'list-item',
+            extendedProps: { summary: title, description: '', location: '', color: color, off: true }
+          });
+        });
+      }
+      return kept;
+    }
+
     function buildEvents(payload, cfg) {
       var today = cfg.today;
       var errors = [];
@@ -591,20 +696,30 @@
           });
           return;
         }
+        var calEvents = [];
         (cal.events || []).forEach(function(raw) {
           // private events without details have no summary; upstream calls them 'Busy'
           raw.summary = raw.summary || 'Busy';
           if (isIgnored(raw, cfg)) return;
           var ev = toEvent(raw, cfg.calendarPrefixes[i], parseColor(cfg.calendarColors[i]), cfg);
-          if (!ev) return;
-
+          if (ev) calEvents.push(ev);
+        });
+        // the days the calendar's data is complete for, as polled: Home Assistant from 6 days
+        // back to 43 days ahead, end exclusive (polling_url in settings.yml), an ICS feed
+        // from 7 days back to icsDaysAhead days after the poll; TRMNL's plugins: unknown
+        calEvents = applyUsualWeek(calEvents, parseUsualWeek(cfg.calendarUsualWeeks[i]),
+          cfg.source === 'ha' ? addDays(today, -6) : cfg.source === 'ics' ? addDays(today, -7) : null,
+          cfg.source === 'ha' ? addDays(today, 42) : cfg.source === 'ics' ? addDays(today, icsDaysAhead - 1) : null,
+          cfg.calendarPrefixes[i], parseColor(cfg.calendarColors[i]), cfg.usualEvents === 'no_time');
+        calEvents.forEach(function(ev) {
+          var raw = ev.extendedProps;
           if (!cfg.includePastEvents) {
             var endsAt = ev.end || ev.start;
             if (ev.allDay ? (ev.end ? endsAt <= today : endsAt < today) : endsAt <= today + 'T00:00:00') return;
           }
 
           // de-duplicate across calendars (family calendars often share an event), like upstream
-          var key = [raw.summary, raw.description || '', ev.start, ev.end, ev.allDay].join('\u0000');
+          var key = [raw.summary, raw.description || '', ev.start, ev.end, ev.allDay, !!raw.off].join('\u0000');
           if (seen[key]) return;
           seen[key] = true;
           events.push(ev);
@@ -669,6 +784,7 @@
         settings.calendarEntities = window.trmnlRollingCalendar.splitList(settings.calendarEntities);
         settings.calendarPrefixes = window.trmnlRollingCalendar.splitAligned(settings.calendarPrefixes);
         settings.calendarColors = window.trmnlRollingCalendar.splitAligned(settings.calendarColors);
+        settings.calendarUsualWeeks = window.trmnlRollingCalendar.splitAligned(settings.calendarUsualWeeks);
         settings.ignoredPhrases = window.trmnlRollingCalendar.splitList(settings.ignoredPhrases);
         settings.ignoredPhrasesExactMatch = window.trmnlRollingCalendar.splitList(settings.ignoredPhrasesExactMatch);
         var built = window.trmnlRollingCalendar.buildEvents(payload, settings);
@@ -768,7 +884,10 @@
         };
         var muted = patternedGreys ? '' : 'text--muted';
         baseOpts.dayCellTopInnerClass = function(info) { return 'text--small ' + (info.isPast ? muted : ''); };
-        baseOpts.eventClass = 'text--small';
+        baseOpts.eventClass = function(info) {
+          var props = info.event.extendedProps;
+          return 'text--small' + (props.off ? ' trmnl-event--off' : '') + (props.usual ? ' trmnl-event--usual' : '');
+        };
         // Upstream look: timed events get a grey bar and a grey time (on 1-/2-bit a muted
         // pattern is hard to read, so solid black there); single-day all-day events are drawn
         // the same, without the time (see toEvent)
@@ -960,6 +1079,8 @@
          "calendarEntities": {% if source != "ha" %}""{% else %}{{ s.calendars | default: "" | json | escape }}{% endif %},
          "calendarPrefixes": {{ s.calendar_labels | default: "" | json | escape }},
          "calendarColors": {{ s.calendar_colors | default: "" | json | escape }},
+         "calendarUsualWeeks": {{ s.calendar_usual_week | default: "" | json | escape }},
+         "usualEvents": {{ s.usual_events | default: "hide" | json | escape }},
          "weatherEntity": {% if source != "merge" and s.weather_entity contains "weather." %}{{ s.weather_entity | strip | json | escape }}{% else %}""{% endif %},
          "weatherPlugin": {% if merge_weather %}true{% else %}false{% endif %},
          "weatherLows": {% if s.weather_temperatures == "high_low" %}true{% else %}false{% endif %},
