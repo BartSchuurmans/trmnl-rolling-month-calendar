@@ -84,6 +84,15 @@ custom_fields:
     group: Calendars
     description: 'Optional, for a calendar with a weekly routine such as working hours: its usual week, one per calendar in the same order as the feeds, plugins or entities. Weekdays in English, 24-hour times and optionally the title, e.g. Mon-Thu 08:30-17:00 Work, several separated by ; (Mon-Thu 08:30-17:00; Fri 08:30-12:00), or no times for all-day events. Events at those times (with that title, if given) are hidden, so only changes show; a usual day without any of its events (a day off) shows it crossed out. No commas inside; use - for a calendar without one.'
     optional: true
+  - keyname: usual_events
+    field_type: select
+    name: Usual events
+    group: Calendars
+    description: What to do with the events that match a calendar's Usual week. Hidden shows only the changes; Without times keeps them, without their times, so the routine stays visible in less space.
+    options:
+      - Hidden: hide
+      - Without times: no_time
+    default: hide
   - keyname: weather_entity
     field_type: string
     name: Home Assistant weather entity

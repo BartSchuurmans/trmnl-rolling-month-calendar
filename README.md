@@ -274,6 +274,7 @@ toggles.
 | Calendar prefixes | – | Text shown before each event title, per calendar (e.g. `W:`) |
 | Calendar colors | – | Event background per calendar: a TRMNL color name (`black`, `gray-10` … `gray-75`, `red`, `blue-40`, …) or a hex color |
 | Usual week | – | Per calendar with a weekly routine (e.g. working hours), such as `Mon-Thu 08:30-17:00 Work`: only what differs from it is shown, see [Usual week](#usual-week) |
+| Usual events | Hidden | `Without times` keeps the events that match a Usual week, without their times |
 
 #### Weather
 
@@ -378,7 +379,8 @@ repeats what everyone knows already. Write that routine in its place in **Usual 
 shows only what differs from it:
 
 - Its events on a usual day at the usual times are hidden; with a title in the rule, only
-  events with that title (in any case).
+  events with that title (in any case). With **Usual events** on `Without times` they stay,
+  without their times: the routine stays visible in less space.
 - Anything else shows as normal: a shifted day with its new times, an extra day, an event
   over several days.
 - A usual day without any of the calendar's events (a day off, a holiday) shows the usual

@@ -218,6 +218,8 @@
   /* "Usual week": a usual event that doesn't happen (a day off), crossed out */
   .trmnl-calendar .trmnl-event--off .mono-event-title,
   .trmnl-calendar .trmnl-event--off .mono-event-time { text-decoration: line-through; }
+  /* "Usual events" set to "Without times": a usual event without its times */
+  .trmnl-calendar .trmnl-event--usual .mono-event-time { display: none; }
   .trmnl-calendar .trmnl-event--white { clip-path: none; --mono-cut-start: 0px; --mono-cut-end: 0px; border: 1px solid var(--mono-line); }
   .screen--1bit .trmnl-calendar .trmnl-event--white,
   .screen--2bit .trmnl-calendar .trmnl-event--white { border: 1px dotted var(--mono-ink); }
@@ -612,7 +614,9 @@
     // events', else the calendar's prefix alone. Days off only count from `from` to `to`, the
     // days the calendar's data is complete for; unknown (null), from its first event to its
     // last.
-    function applyUsualWeek(events, rules, from, to, prefix, color) {
+    // keepTimeless: usual events stay, without their times (extendedProps.usual,
+    // trmnl-event--usual), instead of being hidden.
+    function applyUsualWeek(events, rules, from, to, prefix, color, keepTimeless) {
       if (!rules.length) return events;
       var dayOf = function(d) { return new Date(d.slice(0, 10) + 'T00:00:00Z').getUTCDay(); };
       var daysBetween = function(a, b) { return Math.round((Date.parse(b.slice(0, 10) + 'T00:00:00Z') - Date.parse(a.slice(0, 10) + 'T00:00:00Z')) / 864e5); };
@@ -640,7 +644,8 @@
         var t = titles[rules.indexOf(rule)];
         t[ev.title] = (t[ev.title] || 0) + 1;
         allTitles[ev.title] = (allTitles[ev.title] || 0) + 1;
-        return false;
+        if (keepTimeless) ev.extendedProps.usual = true;
+        return keepTimeless;
       });
       var mostCommon = function(t) { return Object.keys(t).sort(function(a, b) { return t[b] - t[a]; })[0]; };
       if (!firstDay || !lastDay) return kept;
@@ -705,7 +710,7 @@
         calEvents = applyUsualWeek(calEvents, parseUsualWeek(cfg.calendarUsualWeeks[i]),
           cfg.source === 'ha' ? addDays(today, -6) : cfg.source === 'ics' ? addDays(today, -7) : null,
           cfg.source === 'ha' ? addDays(today, 42) : cfg.source === 'ics' ? addDays(today, icsDaysAhead - 1) : null,
-          cfg.calendarPrefixes[i], parseColor(cfg.calendarColors[i]));
+          cfg.calendarPrefixes[i], parseColor(cfg.calendarColors[i]), cfg.usualEvents === 'no_time');
         calEvents.forEach(function(ev) {
           var raw = ev.extendedProps;
           if (!cfg.includePastEvents) {
@@ -879,7 +884,10 @@
         };
         var muted = patternedGreys ? '' : 'text--muted';
         baseOpts.dayCellTopInnerClass = function(info) { return 'text--small ' + (info.isPast ? muted : ''); };
-        baseOpts.eventClass = function(info) { return 'text--small' + (info.event.extendedProps.off ? ' trmnl-event--off' : ''); };
+        baseOpts.eventClass = function(info) {
+          var props = info.event.extendedProps;
+          return 'text--small' + (props.off ? ' trmnl-event--off' : '') + (props.usual ? ' trmnl-event--usual' : '');
+        };
         // Upstream look: timed events get a grey bar and a grey time (on 1-/2-bit a muted
         // pattern is hard to read, so solid black there); single-day all-day events are drawn
         // the same, without the time (see toEvent)
@@ -1072,6 +1080,7 @@
          "calendarPrefixes": {{ s.calendar_labels | default: "" | json | escape }},
          "calendarColors": {{ s.calendar_colors | default: "" | json | escape }},
          "calendarUsualWeeks": {{ s.calendar_usual_week | default: "" | json | escape }},
+         "usualEvents": {{ s.usual_events | default: "hide" | json | escape }},
          "weatherEntity": {% if source != "merge" and s.weather_entity contains "weather." %}{{ s.weather_entity | strip | json | escape }}{% else %}""{% endif %},
          "weatherPlugin": {% if merge_weather %}true{% else %}false{% endif %},
          "weatherLows": {% if s.weather_temperatures == "high_low" %}true{% else %}false{% endif %},
