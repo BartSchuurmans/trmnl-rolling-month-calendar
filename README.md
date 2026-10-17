@@ -406,8 +406,8 @@ are no commas in it (they separate the calendars). A crossed-out day takes the t
 usual events, else the prefix alone.
 
 <sub>The sample calendars with Mark's work calendar (same `M:` prefix and color) on
-`Mon-Thu 08:30-17:00`: a later Wednesday, a Thursday swapped for Friday, and the holiday
-week off.</sub><br>
+`Mon-Thu 08:30-17:00` and **Usual events** on `Without times`: a later Wednesday, a
+Thursday swapped for Friday, and the holiday week off.</sub><br>
 <img src="docs/usual-week.png" width="100%">
 
 ## Differences from upstream
