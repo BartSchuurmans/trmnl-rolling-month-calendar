@@ -221,21 +221,34 @@
   .trmnl-calendar .trmnl-event--white:not(.mono-event--start) { border-inline-start-style: none; }
   .trmnl-calendar .trmnl-event--white:not(.mono-event--end) { border-inline-end-style: none; }
 
-  /* "Usual week": a usual event that doesn't happen (a day off) as its title in the ink
-     colour on the paper, whatever the calendar's colour, struck through across the whole
-     cell: a thin strike through text on a fill (or a dither pattern) was hard to read. */
-  .trmnl-calendar .mono-event.trmnl-event--off {
+  /* "Usual week": its events (kept by "Usual events" set to "Without times", and a day off)
+     are routine, so they are drawn light: plain ink text on the paper, without fill, outline
+     or bar, so the events that differ stand out. Only the prefix keeps the calendar's colour,
+     as a small tag (see eventContent). A day off is struck through across the whole cell. */
+  .trmnl-calendar .mono-event.trmnl-event--plain {
     position: relative;
     background: none;
     clip-path: none;
     border: none;
   }
-  .trmnl-calendar .trmnl-event--off .mono-event-inner {
+  .trmnl-calendar .trmnl-event--plain .mono-event-inner {
     color: var(--mono-ink);
     padding: 0 calc(4px * var(--mono-u));
   }
-  .trmnl-calendar .mono-event--narrow.trmnl-event--off .mono-event-inner { padding: 0 calc(2px * var(--mono-u)); }
-  .trmnl-calendar .trmnl-event--off .mono-event-bar { display: none; }
+  .trmnl-calendar .mono-event--narrow.trmnl-event--plain .mono-event-inner { padding: 0 calc(2px * var(--mono-u)); }
+  .trmnl-calendar .trmnl-event--plain .mono-event-bar { display: none; }
+  .trmnl-calendar .trmnl-event--plain .mono-event-title { font-weight: 400; }
+  /* not on 1-/2-bit: the regular pixel font breaks up at some positions */
+  .screen--1bit .trmnl-calendar .trmnl-event--plain .mono-event-title,
+  .screen--2bit .trmnl-calendar .trmnl-event--plain .mono-event-title { font-weight: 700; }
+  .trmnl-calendar .trmnl-event-prefix {
+    font-weight: 700;
+    padding: 0 calc(2px * var(--mono-u));
+    border-radius: calc(2px * var(--mono-u));
+  }
+  .trmnl-calendar .trmnl-event-prefix--white { border: 1px solid var(--mono-line); }
+  .screen--1bit .trmnl-calendar .trmnl-event-prefix--white,
+  .screen--2bit .trmnl-calendar .trmnl-event-prefix--white { border: 1px dotted var(--mono-ink); }
   .trmnl-calendar .mono-event.trmnl-event--off::after {
     content: "";
     position: absolute;
@@ -589,7 +602,7 @@
         // otherwise single-day all-day events get the timed events' bar ('list-item' is
         // FullCalendar's dot display) and only multi-day ones keep a filled band
         display: color ? 'block' : (allDay && isSingleDay(start, end) ? 'list-item' : 'auto'),
-        extendedProps: { summary: ev.summary, description: ev.description || '', location: ev.location || '', color: color }
+        extendedProps: { summary: ev.summary, description: ev.description || '', location: ev.location || '', color: color, prefix: prefix }
       };
     }
 
@@ -686,7 +699,7 @@
           kept.push({
             title: title, start: date, end: addDays(date, 1), allDay: true,
             display: color ? 'block' : 'list-item',
-            extendedProps: { summary: title, description: '', location: '', color: color, off: true }
+            extendedProps: { summary: title, description: '', location: '', color: color, prefix: prefix, off: true }
           });
         });
       }
@@ -910,7 +923,8 @@
         baseOpts.dayCellTopInnerClass = function(info) { return 'text--small ' + (info.isPast ? muted : ''); };
         baseOpts.eventClass = function(info) {
           var props = info.event.extendedProps;
-          return 'text--small' + (props.off ? ' trmnl-event--off' : '') + (props.usual ? ' trmnl-event--usual' : '');
+          return 'text--small' + (props.off || props.usual ? ' trmnl-event--plain' : '') +
+            (props.off ? ' trmnl-event--off' : '') + (props.usual ? ' trmnl-event--usual' : '');
         };
         // Upstream look: timed events get a grey bar and a grey time (on 1-/2-bit a muted
         // pattern is hard to read, so solid black there); single-day all-day events are drawn
@@ -944,9 +958,6 @@
           return paintedBy[token];
         };
         built.events.forEach(function(ev) {
-          // a day off ("Usual week") is drawn without a fill (CSS), so without its classes:
-          // the contrast outline would eat the strike on 1-/2-bit
-          if (ev.extendedProps.off) { ev.extendedProps.fillClass = ''; return; }
           var color = ev.extendedProps.color || { token: 'gray-70' };
           var raw = color.hex || screenStyles.getPropertyValue('--' + color.token).trim();
           var painted = color.hex || paintOf(color.token) || raw;
@@ -958,9 +969,30 @@
           ev.contrastColor = patterned ? 'var(--mono-ink)' : !isDark(painted) ? 'var(--black)' : 'var(--white)';
           if (patterned) classes.push('text-stroke', 'text-stroke--small');
           ev.extendedProps.fillClass = classes.join(' ');
+          // "Usual week" events are drawn without a fill (CSS): the fill goes on the prefix
+          if (ev.extendedProps.off || ev.extendedProps.usual) {
+            ev.extendedProps.prefixClass = ev.extendedProps.color ? ev.extendedProps.fillClass.replace('trmnl-event--white', 'trmnl-event-prefix--white') : '';
+            ev.extendedProps.prefixColor = ev.contrastColor;
+            ev.extendedProps.fillClass = '';
+            delete ev.contrastColor;
+          }
         });
         node.removeChild(probe);
         baseOpts.rowEventClass = function(info) { return info.event.extendedProps.fillClass; };
+        // a "Usual week" event's title, with its prefix as a tag in the calendar's colour
+        var themeEventContent = window.trmnlMonoTheme.optionDefaults.eventContent;
+        var escapeHtml = function(text) {
+          return String(text).replace(/[&<>"']/g, function(c) { return '&#' + c.charCodeAt(0) + ';'; });
+        };
+        baseOpts.eventContent = function(info) {
+          var props = info.event.extendedProps, title = info.event.title;
+          if (!(props.off || props.usual) || !props.prefix || title.indexOf(props.prefix) !== 0) return themeEventContent(info);
+          var rest = title.slice(props.prefix.length).trim();
+          var tag = props.prefixClass ?
+            '<span class="trmnl-event-prefix ' + escapeHtml(props.prefixClass) + '" style="color: ' + props.prefixColor + '">' + escapeHtml(props.prefix) + '</span>' :
+            '<b>' + escapeHtml(props.prefix) + '</b>';
+          return { html: '<div class="' + escapeHtml(info.titleClass) + '">' + tag + (rest ? ' ' + escapeHtml(rest) : '') + '</div>' };
+        };
 
         // Rolling month fills the screen with as many whole weeks as actually fit.
         // Render the max first — 6, because only 6 weeks of events are fetched ahead
