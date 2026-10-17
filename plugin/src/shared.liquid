@@ -215,16 +215,40 @@
 
   /* a white calendar colour has no edge on a white cell: outline it like the grid lines,
      open (not pointed, which would cut the outline) where it continues in another week */
-  /* "Usual week": a usual event that doesn't happen (a day off), crossed out */
-  .trmnl-calendar .trmnl-event--off .mono-event-title,
-  .trmnl-calendar .trmnl-event--off .mono-event-time { text-decoration: line-through; }
-  /* "Usual events" set to "Without times": a usual event without its times */
-  .trmnl-calendar .trmnl-event--usual .mono-event-time { display: none; }
   .trmnl-calendar .trmnl-event--white { clip-path: none; --mono-cut-start: 0px; --mono-cut-end: 0px; border: 1px solid var(--mono-line); }
   .screen--1bit .trmnl-calendar .trmnl-event--white,
   .screen--2bit .trmnl-calendar .trmnl-event--white { border: 1px dotted var(--mono-ink); }
   .trmnl-calendar .trmnl-event--white:not(.mono-event--start) { border-inline-start-style: none; }
   .trmnl-calendar .trmnl-event--white:not(.mono-event--end) { border-inline-end-style: none; }
+
+  /* "Usual week": a usual event that doesn't happen (a day off) as its title in the ink
+     colour on the paper, whatever the calendar's colour, struck through across the whole
+     cell: a thin strike through text on a fill (or a dither pattern) was hard to read. */
+  .trmnl-calendar .mono-event.trmnl-event--off {
+    position: relative;
+    background: none;
+    clip-path: none;
+    border: none;
+  }
+  .trmnl-calendar .trmnl-event--off .mono-event-inner {
+    color: var(--mono-ink);
+    padding: 0 calc(4px * var(--mono-u));
+  }
+  .trmnl-calendar .mono-event--narrow.trmnl-event--off .mono-event-inner { padding: 0 calc(2px * var(--mono-u)); }
+  .trmnl-calendar .trmnl-event--off .mono-event-bar { display: none; }
+  .trmnl-calendar .mono-event.trmnl-event--off::after {
+    content: "";
+    position: absolute;
+    inset-inline: 0;
+    top: calc(50% - 1px * var(--mono-u));
+    height: calc(2px * var(--mono-u));
+    background: var(--mono-ink);
+  }
+  /* 1-/2-bit pixel fonts are a few pixels high: a thick strike would cover them */
+  .screen--1bit .trmnl-calendar .mono-event.trmnl-event--off::after,
+  .screen--2bit .trmnl-calendar .mono-event.trmnl-event--off::after { top: 50%; height: 1px; }
+  /* "Usual events" set to "Without times": a usual event without its times */
+  .trmnl-calendar .trmnl-event--usual .mono-event-time { display: none; }
 
   /* patterned weekend cells make small text hard to read: back it with the paper colour */
   .screen--1bit .trmnl-calendar .mono-day-number,
@@ -920,6 +944,9 @@
           return paintedBy[token];
         };
         built.events.forEach(function(ev) {
+          // a day off ("Usual week") is drawn without a fill (CSS), so without its classes:
+          // the contrast outline would eat the strike on 1-/2-bit
+          if (ev.extendedProps.off) { ev.extendedProps.fillClass = ''; return; }
           var color = ev.extendedProps.color || { token: 'gray-70' };
           var raw = color.hex || screenStyles.getPropertyValue('--' + color.token).trim();
           var painted = color.hex || paintOf(color.token) || raw;
