@@ -221,10 +221,9 @@
   .trmnl-calendar .trmnl-event--white:not(.mono-event--start) { border-inline-start-style: none; }
   .trmnl-calendar .trmnl-event--white:not(.mono-event--end) { border-inline-end-style: none; }
 
-  /* "Usual week": its events (kept by "Usual events" set to "Without times", and a day off)
-     are routine, so they are drawn light: plain ink text on the paper, without fill, outline
-     or bar, so the events that differ stand out. Only the prefix keeps the calendar's colour,
-     as a small tag (see eventContent). A day off is struck through across the whole cell. */
+  /* "Usual week": a day off is drawn light, as plain ink text on the paper without fill,
+     outline or bar, struck through across the whole cell. Only the prefix keeps the
+     calendar's colour, as a small tag (see eventContent). */
   .trmnl-calendar .mono-event.trmnl-event--plain {
     position: relative;
     background: none;
@@ -265,8 +264,11 @@
   /* 1-/2-bit pixel fonts are a few pixels high: a thick strike would cover them */
   .screen--1bit .trmnl-calendar .mono-event.trmnl-event--off::after,
   .screen--2bit .trmnl-calendar .mono-event.trmnl-event--off::after { top: 50%; height: 1px; }
-  /* "Usual events" set to "Without times": a usual event without its times */
+  /* "Usual events" set to "Without times": a usual event without its times, and with a
+     regular-weight title, so the events that differ stand out (not on 1-/2-bit: the regular
+     pixel font breaks up at some positions) */
   .trmnl-calendar .trmnl-event--usual .mono-event-time { display: none; }
+  .screen:not(.screen--1bit):not(.screen--2bit) .trmnl-calendar .trmnl-event--usual .mono-event-title { font-weight: 400; }
 
   /* patterned weekend cells make small text hard to read: back it with the paper colour */
   .screen--1bit .trmnl-calendar .mono-day-number,
@@ -928,7 +930,7 @@
         baseOpts.dayCellTopInnerClass = function(info) { return 'text--small ' + (info.isPast ? muted : ''); };
         baseOpts.eventClass = function(info) {
           var props = info.event.extendedProps;
-          return 'text--small' + (props.off || props.usual ? ' trmnl-event--plain' : '') +
+          return 'text--small' + (props.off ? ' trmnl-event--plain' : '') +
             (props.off ? ' trmnl-event--off' : '') + (props.usual ? ' trmnl-event--usual' : '');
         };
         // Upstream look: timed events get a grey bar and a grey time (on 1-/2-bit a muted
@@ -974,8 +976,8 @@
           ev.contrastColor = patterned ? 'var(--mono-ink)' : !isDark(painted) ? 'var(--black)' : 'var(--white)';
           if (patterned) classes.push('text-stroke', 'text-stroke--small');
           ev.extendedProps.fillClass = classes.join(' ');
-          // "Usual week" events are drawn without a fill (CSS): the fill goes on the prefix
-          if (ev.extendedProps.off || ev.extendedProps.usual) {
+          // a day off ("Usual week") is drawn without a fill (CSS): the fill goes on the prefix
+          if (ev.extendedProps.off) {
             ev.extendedProps.prefixClass = ev.extendedProps.color ? ev.extendedProps.fillClass.replace('trmnl-event--white', 'trmnl-event-prefix--white') : '';
             ev.extendedProps.prefixColor = ev.contrastColor;
             ev.extendedProps.fillClass = '';
@@ -984,14 +986,14 @@
         });
         node.removeChild(probe);
         baseOpts.rowEventClass = function(info) { return info.event.extendedProps.fillClass; };
-        // a "Usual week" event's title, with its prefix as a tag in the calendar's colour
+        // a day off's title, with its prefix as a tag in the calendar's colour
         var themeEventContent = window.trmnlMonoTheme.optionDefaults.eventContent;
         var escapeHtml = function(text) {
           return String(text).replace(/[&<>"']/g, function(c) { return '&#' + c.charCodeAt(0) + ';'; });
         };
         baseOpts.eventContent = function(info) {
           var props = info.event.extendedProps, title = info.event.title;
-          if (!(props.off || props.usual) || !props.prefix || title.indexOf(props.prefix) !== 0) return themeEventContent(info);
+          if (!props.off || !props.prefix || title.indexOf(props.prefix) !== 0) return themeEventContent(info);
           var rest = title.slice(props.prefix.length).trim();
           var tag = props.prefixClass ?
             '<span class="trmnl-event-prefix ' + escapeHtml(props.prefixClass) + '" style="color: ' + props.prefixColor + '">' + escapeHtml(props.prefix) + '</span>' :

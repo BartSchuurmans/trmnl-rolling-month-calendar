@@ -380,13 +380,13 @@ shows only what differs from it:
 
 - Its events on a usual day at the usual times are hidden; with a title in the rule, only
   events with that title (in any case). With **Usual events** on `Without times` they stay,
-  without their times and drawn light, as plain text with only the prefix in the
-  calendar's colour: the routine stays visible in less space, and what differs stands out.
+  without their times and with a regular-weight title: the routine stays visible in less
+  space, and what differs stands out.
 - Anything else shows as normal: a shifted day with its new times, an extra day, an event
   over several days.
 - A usual day without any of the calendar's events (a day off, a holiday) shows the usual
-  event crossed out, drawn light as an all-day event, so a holiday of any length stays
-  visible.
+  event crossed out as an all-day event, as plain text with only the prefix in the
+  calendar's colour, so a holiday of any length stays visible.
 
 The usual week is one or more rules separated by `;`, each weekdays, times and
 optionally the title:
@@ -406,8 +406,8 @@ are no commas in it (they separate the calendars). A crossed-out day takes the t
 usual events, else the prefix alone.
 
 <sub>The sample calendars with Mark's work calendar (same `M:` prefix and color) on
-`Mon-Thu 08:30-17:00`: a later Wednesday, a Thursday swapped for Friday, and the holiday
-week off.</sub><br>
+`Mon-Thu 08:30-17:00` and **Usual events** on `Without times`: a later Wednesday, a
+Thursday swapped for Friday, and the holiday week off.</sub><br>
 <img src="docs/usual-week.png" width="100%">
 
 ## Differences from upstream

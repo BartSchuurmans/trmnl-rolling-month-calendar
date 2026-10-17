@@ -21,7 +21,7 @@ node render.mjs $common --device og2 --out "$raw/preview-2bit.png"
 # "Usual week" with a work calendar (render.mjs --work)
 # shellcheck disable=SC2086
 node render.mjs $common --work --set calendar_labels=-,M:,S:,M: --set calendar_colors=gray-35,white,gray-60,white \
-    --set "calendar_usual_week=-,-,-,Mon-Thu 08:30-17:00" --out "$raw/usual-week.png"
+    --set "calendar_usual_week=-,-,-,Mon-Thu 08:30-17:00" --set usual_events=no_time --out "$raw/usual-week.png"
 rm -f "$raw"/preview*.html "$raw"/usual-week*.html
 
 node frame.mjs --model x "$raw/preview.png" "$docs/preview.png"
