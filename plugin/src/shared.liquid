@@ -237,20 +237,17 @@
   }
   .trmnl-calendar .mono-event--narrow.trmnl-event--plain .mono-event-inner { padding: 0 calc(2px * var(--mono-u)); }
   .trmnl-calendar .trmnl-event--plain .mono-event-bar { display: none; }
-  .trmnl-calendar .trmnl-event--plain .mono-event-title { font-weight: 400; }
-  /* not on 1-/2-bit: the regular pixel font breaks up at some positions */
-  .screen--1bit .trmnl-calendar .trmnl-event--plain .mono-event-title,
-  .screen--2bit .trmnl-calendar .trmnl-event--plain .mono-event-title { font-weight: 700; }
   /* the tag sticks out to the left by its padding and border, so its text lines up with
      the other events' titles; the title's padding keeps that part out of its clipping */
   .trmnl-calendar .trmnl-event--plain .mono-event-title {
-    padding-inline-start: calc(1px + 2px * var(--mono-u));
-    margin-inline-start: calc(-1px - 2px * var(--mono-u));
+    padding: 1px 0 1px calc(1px + 2px * var(--mono-u));
+    margin: -1px 0 -1px calc(-1px - 2px * var(--mono-u));
   }
   .trmnl-calendar .trmnl-event-prefix {
     display: inline-block;
     padding: 0 calc(2px * var(--mono-u));
     margin-inline-start: calc(-1px - 2px * var(--mono-u));
+    margin-block: -1px;  /* its border doesn't make the line taller */
     border: 1px solid transparent;
     border-radius: calc(2px * var(--mono-u));
   }
