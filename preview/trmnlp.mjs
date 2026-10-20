@@ -18,7 +18,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { execFileSync, spawnSync } from 'node:child_process';
+import { execFileSync, spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import * as yaml from 'js-yaml';
 
@@ -52,7 +52,7 @@ if (contextFile === '--pull') {
   process.exit(0);
 }
 if (contextFile === '--lint') process.exit(lint() ? 0 : 1);
-if (contextFile === '--test') process.exit(test(bodyFile, size) ? 0 : 1);
+if (contextFile === '--test') process.exit(await test(bodyFile, size) ? 0 : 1);
 if (!contextFile || !bodyFile) throw new Error('usage: node trmnlp.mjs <context.json> <body.html> [size]');
 
 const context = JSON.parse(fs.readFileSync(contextFile, 'utf8'));
@@ -92,36 +92,49 @@ fs.rmSync(project, { recursive: true, force: true });
 // Firefox on TRMNL's devices. Next to the tests: docs/sample-ha's calendars (sample-ha/) and
 // the Plugin Merge render context (context.json, from render.mjs --dump-context). Writes
 // trmnlp's report (index.html, every screen drawn) to <report dir>/<variant>; under GitHub
-// Actions the counts and failures also go to the run's summary.
-function test(mergeContext, reportDir) {
+// Actions the counts and failures also go to the run's summary. The variants run side by
+// side, each in its own container; their output and summaries follow in variant order.
+async function test(mergeContext, reportDir) {
   if (!mergeContext || !reportDir) throw new Error('usage: node trmnlp.mjs --test <merge-context.json> <report dir>');
   const repo = path.join(here, '..');
   execFileSync('sh', [path.join(repo, 'scripts', 'build-variant.sh')], { stdio: 'ignore' });
   const extra = (process.env.TRMNLP_DOCKER_ARGS || '').split(' ').filter(Boolean);
   const summary = process.env.GITHUB_STEP_SUMMARY;
-  let ok = true;
-  for (const variant of fs.readdirSync(path.join(repo, 'plugin')).sort()) {
+  const variants = fs.readdirSync(path.join(repo, 'plugin')).sort()
+    .filter((variant) => variant !== 'src' && fs.existsSync(path.join(repo, 'plugin', variant, 'tests')));
+  const runs = await Promise.all(variants.map(async (variant) => {
     const tests = path.join(repo, 'plugin', variant, 'tests');
-    if (variant === 'src' || !fs.existsSync(tests)) continue;
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'trmnlp-test-'));
     fs.cpSync(path.join(repo, 'dist', variant, 'src'), path.join(dir, 'src'), { recursive: true });
     fs.cpSync(tests, path.join(dir, 'tests'), { recursive: true });
     fs.cpSync(path.join(repo, 'docs', 'sample-ha', 'api', 'calendars'), path.join(dir, 'tests', 'sample-ha'), { recursive: true });
     fs.copyFileSync(mergeContext, path.join(dir, 'tests', 'context.json'));
     fs.writeFileSync(path.join(dir, '.trmnlp.yml'), yaml.dump({ watch: false, time_zone: 'Europe/Amsterdam' }));
-    const run = spawnSync('docker', ['run', '--rm', ...user, ...extra, '--volume', `${dir}:/plugin`,
-      ...(summary ? ['--env', 'CI=true', '--env', 'GITHUB_STEP_SUMMARY=/summary.md', '--volume', `${summary}:/summary.md`] : []),
-      IMAGE, 'test', '--report', 'report'], { encoding: 'utf8' });
+    // its own summary file, so the two runs don't write into each other's lines
+    if (summary) fs.writeFileSync(path.join(dir, 'summary.md'), '');
+    const run = await new Promise((resolve) => {
+      const child = spawn('docker', ['run', '--rm', ...user, ...extra, '--volume', `${dir}:/plugin`,
+        ...(summary ? ['--env', 'CI=true', '--env', 'GITHUB_STEP_SUMMARY=/plugin/summary.md'] : []),
+        IMAGE, 'test', '--report', 'report']);
+      let output = '';
+      child.stdout.on('data', (chunk) => { output += chunk; });
+      child.stderr.on('data', (chunk) => { output += chunk; });
+      child.on('close', (status) => resolve({ status, output }));
+    });
     const report = path.join(reportDir, variant);
     fs.rmSync(report, { recursive: true, force: true });
     if (fs.existsSync(path.join(dir, 'report'))) fs.cpSync(path.join(dir, 'report'), report, { recursive: true });
+    const summaryText = summary ? fs.readFileSync(path.join(dir, 'summary.md'), 'utf8') : '';
     fs.rmSync(dir, { recursive: true, force: true });
     // RSpec's own output, without Selenium's log lines
-    const output = `${run.stdout ?? ''}${run.stderr ?? ''}`.split('\n').filter((l) => !/selenium/i.test(l)).join('\n').trim();
-    if (run.status !== 0) ok = false;
-    console.log(`${variant}: ${run.status === 0 ? 'ok' : 'FAILED'} (report: ${path.relative(process.cwd(), report)})\n${output}`);
+    const output = run.output.split('\n').filter((l) => !/selenium/i.test(l)).join('\n').trim();
+    return { variant, ok: run.status === 0, report, output, summaryText };
+  }));
+  for (const { variant, ok, report, output, summaryText } of runs) {
+    if (summary) fs.appendFileSync(summary, summaryText);
+    console.log(`${variant}: ${ok ? 'ok' : 'FAILED'} (report: ${path.relative(process.cwd(), report)})\n${output}`);
   }
-  return ok;
+  return runs.every((run) => run.ok);
 }
 
 // `trmnlp lint` (TRMNL's best-practice checks) on plugin/src (LaraPaper, polling) and on
