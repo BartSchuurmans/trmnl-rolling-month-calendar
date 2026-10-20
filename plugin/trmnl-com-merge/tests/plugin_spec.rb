@@ -40,7 +40,8 @@ RSpec.describe 'Rolling Month Calendar' do
     end
   end
 
-  TRMNLP::Testing.option_field_values.each do |keyname, values|
+  # Select fields only: 'a publishable recipe' already draws each boolean field on and off
+  TRMNLP::Testing.option_field_values.reject { |_, values| values == %w[true false] }.each do |keyname, values|
     values.each do |value|
       it "draws the full view with #{keyname} set to #{value}" do
         screen = trmnl.render(device: 'v2', now:, variables:, custom_fields: custom_fields.merge(keyname => value))
