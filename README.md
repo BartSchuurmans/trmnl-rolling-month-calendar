@@ -102,7 +102,7 @@ flowchart LR
 
 <sub>With Docker Compose instead of the app, the LaraPaper container runs on any machine that can reach Home Assistant.</sub>
 
-The recipe is tested with LaraPaper 0.44.0 (the app's version) and still works with
+The recipe is tested with LaraPaper 0.45.1 (the app's version) and still works with
 0.43: there, ICS feeds show fewer weeks (see [ICS feeds](#ics-feeds)) and you tick
 **Remove bleed margin?** yourself.
 

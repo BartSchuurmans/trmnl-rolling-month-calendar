@@ -2,7 +2,7 @@
 # would otherwise fetch from the internet.
 # The official LaraPaper image is multi-arch (linux/amd64 + linux/arm64). To update
 # LaraPaper, bump this tag and the version in config.yaml.
-ARG BUILD_FROM=ghcr.io/usetrmnl/larapaper:0.44.0
+ARG BUILD_FROM=ghcr.io/usetrmnl/larapaper:0.45.1
 FROM ${BUILD_FROM}
 
 LABEL org.opencontainers.image.title="LaraPaper (local)" \
