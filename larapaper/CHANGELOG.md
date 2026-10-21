@@ -1,5 +1,30 @@
 # Changelog
 
+## 0.45.1-1
+
+### LaraPaper 0.45.1
+
+From the [LaraPaper 0.45.1 release](https://github.com/usetrmnl/larapaper/releases/tag/0.45.1):
+
+SECURITY RELEASE: critical PHP security release of 2026-10-21 (CVE-2026-109618,
+CVE-2026-109619). The Docker base image is bumped to PHP 8.4.27.
+
+### LaraPaper 0.45.0
+
+From the [LaraPaper 0.45.0 release](https://github.com/usetrmnl/larapaper/releases/tag/0.45.0):
+
+#### What's Changed
+* feat: enhance plugin context with additional device and settings information
+* fix(#285): use default stderr stream logger
+* fix(#285): increase default http client timeout to 15 sec
+* fix: access to lab settings for the first user only
+
+### Home Assistant app
+
+- LaraPaper 0.45.1, on PHP 8.4.27, which fixes two critical remote code execution
+  flaws in PHP (CVE-2026-109618, CVE-2026-109619). Update soon: any device or browser
+  that can reach LaraPaper's web port could exploit them, without logging in.
+
 ## 0.44.0-2
 
 ### Home Assistant app
