@@ -6,8 +6,14 @@
 
 From the [LaraPaper 0.45.1 release](https://github.com/usetrmnl/larapaper/releases/tag/0.45.1):
 
-SECURITY RELEASE: critical PHP security release of 2026-10-21 (CVE-2026-109618,
-CVE-2026-109619). The Docker base image is bumped to PHP 8.4.27.
+#### SECURITY RELEASE 🚨
+
+* Critical PHP security release 2026-10-21 (CVE-2026-109618, CVE-2026-109619)
+* Bumps the Docker base image to PHP 8.4.27
+
+Updating is strongly recommended for Docker Image deployments. Bare-metal deployments should upgrade to PHP 8.4.27.
+
+**Full Changelog**: [0.45.0...0.45.1](https://github.com/usetrmnl/larapaper/compare/0.45.0...0.45.1)
 
 ### LaraPaper 0.45.0
 
