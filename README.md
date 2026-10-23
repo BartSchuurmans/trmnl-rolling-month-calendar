@@ -14,10 +14,11 @@ There are two ways to use it. Pick the one that matches how your TRMNL is set up
   Outlook, Apple, CalDAV…). Nothing to host. If your calendars are in Home Assistant
   instead, and it is reachable from the internet, there is a
   [Home Assistant edition](#on-trmnlcom-with-home-assistant).
-- **[Self-hosted with LaraPaper](#self-hosted-with-larapaper)**: your device talks to
+- **[Self-hosted with LaraPaper](LARAPAPER.md)**: your device talks to
   [LaraPaper](https://github.com/usetrmnl/larapaper), a TRMNL server you run yourself,
   for example as a Home Assistant app. The calendar then reads **ICS feeds** or **Home
-  Assistant** calendar entities, and everything stays on your network.
+  Assistant** calendar entities, and everything stays on your network. Its setup is on
+  [its own page](LARAPAPER.md).
 
 The [settings](#settings) are the same on both, apart from where the events come from.
 The rest of this README after [Settings](#settings) is about how the recipe is built,
@@ -57,7 +58,7 @@ be reachable from the internet: through [Home Assistant
 Cloud](https://www.nabucasa.com/config/remote/) (its remote URL, like
 `https://abcdefgh.ui.nabu.casa`) or your own [remote
 access](https://www.home-assistant.io/docs/configuration/remote/) address. If it isn't,
-or you'd rather keep it that way, run [LaraPaper](#self-hosted-with-larapaper) at home
+or you'd rather keep it that way, run [LaraPaper](LARAPAPER.md) at home
 instead.
 
 1. **Make a long-lived access token** in Home Assistant: your profile → **Security** →
@@ -77,147 +78,7 @@ For the weather next to the day numbers, fill in **Home Assistant weather entity
 To try it before connecting your own Home Assistant, point it at the sample calendars in
 this repository instead ([how](plugin/trmnl-com-polling/README.md#trying-it-without-your-own-home-assistant)).
 
-## Self-hosted with LaraPaper
-
-This repository also has a Home Assistant app, **LaraPaper (local)**, that runs LaraPaper
-with everything the calendar needs built in, so rendering a screen needs no internet
-access. LaraPaper can also run with Docker Compose on any machine.
-
-```mermaid
-flowchart LR
-    subgraph host["Home Assistant host"]
-        subgraph core["Home Assistant Core container"]
-            HA["<b>Home Assistant</b><br>calendar entities"]
-        end
-        subgraph app["LaraPaper (local) app container"]
-            LP["<b>LaraPaper</b><br>polls HA every 15 min,<br>runs the calendar recipe"]
-            CR["<b>Headless Chromium</b><br>TRMNL framework and<br>FullCalendar bundled"]
-            LP -- "renders to PNG" --> CR
-        end
-        core -- "/api/calendars/&lt;entity&gt;" --> app
-    end
-    X["<b>TRMNL X</b><br>1872×1404, 16 grays"]
-    app -- "screen image<br>over Wi-Fi" --> X
-```
-
-<sub>With Docker Compose instead of the app, the LaraPaper container runs on any machine that can reach Home Assistant.</sub>
-
-The recipe is tested with LaraPaper 0.45.1 (the app's version) and still works with
-0.43: there, ICS feeds show fewer weeks (see [ICS feeds](#ics-feeds)) and you tick
-**Remove bleed margin?** yourself.
-
-### 1. Run LaraPaper
-
-**As a Home Assistant app (recommended).** This repository is an app repository. Go to
-Settings → Apps → store → ⋮ → Repositories, add
-`https://github.com/BartSchuurmans/trmnl-rolling-month-calendar`, and install
-**LaraPaper (local)**. It bundles the TRMNL framework and FullCalendar, so rendering
-needs no internet access, and it reads your calendars with its own Home Assistant
-access, so you don't need an access token. Its web UI opens inside Home Assistant, so
-you can reach it wherever you reach Home Assistant. Setup steps are in
-[larapaper/DOCS.md](larapaper/DOCS.md).
-
-**Or with Docker Compose** on any machine:
-
-```sh
-cat > .env <<EOF
-APP_KEY=base64:$(openssl rand -base64 32)
-APP_URL=http://<server-ip>:4567
-EOF
-docker compose up -d
-```
-
-Open `http://<server-ip>:4567` and register. Set your time zone in your user
-settings; the calendar uses it unless you set one on the plugin.
-
-### 2. Point the TRMNL X at it
-
-A new TRMNL X starts in Wi-Fi pairing mode. To get back to it on one that is already set
-up, hold the left and right ends of the touch bar until the screen flashes (the X has no
-button on the back). Connect to the **TRMNL** Wi-Fi network it opens, tap **Advanced** →
-**Custom Server** → **Yes** and enter `http://<server-ip>:4567`, without a trailing
-slash. Then go **Back to Wi-Fi**, pick your network and **Connect**.
-
-With the **Auto-Join** toggle in LaraPaper's header switched on (it then reads **Auto-Join
-Permitted**; only the first registered user sees it), the device shows up by itself.
-Check that its device model is **TRMNL X**. The device then shows "Please visit
-trmnl.com/start with Friendly ID … to finish setup". The firmware always shows that text
-after pairing, also with a custom server, so ignore it: the device is paired once it is
-listed in LaraPaper, and it shows your playlist from its next refresh (tap the middle of
-the touch bar to refresh now).
-
-### 3. Find your calendars
-
-**ICS feeds.** Most calendar services publish a private feed link (read-only, and
-anyone with the link can read the calendar, so keep it private):
-
-- Google Calendar: calendar settings → **Integrate calendar** → **Secret address in
-  iCal format**
-- iCloud: Calendar app → share the calendar → **Public Calendar** → copy the
-  `webcal://` link
-- Outlook.com / Microsoft 365: Settings → Calendar → **Shared calendars** → **Publish a
-  calendar** → the ICS link
-- Fastmail, Nextcloud and most CalDAV servers have a similar "subscribe" or "export"
-  link
-
-**Home Assistant.** Find your calendar entity IDs under Settings → Devices & services →
-Entities (filter on `calendar.`). Any calendar integration works (Local Calendar,
-Google, CalDAV, iCloud…).
-
-**Docker Compose only:** LaraPaper needs a token to read Home Assistant. HA → your profile →
-**Security** → **Long-lived access tokens** → Create. Check it from the LaraPaper host:
-
-```sh
-curl -H "Authorization: Bearer $TOKEN" \
-  "http://homeassistant.local:8123/api/calendars/calendar.family?start=2026-09-21&end=2026-11-10"
-```
-
-### 4. Install the recipe
-
-LaraPaper → **Plugins** → add menu → **Import from OSS Catalog** → **Install** on
-**Rolling Month Calendar**. Then
-open the settings of the **Rolling Month Calendar** recipe and fill in either:
-
-- **ICS feed URLs**, one per calendar. When these are set, the Home Assistant fields are
-  not used. Or:
-- **Home Assistant calendar entities**, e.g. `calendar.family`, `calendar.work`. With
-  Docker Compose also **Home Assistant URL**, e.g. `http://homeassistant.local:8123`
-  (must be reachable from the LaraPaper container), and **Access token**. With the
-  Home Assistant app, leave the URL at its default `http://127.0.0.1:8124` and the
-  token empty: that is the app's own access to Home Assistant.
-
-With the Home Assistant app you can also fill in **Home Assistant weather entity**, e.g.
-`weather.forecast_home`, for each day's forecast next to its day number (see
-[Weather](#weather)).
-
-The calendar is made to run to the screen's edges, as it does on TRMNL.com. LaraPaper
-0.44.0 and later take that from the recipe; on an older LaraPaper, tick **Remove bleed
-margin?** under **Screen Settings**.
-
-Add the recipe to the device's playlist (**Add to Playlist** on the recipe page).
-
-**Updating:** installing from the catalog again adds a second copy. To update in place
-and keep your settings, download
-[`rolling-month-calendar.zip`](https://github.com/BartSchuurmans/trmnl-rolling-month-calendar/releases/latest/download/rolling-month-calendar.zip)
-from the latest release and import it with **Plugins** → add menu → **Import Recipe
-Archive**. The recipe keeps the same `id` (`settings.yml`), so LaraPaper replaces the
-installed copy. After changing anything under `plugin/src`, build the ZIP with
-`./scripts/build-zip.sh` (→ `dist/rolling-month-calendar.zip`) and import that the same
-way.
-
-### ICS feeds
-
-LaraPaper fetches each feed on every refresh and parses it itself: recurring events are
-expanded and times are converted from the feed's time zones. It keeps only events from
-7 days back to 45 days ahead (30 before LaraPaper 0.44.0), so with ICS feeds the grid
-ends at the last whole week before that: 6 weeks, or on an older LaraPaper usually 4
-and sometimes 5. A later day would otherwise look free while its events are simply not
-in the data. Home Assistant is asked for 6 weeks ahead and has no such limit.
-
-A `webcal://` link is fetched over `https://`. The Home Assistant token is never sent
-to the feeds.
-
-### Weather
+## Weather
 
 Each day from today on can get its daily forecast left of its day number: an icon and
 the high, or the high and low with **Weather temperatures**. Where the line runs out of
@@ -240,8 +101,8 @@ serverless function on TRMNL.com asks your Home Assistant for that entity's fore
 with the same token as the calendars.
 
 **With LaraPaper**, it takes the LaraPaper (local) app: set **Home Assistant weather
-entity**, and the forecast comes from that entity. It works with ICS feeds as well as
-with Home Assistant calendars.
+entity**, and the forecast comes from that entity (see [Weather on
+LaraPaper](LARAPAPER.md#weather)).
 
 Use Home Assistant's [Open-Meteo](https://www.home-assistant.io/integrations/open_meteo/)
 integration (free, no key) rather than Met.no, the one Home Assistant sets up as
@@ -250,18 +111,13 @@ so by the evening today's high is about the current temperature. Open-Meteo's co
 the whole day. Its entity is named after the zone it forecasts for, e.g. `weather.home`
 for the Home zone.
 
-Home Assistant gives forecasts only to a `weather.get_forecasts` service call (a POST),
-and a recipe can only poll with GET. The app's proxy on `http://127.0.0.1:8124` turns
-`GET /api/weather/<weather entity>` into that one call (`type: daily`), so the recipe
-fetches the forecast from **Home Assistant URL** at its default. It doesn't work with
-a Home Assistant URL of your own (Docker Compose).
-
 ## Settings
 
 Where the events and the weather come from is the only difference between the two:
 TRMNL.com has the **Calendar** and **Weather** dropdowns, its Home Assistant edition the
 **Home Assistant** fields, LaraPaper the **ICS feed URLs** or **Home
-Assistant** fields (see the setup above). Everything else is the same.
+Assistant** fields (see the setup above,
+and [LARAPAPER.md](LARAPAPER.md) for LaraPaper). Everything else is the same.
 
 On TRMNL.com the form folds them into these groups (click a group to open it), below
 the calendar fields; LaraPaper shows them as one list in this order. On/off settings are
@@ -319,7 +175,7 @@ saved back then, but LaraPaper's form shows a saved "No" as ticked, and saving t
 then turns it on: after updating, check the toggles once.
 
 The grid shows as many whole weeks (up to 6) as fit, and with ICS feeds no more than
-the feeds cover (see [ICS feeds](#ics-feeds)): busy weeks make rows taller, so
+the feeds cover (see [ICS feeds](LARAPAPER.md#ics-feeds)): busy weeks make rows taller, so
 fewer fit. With **Busy weeks** set to `Show fewer weeks` it shows only the weeks that
 fit, so every event stays visible even if that is only a week or two. `Show "+N more"`
 keeps at least 3 weeks and ends a day that doesn't fit with "+N more". (TRMNL's built-in
@@ -568,12 +424,6 @@ To run the render checks locally, set up `FRAMEWORK_DIR` as in the workflow, run
   local midnight (`"now" | date: "%Y-%m-%d" | date: "%s" | minus: 561600`), which
   LaraPaper's PHP Liquid and the Ruby Liquid of TRMNL's own servers both read the same
   way.
-- The recipe loads FullCalendar from `/rolling-month-calendar/...`, which the LaraPaper (local)
-  app serves, and falls back to jsDelivr on any other server (TRMNL.com loads it from
-  jsDelivr straight away). With plain LaraPaper, rendering also loads the TRMNL framework
-  from trmnl.com, so the container needs internet access. The app avoids both. How: screens render from a
-  temporary `file://` page, so root-relative paths resolve to files in the image, and to
-  nginx in the browser preview.
 - Like LaraPaper, the preview reduces the screenshot to the device's grey levels. 4-bit
   is always dithered. 1-bit and 2-bit are dithered only when the page contains
   `<img class="image-dither">`, which the recipe doesn't add.

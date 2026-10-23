@@ -2,7 +2,8 @@
 
 Rolling-month calendar recipe for a TRMNL X, rendered by LaraPaper (self-hosted TRMNL
 server) from ICS feeds or Home Assistant calendar entities. Forked from the native TRMNL calendar
-plugin; see README.md for setup and UPSTREAM.md for what differs from upstream.
+plugin; see README.md for setup on TRMNL.com, LARAPAPER.md for LaraPaper and the app, and
+UPSTREAM.md for what differs from upstream.
 
 ## Layout
 
@@ -288,7 +289,7 @@ dates with `getUTC*`.
   workflows and voice) don't apply here, as FullCalendar needs this recipe's own CSS.
 - The recipe (and its variants) runs on servers of various versions: keep older LaraPaper
   versions working unless that needs ugly workarounds, and document any version cutoff in
-  README.md. The app (`larapaper/`) only has to work with the LaraPaper it bundles.
+  LARAPAPER.md (LaraPaper) or README.md. The app (`larapaper/`) only has to work with the LaraPaper it bundles.
 - Keep upstream's behaviour and comments where the code is forked (see UPSTREAM.md) and
   update UPSTREAM.md when diverging.
 - Sizes in CSS scale with `--mono-u` (`--ui-scale`); colours use framework vars (see Dark mode).

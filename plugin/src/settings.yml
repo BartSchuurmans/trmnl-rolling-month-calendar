@@ -1,5 +1,5 @@
 ---
-# TRMNL recipe settings (trmnlp format). Import into LaraPaper as a ZIP, see README.md.
+# TRMNL recipe settings (trmnlp format). Import into LaraPaper as a ZIP, see LARAPAPER.md.
 name: Rolling Month Calendar
 id: rolling-month-calendar
 refresh_interval: 15
@@ -45,13 +45,13 @@ custom_fields:
   - keyname: ics_urls
     field_type: multi_string
     name: ICS feed URLs
-    description: One or more calendar feed links (.ics or webcal://), e.g. Google Calendar's <a href="https://support.google.com/calendar/answer/37648" class="underline" target="_blank">"Secret address in iCal format"</a>; <a href="https://github.com/BartSchuurmans/trmnl-rolling-month-calendar#3-find-your-calendars" class="underline" target="_blank">other services</a>. When set, the Home Assistant fields below are not used. Before LaraPaper 0.44.0, ICS feeds only hold events up to 30 days ahead, so there the grid stops at the last week that is covered.
+    description: One or more calendar feed links (.ics or webcal://), e.g. Google Calendar's <a href="https://support.google.com/calendar/answer/37648" class="underline" target="_blank">"Secret address in iCal format"</a>; <a href="https://github.com/BartSchuurmans/trmnl-rolling-month-calendar/blob/main/LARAPAPER.md#3-find-your-calendars" class="underline" target="_blank">other services</a>. When set, the Home Assistant fields below are not used. Before LaraPaper 0.44.0, ICS feeds only hold events up to 30 days ahead, so there the grid stops at the last week that is covered.
     placeholder: calendar.google.com/calendar/ical/.../basic.ics
     optional: true
   - keyname: ha_url
     field_type: url
     name: Home Assistant URL
-    description: Instead of ICS feeds, Home Assistant calendar entities. Base URL of your Home Assistant instance, reachable from the server. No trailing slash. The default is the <a href="https://github.com/BartSchuurmans/trmnl-rolling-month-calendar#self-hosted-with-larapaper" class="underline" target="_blank">LaraPaper (local) Home Assistant app</a>'s own calendar access, which needs no token.
+    description: Instead of ICS feeds, Home Assistant calendar entities. Base URL of your Home Assistant instance, reachable from the server. No trailing slash. The default is the <a href="https://github.com/BartSchuurmans/trmnl-rolling-month-calendar/blob/main/LARAPAPER.md" class="underline" target="_blank">LaraPaper (local) Home Assistant app</a>'s own calendar access, which needs no token.
     default: http://127.0.0.1:8124
     placeholder: http://homeassistant.local:8123
     optional: true
@@ -97,7 +97,7 @@ custom_fields:
     field_type: string
     name: Home Assistant weather entity
     group: Weather
-    description: Optional. A <a href="https://www.home-assistant.io/integrations/weather/" class="underline" target="_blank">weather entity</a> (e.g. weather.forecast_home) whose daily forecast is shown next to each day number, from today on. Needs the LaraPaper (local) Home Assistant app (<a href="https://github.com/BartSchuurmans/trmnl-rolling-month-calendar#weather" class="underline" target="_blank">how it works</a>) and its default Home Assistant URL above; works with ICS feeds too.
+    description: Optional. A <a href="https://www.home-assistant.io/integrations/weather/" class="underline" target="_blank">weather entity</a> (e.g. weather.forecast_home) whose daily forecast is shown next to each day number, from today on. Needs the LaraPaper (local) Home Assistant app (<a href="https://github.com/BartSchuurmans/trmnl-rolling-month-calendar/blob/main/LARAPAPER.md#weather" class="underline" target="_blank">how it works</a>) and its default Home Assistant URL above; works with ICS feeds too.
     placeholder: weather.forecast_home
     optional: true
   - keyname: weather_temperatures
