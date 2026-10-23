@@ -21,12 +21,8 @@ node render.mjs $common --set "$usual" --out "$raw/preview.png"
 node render.mjs $common --set "$usual" --device og --out "$raw/preview-1bit.png"
 # shellcheck disable=SC2086
 node render.mjs $common --set "$usual" --device og2 --out "$raw/preview-2bit.png"
-# The same with Usual events on Without times
-# shellcheck disable=SC2086
-node render.mjs $common --set "$usual" --set usual_events=no_time --out "$raw/usual-week.png"
-rm -f "$raw"/preview*.html "$raw"/usual-week*.html
+rm -f "$raw"/preview*.html
 
 node frame.mjs --model x "$raw/preview.png" "$docs/preview.png"
 node frame.mjs --model og "$raw/preview-1bit.png" "$docs/preview-1bit.png"
 node frame.mjs --model og "$raw/preview-2bit.png" "$docs/preview-2bit.png"
-node frame.mjs --model x "$raw/usual-week.png" "$docs/usual-week.png"

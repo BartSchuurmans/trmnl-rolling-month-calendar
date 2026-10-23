@@ -261,10 +261,9 @@ are no commas in it (they separate the calendars). A crossed-out day takes the t
 (with the calendar's prefix), else the rule's title, else that of the calendar's other
 usual events, else the prefix alone.
 
-<sub>The screenshot at the top has Mark's work calendar (same `M:` prefix and color) on
-`Mon-Thu 08:30-17:00` with **Usual events** on `Hidden`: only a later Wednesday, a
-Thursday swapped for Friday and the days off for the holiday show. Here the same on `Without times`.</sub><br>
-<img src="docs/usual-week.png" width="100%">
+The [screenshot at the top](#rolling-month-calendar-for-trmnl) shows it: Mark's work calendar (same `M:`
+prefix and color) on `Mon-Thu 08:30-17:00` with **Usual events** on `Hidden`, so only a
+later Wednesday, a Thursday swapped for Friday and the days off for the holiday show.
 
 ## Differences from upstream
 
