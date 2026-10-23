@@ -9,8 +9,8 @@ prefix per calendar, and half and quadrant views for mashups. Made for the
 
 There are two ways to use it. Pick the one that matches how your TRMNL is set up:
 
-- **[On TRMNL.com](#on-trmnlcom)**: your device uses TRMNL's own servers. Install the
-  recipe and pick the calendar plugins you already connected on trmnl.com (Google,
+- **[On TRMNL.com](#on-trmnlcom)**: your device uses TRMNL's own servers. [Install the
+  recipe](https://trmnl.com/recipes/rolling-month-calendar-492440) and pick the calendar plugins you already connected on trmnl.com (Google,
   Outlook, Apple, CalDAV…). Nothing to host. If your calendars are in Home Assistant
   instead, and it is reachable from the internet, there is a
   [Home Assistant edition](#on-trmnlcom-with-home-assistant).
@@ -35,8 +35,8 @@ for anyone who wants to change it.
      this week before today: without them, the plugin shares nothing before today;
    - keep it in a playlist, or its events stop refreshing. It doesn't have to show on
      its own: hide it in the playlist, and only this recipe shows its events.
-2. **Install the recipe**: find **Rolling Month Calendar** among
-   TRMNL's recipes and install it.
+2. **Install the recipe**: open [Rolling Month Calendar](https://trmnl.com/recipes/rolling-month-calendar-492440) on
+   TRMNL.com and install it.
 3. **Pick your calendars** in its **Calendar** dropdowns, up to eight. The dropdowns list
    all your plugins, so choose the calendar ones. Set the other [settings](#settings)
    as you like.
@@ -64,8 +64,8 @@ instead.
    **Long-lived access tokens** → Create. A token can do anything its user can, so
    preferably make a separate user for TRMNL that isn't an administrator (Settings →
    People → Users), log in as that user and create the token there.
-2. **Install the recipe**: find **Rolling Month Calendar (Home Assistant)** among TRMNL's
-   recipes and install it.
+2. **Install the recipe**: open [Rolling Month Calendar (Home
+   Assistant)](https://trmnl.com/recipes/rolling-month-calendar-home-assistant-494738) on TRMNL.com and install it.
 3. **Fill in** your Home Assistant URL (without a trailing slash), the token and your
    calendar entity IDs (Settings → Devices & services → Entities, search for
    `calendar.`). Set the other [settings](#settings) as you like.
