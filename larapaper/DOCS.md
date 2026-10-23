@@ -45,7 +45,7 @@ listed in `assets.txt`, each checked against a pinned SHA-256.
    next refresh. A TRMNL OG on firmware older than 1.4.6 has no
    **Custom Server** option and needs a firmware update first.
 4. Install the calendar recipe: **Plugins** → add menu → **Import from OSS Catalog** →
-   **Install** on **Rolling Month Calendar** (see the repository README). Fill in your
+   **Install** on **Rolling Month Calendar** (see [LARAPAPER.md](https://github.com/BartSchuurmans/trmnl-rolling-month-calendar/blob/main/LARAPAPER.md)). Fill in your
    calendar entities and leave **Home Assistant URL** at `http://127.0.0.1:8124` and the access token empty: the app
    reads your calendars with its own Home Assistant access, so you don't need to create
    a token. A recipe you set up before keeps its URL and token when you update; change
