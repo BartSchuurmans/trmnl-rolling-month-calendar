@@ -241,8 +241,8 @@ shows only what differs from it:
 - Anything else shows as normal: a shifted day with its new times, an extra day, an event
   over several days.
 - A usual day without any of the calendar's events (a day off, a holiday) shows the usual
-  event crossed out as an all-day event, as plain text with only the prefix in the
-  calendar's colour, so a holiday of any length stays visible.
+  event crossed out as an all-day event in the calendar's colour, so a holiday of any
+  length stays visible.
 
 The usual week is one or more rules separated by `;`, each weekdays, times and
 optionally the title:
