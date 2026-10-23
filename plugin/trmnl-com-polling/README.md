@@ -38,7 +38,8 @@ Cloudflare Workers with the sample calendars (the six-week cycle of
 `preview/sample-data.mjs`) and a forecast for `weather.forecast_home`: set **Home
 Assistant URL** to its workers.dev URL, any text as the token, `calendar.family`,
 `calendar.mark`, `calendar.sara` as the entities and `weather.forecast_home` as the
-weather entity.
+weather entity. Add `calendar.work`, Mark's work calendar, with **Usual week**
+`-,-,-,Mon-Thu 08:30-17:00` to try Usual week (the README's screenshot).
 
 Without it, `docs/sample-ha/` serves the same calendars as static files, but no
 weather. Set **Home Assistant URL** to

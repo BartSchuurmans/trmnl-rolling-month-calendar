@@ -6,7 +6,7 @@
 // Assistant for the TRMNL.com Home Assistant recipe (plugin/trmnl-com-polling): its Home
 // Assistant URL set to that folder on jsDelivr (cdn.jsdelivr.net/gh/<repo>@main/docs/
 // sample-ha; raw.githubusercontent.com answers 404 to the token header), any token, the entities
-// calendar.family, calendar.mark and calendar.sara. Those files are HA's
+// calendar.family, calendar.mark and calendar.sara (and calendar.work for Usual week). Those files are HA's
 // /api/calendars/<entity> responses with every occurrence from the cycle's start to
 // SAMPLE_HA_END (a static server ignores ?start=&end=), so move that on before it passes.
 // sample-server/worker.mjs is the better stand-in: it works them out from today, and answers
@@ -65,7 +65,27 @@ export const CALENDARS = {
     allDay(4, 'Mon', 2, 'Conference'),
     timed(5, 'Tue', '20:00', '21:30', 'Book club'),
   ],
+  // Mark's work calendar, for "Usual week" (calendar_usual_week Mon-Thu 08:30-17:00):
+  // Monday to Thursday 8:30-17:00, apart from a few changes in the cycle (WORK_CHANGES).
+  // Published like the others, but not drawn unless asked for (SAMPLE, render.mjs --work).
+  work: [],
 };
+// The calendars drawn by default, in this order
+const SAMPLE = ['family', 'mark', 'sara'];
+
+// A later Wednesday, Thursday swapped for Friday, the family's holiday week off, a
+// short Tuesday: week-day of the cycle → times, or null for a day off
+const WORK_CHANGES = {
+  '1-Wed': ['12:00', '20:00'], '2-Thu': null, '2-Fri': ['08:30', '17:00'],
+  '3-Mon': null, '3-Tue': null, '3-Wed': null, '3-Thu': null, '5-Tue': ['08:30', '13:00'],
+};
+for (let week = 0; week < CYCLE; week++) {
+  for (const day of Object.keys(DAYS)) {
+    const change = `${week}-${day}`;
+    const times = change in WORK_CHANGES ? WORK_CHANGES[change] : DAYS[day] < 4 && ['08:30', '17:00'];
+    if (times) CALENDARS.work.push(timed(week, day, ...times, 'Work'));
+  }
+}
 
 const DAY_MS = 86400000;
 const ymd = (ms) => new Date(ms).toISOString().slice(0, 10);
@@ -104,36 +124,13 @@ function haEvents(name, from, to, zone) {
 
 // The calendars as polled from HA: every occurrence from a week before `today`
 // (YYYY-MM-DD) to seven weeks after it, in time zone `zone`
-export function sampleData(today, zone) {
+export function sampleData(today, zone, names = SAMPLE) {
   const from = Date.parse(`${today}T00:00:00Z`) - 7 * DAY_MS, to = from + 8 * 7 * DAY_MS;
-  return Object.fromEntries(Object.keys(CALENDARS).map((name, i) => [`IDX_${i}`, { data: haEvents(name, from, to, zone) }]));
+  return Object.fromEntries(names.map((name, i) => [`IDX_${i}`, { data: haEvents(name, from, to, zone) }]));
 }
 
-// Mark's work calendar for "Usual week" (calendar_usual_week), as rendered with
-// render.mjs --work: Monday to Thursday 8:30-17:00, apart from a few changes in the cycle
-// (a later Wednesday, Thursday swapped for Friday, the family's holiday week off, a short
-// Tuesday). Like sampleData, a week before `today` to seven weeks after it, in HA's
-// format; not one of the published sample calendars.
-const WORK_CHANGES = {
-  '1-Wed': ['12:00', '20:00'], '2-Thu': null, '2-Fri': ['08:30', '17:00'],
-  '3-Mon': null, '3-Tue': null, '3-Wed': null, '3-Thu': null, '5-Tue': ['08:30', '13:00'],
-};
-export function sampleWork(today, zone) {
-  const from = Date.parse(`${today}T00:00:00Z`) - 7 * DAY_MS, anchor = Date.parse(`${ANCHOR}T00:00:00Z`);
-  const names = Object.keys(DAYS);
-  const events = [];
-  for (let t = from; t < from + 8 * 7 * DAY_MS; t += DAY_MS) {
-    const days = Math.round((t - anchor) / DAY_MS);
-    const week = ((Math.floor(days / 7) % CYCLE) + CYCLE) % CYCLE, day = names[((days % 7) + 7) % 7];
-    const change = `${week}-${day}`;
-    const times = change in WORK_CHANGES ? WORK_CHANGES[change] : DAYS[day] < 4 && ['08:30', '17:00'];
-    if (!times) continue;
-    const date = ymd(t);
-    events.push({ start: { dateTime: `${date}T${times[0]}:00${offset(date, zone)}` }, end: { dateTime: `${date}T${times[1]}:00${offset(date, zone)}` },
-      summary: 'Work', description: null, location: null, uid: `work-${date}`, recurrence_id: null, rrule: null });
-  }
-  return { data: events };
-}
+// Mark's work calendar alone, polled like sampleData (render.mjs --work adds it)
+export const sampleWork = (today, zone) => sampleData(today, zone, ['work']).IDX_0;
 
 // docs/sample-ha/api/calendars/calendar.<name>: the cycle's start to SAMPLE_HA_END, in
 // Amsterdam time, one event per line

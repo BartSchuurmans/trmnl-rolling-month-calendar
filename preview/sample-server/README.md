@@ -9,16 +9,17 @@ can't.
 
 | Request | Answer |
 |---|---|
-| `GET /api/calendars/calendar.family`, `.mark`, `.sara` `?start=&end=` | The sample events in that window, as Home Assistant sends them (Amsterdam time) |
+| `GET /api/calendars/calendar.family`, `.mark`, `.sara`, `.work` `?start=&end=` | The sample events in that window, as Home Assistant sends them (Amsterdam time) |
 | `POST /api/services/weather/get_forecasts?return_response` with `{"entity_id": "weather.forecast_home", "type": "daily"}` | Ten days of forecast from today, as `transform.js` reads it |
-| `GET /feeds/family.ics`, `mark.ics`, `sara.ics` | The sample ICS feeds, the same as `docs/sample-ics/` |
+| `GET /feeds/family.ics`, `mark.ics`, `sara.ics`, `work.ics` | The sample ICS feeds, the same as `docs/sample-ics/` |
 
 The `/api/` paths want a bearer token, as Home Assistant does, but take any. The data is
 public, so there's nothing secret to configure.
 
 In the recipe's form: **Home Assistant URL** the worker's URL, **token** any text,
 **calendar entities** `calendar.family`, `calendar.mark`, `calendar.sara`, **weather
-entity** `weather.forecast_home`.
+entity** `weather.forecast_home`. `calendar.work` is Mark's work calendar, for **Usual
+week** `-,-,-,Mon-Thu 08:30-17:00` (as in the README's screenshot).
 
 ## Deploying
 
