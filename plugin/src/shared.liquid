@@ -222,7 +222,8 @@
   .trmnl-calendar .trmnl-event--white:not(.mono-event--end) { border-inline-end-style: none; }
 
   /* "Usual week": a day off is drawn like the calendar's other events, struck through
-     across the whole cell, in the colour of its text */
+     across the whole cell, in the colour of its text, with a regular-weight title like the
+     usual events (below): it is routine, and not happening */
   .trmnl-calendar .mono-event.trmnl-event--off { position: relative; }
   .trmnl-calendar .mono-event.trmnl-event--off::after {
     content: "";
@@ -235,11 +236,15 @@
   /* 1-/2-bit pixel fonts are a few pixels high: a thick strike would cover them */
   .screen--1bit .trmnl-calendar .mono-event.trmnl-event--off::after,
   .screen--2bit .trmnl-calendar .mono-event.trmnl-event--off::after { top: 50%; height: 1px; }
+  /* on a dither pattern a 1px line gets lost: 2px there (a paper edge would cut the glyphs) */
+  .screen--1bit .trmnl-calendar .mono-event.trmnl-event--off.text-stroke::after,
+  .screen--2bit .trmnl-calendar .mono-event.trmnl-event--off.text-stroke::after { top: calc(50% - 2px); height: 2px; }
   /* "Usual events" set to "Without times": a usual event without its times, and with a
      regular-weight title, so the events that differ stand out (not on 1-/2-bit: the regular
      pixel font breaks up at some positions) */
   .trmnl-calendar .trmnl-event--usual .mono-event-time { display: none; }
-  .screen:not(.screen--1bit):not(.screen--2bit) .trmnl-calendar .trmnl-event--usual .mono-event-title { font-weight: 400; }
+  .screen:not(.screen--1bit):not(.screen--2bit) .trmnl-calendar .trmnl-event--usual .mono-event-title,
+  .screen:not(.screen--1bit):not(.screen--2bit) .trmnl-calendar .trmnl-event--off .mono-event-title { font-weight: 400; }
 
   /* patterned weekend cells make small text hard to read: back it with the paper colour */
   .screen--1bit .trmnl-calendar .mono-day-number,
