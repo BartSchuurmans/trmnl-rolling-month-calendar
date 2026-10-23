@@ -4,12 +4,12 @@
 // on every request, so it never runs out. It answers what the recipe asks of Home
 // Assistant:
 //
-//   GET  /api/calendars/calendar.family|mark|sara?start=YYYY-MM-DD&end=YYYY-MM-DD
+//   GET  /api/calendars/calendar.family|mark|sara|work?start=YYYY-MM-DD&end=YYYY-MM-DD
 //   POST /api/services/weather/get_forecasts?return_response
 //        {"entity_id": "weather.forecast_home", "type": "daily"}   (transform.js)
 //
 // with any bearer token (the data is public; a missing one gets 401 like Home Assistant),
-// and the sample ICS feeds as /feeds/family|mark|sara.ics, the same as docs/sample-ics/.
+// and the sample ICS feeds as /feeds/family|mark|sara|work.ics, the same as docs/sample-ics/.
 // Cloudflare deploys it from main (wrangler.jsonc here); see README.md.
 import { CALENDARS, sampleHaRange, sampleForecast, sampleIcs } from '../sample-data.mjs';
 
