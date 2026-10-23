@@ -4,7 +4,7 @@
 # `node preview/trmnlp.mjs --test`): polling the calendars, the serverless function's
 # forecast call (transform.js), and the views in Firefox, against a fake Home Assistant
 # and at a fixed time. The calendars are the sample ones (docs/sample-ha, copied next to
-# this file as sample-ha/); `trmnlp test --report` shows every screen drawn.
+# this file as sample-ha/, answered for the requested dates); `trmnlp test --report` shows every screen drawn.
 RSpec.describe 'Rolling Month Calendar (Home Assistant)' do
   HA = 'https://ha.example'
   TOKEN = 'test-token'
@@ -26,7 +26,11 @@ RSpec.describe 'Rolling Month Calendar (Home Assistant)' do
       file = File.join(__dir__, 'sample-ha', name)
       next { status: 404, json: { message: 'Entity not found' } } unless File.exist?(file)
 
-      { body: File.read(file), headers: { 'content-type' => 'application/json' } }
+      # Only the requested window, as Home Assistant answers: the file runs to SAMPLE_HA_END
+      from, to = %w[start end].map { |key| request[:url][/[?&]#{key}=([\d-]+)/, 1] }
+      day = ->(at) { (at['dateTime'] || at['date'])[0, 10] }
+      events = JSON.parse(File.read(file)).select { |e| day.(e['start']) < to && day.(e['end']) >= from }
+      { json: events }
     end
   end
   let(:forecast) do

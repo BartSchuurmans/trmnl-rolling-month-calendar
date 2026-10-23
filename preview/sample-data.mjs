@@ -40,7 +40,8 @@ export const CALENDARS = {
     timed(1, 'Wed', '15:00', '16:00', 'Parent-teacher meeting'),
     allDay(1, 'Sat', 1, 'Birthday Oma'),
     timed(1, 'Sat', '16:00', '19:00', 'Birthday party'),
-    allDay(2, 'Sat', 9, 'Holiday'),
+    timed(2, 'Sun', '11:00', '15:00', 'Zoo'),
+    allDay(3, 'Wed', 5, 'Holiday'),
     timed(4, 'Fri', '20:00', '22:30', 'Concert'),
     timed(5, 'Fri', '19:30', '22:00', 'Movie night'),
     allDay(5, 'Sat', 2, 'Grandparents visiting'),
@@ -50,6 +51,7 @@ export const CALENDARS = {
     timed(0, 'Wed', '11:00', '12:00', 'Dentist'),
     timed(0, 'Thu', '12:00', '13:00', null), // no title: shown as busy
     timed(0, 'Sat', '09:00', '10:30', 'Football', 2),
+    timed(1, 'Sun', '10:00', '11:00', 'Run', 2),
     timed(1, 'Tue', '09:00', '17:00', 'Offsite'),
     timed(3, 'Thu', '09:00', '09:30', 'Car service'),
     timed(5, 'Wed', '17:30', '18:00', 'Haircut'),
@@ -60,7 +62,9 @@ export const CALENDARS = {
     timed(0, 'Thu', '18:00', '19:00', 'Yoga', 2),
     // shared with the family calendar → de-duplicated
     timed(1, 'Wed', '15:00', '16:00', 'Parent-teacher meeting'),
+    timed(1, 'Fri', '19:00', '22:00', 'Drinks with Lisa'),
     timed(2, 'Tue', '14:00', '15:00', 'Design review'),
+    timed(2, 'Wed', '12:00', '13:00', 'Lunch with Eva'),
     timed(3, 'Thu', '19:00', '21:00', 'Team dinner'),
     allDay(4, 'Mon', 2, 'Conference'),
     timed(5, 'Tue', '20:00', '21:30', 'Book club'),
@@ -73,11 +77,11 @@ export const CALENDARS = {
 // The calendars drawn by default, in this order
 const SAMPLE = ['family', 'mark', 'sara'];
 
-// A later Wednesday, Thursday swapped for Friday, the family's holiday week off, a
+// A later Wednesday, Thursday swapped for Friday, the family's holiday off, a
 // short Tuesday: week-day of the cycle → times, or null for a day off
 const WORK_CHANGES = {
   '1-Wed': ['12:00', '20:00'], '2-Thu': null, '2-Fri': ['08:30', '17:00'],
-  '3-Mon': null, '3-Tue': null, '3-Wed': null, '3-Thu': null, '5-Tue': ['08:30', '13:00'],
+  '3-Wed': null, '3-Thu': null, '5-Tue': ['08:30', '13:00'],
 };
 for (let week = 0; week < CYCLE; week++) {
   for (const day of Object.keys(DAYS)) {
