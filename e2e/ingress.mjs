@@ -67,10 +67,12 @@ try {
   page.on('requestfailed', (r) => failed.push(`${r.failure()?.errorText} ${r.url()}`));
   page.on('pageerror', (e) => failed.push(`page error: ${e.message}`));
 
-  // Home Assistant opens the ingress path's root; without a session, LaraPaper's
-  // redirect to its login page stays under the prefix
+  // Home Assistant opens the ingress path's root: LaraPaper's welcome page, whose
+  // login link stays under the prefix
   await page.goto(`${base}/`);
-  check(page.url() === `${base}/login`, `redirected to the login page (${page.url()})`);
+  await Promise.all([page.waitForURL(`${base}/login`, { timeout: 30000 }).catch(() => {}),
+    page.click(`a[href="${base}/login"]`)]);
+  check(page.url() === `${base}/login`, `welcome page links to the login page (${page.url()})`);
   await page.fill('input[name="email"]', login.email);
   await page.fill('input[name="password"]', login.password);
   await Promise.all([page.waitForURL(`${base}/dashboard`, { timeout: 30000 }).catch(() => {}),

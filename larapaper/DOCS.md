@@ -1,14 +1,15 @@
 # LaraPaper (local)
 
 [LaraPaper](https://github.com/usetrmnl/larapaper), the self-hosted TRMNL server, set
-up so that rendering a screen needs no internet access. It is the official LaraPaper
-image with these additions:
+up so that rendering a screen needs no internet access. It is the official
+[LaraPaper (BYOS) add-on](https://github.com/usetrmnl/trmnl-home-assistant/tree/main/trmnl-larapaper),
+which keeps the database, generated screens and app key in `/data` (so they survive
+updates and are part of Home Assistant backups) and opens the web UI through Home
+Assistant, with these additions:
 
 - **TRMNL framework 3.4.0** (CSS, JS and fonts) and **FullCalendar 7.1.0** (and 6.1.21 for recipe versions up to v1.9.0) are built
   into the image. LaraPaper normally loads the framework from trmnl.com, and the
   calendar recipe loads FullCalendar from jsDelivr, every time a screen renders.
-- The database, generated screens and app key are kept in `/data`, so they survive
-  updates and are part of Home Assistant backups.
 - The calendar recipe reads Home Assistant through `http://127.0.0.1:8124`, which
   forwards calendar requests and daily weather forecasts (and nothing else) to Home
   Assistant with the app's own access. It is only reachable from inside the app.
@@ -24,7 +25,7 @@ image with these additions:
 
 Installing or updating the app downloads a prebuilt image
 (`ghcr.io/bartschuurmans/larapaper-local`, amd64 and aarch64), which needs internet.
-The image is built by this repository's CI from the LaraPaper image and the files
+The image is built by this repository's CI from the add-on's image and the files
 listed in `assets.txt`, each checked against a pinned SHA-256.
 
 ## Setup
@@ -104,4 +105,4 @@ their own scripts or images from the internet still need it too.
 ## Updating
 
 LaraPaper updates come through updates of this app, which pin an exact LaraPaper
-version (`FROM` in the `Dockerfile`).
+version (`FROM` in the `Dockerfile`: the add-on's image, whose version is LaraPaper's).
