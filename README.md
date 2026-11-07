@@ -312,8 +312,8 @@ the changes in detail.
   Home Assistant from TRMNL.com, plus a serverless function (`transform.js`) that fetches
   the weather forecast, built and released the same way.
 - **LaraPaper (local)** (`larapaper/`, `repository.yaml`): a Home Assistant app that runs
-  the official LaraPaper image with the TRMNL framework, its fonts and FullCalendar built
-  in, so rendering a screen needs no internet access. See
+  the official LaraPaper Home Assistant add-on with the TRMNL framework, its fonts and
+  FullCalendar built in, so rendering a screen needs no internet access. See
   [larapaper/DOCS.md](larapaper/DOCS.md).
 - **A local preview** (`preview/`): renders the recipe to a PNG at the device's
   resolution and grey levels, from sample, random or live Home Assistant data. CI uses it

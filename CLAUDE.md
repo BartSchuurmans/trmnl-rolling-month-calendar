@@ -22,8 +22,13 @@ UPSTREAM.md for what differs from upstream.
   Home Assistant for trying `plugin/trmnl-com-polling/`; `preview/sample-server/worker.mjs`
   is the better one, on Cloudflare Workers, deployed from main by Cloudflare: data from
   today, plus the weather forecast's POST).
-- `larapaper/` + `repository.yaml` — Home Assistant app: official LaraPaper image plus
-  bundled TRMNL framework, fonts and FullCalendar (`assets.txt`, pinned by SHA-256).
+- `larapaper/` + `repository.yaml` — Home Assistant app: the official LaraPaper add-on's
+  image (`ghcr.io/usetrmnl/trmnl-larapaper-<arch>`, from usetrmnl/trmnl-home-assistant:
+  /data, options, ingress) plus what it lacks: bundled TRMNL framework, fonts and
+  FullCalendar (`assets.txt`, pinned by SHA-256), the Home Assistant proxy, pre-render and
+  device sensors. Its extras run in `rootfs/etc/entrypoint.d/20-larapaper-local.sh`, after
+  the add-on's own `10-homeassistant.sh`; fix what the add-on does in the add-on (Bart's
+  fork), not here.
 - `e2e/` — end-to-end test against the app container: fake Home Assistant, driver,
   in-container helper.
 - `plugin/<variant>/` (now `trmnl-com-merge/` and `trmnl-com-polling/`, see `plugin/README.md`) — the
@@ -173,21 +178,22 @@ purifies them down to `href` (since 0.44.0 opening in a new tab, and the About
 `github_url`/`learn_more_url`).
 
 **Home Assistant access.** In the app, the recipe's default URL `http://127.0.0.1:8124`
-is an nginx proxy written by `larapaper/rootfs/etc/entrypoint.d/10-ha-calendar.sh`: it
+is an nginx proxy written by `larapaper/rootfs/etc/entrypoint.d/20-larapaper-local.sh`: it
 forwards only GET `/api/calendars/` to `http://supervisor/core/api` with the app's
 `SUPERVISOR_TOKEN` (`homeassistant_api: true`), so no user token is needed. It listens
 on loopback only; don't publish it or widen its paths. Docker Compose setups still use a
 URL and long-lived token. CI and the e2e test point it at the fake HA via `HA_API_URL`.
 
-**Ingress.** The web UI also opens through Home Assistant (`ingress: true`), on an nginx
-server on port 8099 written by the same entrypoint script, which answers only the
-Supervisor (172.30.32.2; `HA_INGRESS_PROXY` in CI). HA strips `/api/hassio_ingress/<token>`
-and sends it as `X-Ingress-Path`; nginx passes it to PHP as the script's directory
-(`SCRIPT_NAME`/`REQUEST_URI`), so Laravel's URLs carry it, plus host/scheme from
-`X-Forwarded-*`. Root-relative paths Laravel doesn't make still break there: the
-framework's `/fonts/` (nginx `sub_filter`), the recipe preview's assets
-(`larapaper/ingress/ingress.js`) and APP_URL screen links
-(`larapaper/ingress/IngressServiceProvider.php`).
+**Ingress.** The web UI also opens through Home Assistant (`ingress: true`), on the
+add-on's nginx server on port 8099 (`10-homeassistant.sh` in its image), which answers
+only the Supervisor (172.30.32.2; `HA_INGRESS_PROXY` in CI). HA strips
+`/api/hassio_ingress/<token>` and sends it as `X-Ingress-Path`; nginx passes it to
+Laravel as `X-Forwarded-Prefix` (the Supervisor is a trusted proxy), so Laravel's URLs
+carry it, and rewrites APP_URL storage links. `20-larapaper-local.sh` adds to that server
+what our bundled assets need: the framework's `/fonts/` (`sub_filter`), the recipe
+preview's assets (`larapaper/ingress/ingress.js`), and storage links in Livewire's
+component snapshot (JSON in JSON, missed by the add-on); it fails the start if the
+add-on's config no longer has the lines it hooks into.
 
 **Pre-rendering.** LaraPaper renders only inside the device's GET `/api/display` (when
 the recipe's data is older than its refresh interval), and the TRMNL firmware gives that
@@ -297,7 +303,8 @@ dates with `getUTC*`.
   in `docs/` with `sh preview/docs-images.sh` and commit them in the same PR.
 - After changing `plugin/src/`, rebuild with `scripts/build-zip.sh`; re-importing the
   ZIP updates the recipe in LaraPaper in place (same `id`).
-- Bumping LaraPaper: `BUILD_FROM` in `larapaper/Dockerfile` + `version` in `config.yaml`. Bumping the
+- Bumping LaraPaper: the add-on image's tag (LaraPaper's version, once the add-on has
+  released it) in `BUILD_FROM` in `larapaper/Dockerfile` + `version` in `config.yaml`. Bumping the
   framework or FullCalendar: update `assets.txt` hashes (a tarball member is pinned by
   the tarball's hash) and the license texts listed there, and the paths in the
   Dockerfile, `shared.liquid` and `settings.yml`.

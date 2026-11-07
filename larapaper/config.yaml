@@ -1,9 +1,10 @@
 name: LaraPaper (local)
-version: "0.45.1-1"
+version: "0.46.0-1"
 slug: larapaper_local
 description: >-
-  TRMNL BYOS server (LaraPaper) that renders screens without internet access:
-  the TRMNL framework and FullCalendar are bundled in the image.
+  The official LaraPaper (BYOS) add-on, plus rendering without internet access (the
+  TRMNL framework and FullCalendar bundled), a Home Assistant proxy for recipes,
+  pre-rendering and device sensors.
 url: https://github.com/BartSchuurmans/trmnl-rolling-month-calendar/tree/main/larapaper
 # Built and published by .github/workflows/app.yml when the version changes on main
 image: ghcr.io/bartschuurmans/larapaper-local

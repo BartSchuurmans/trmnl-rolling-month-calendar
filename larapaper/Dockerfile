@@ -1,16 +1,16 @@
-# LaraPaper (local): the official LaraPaper image plus everything a screen render
-# would otherwise fetch from the internet.
-# The official LaraPaper image is multi-arch (linux/amd64 + linux/arm64). To update
-# LaraPaper, bump this tag and the version in config.yaml.
-ARG BUILD_FROM=ghcr.io/usetrmnl/larapaper:0.45.1
+# LaraPaper (local): the official LaraPaper Home Assistant add-on
+# (usetrmnl/trmnl-home-assistant, trmnl-larapaper/: LaraPaper plus /data, options and
+# ingress) plus everything a screen render would otherwise fetch from the internet, a
+# Home Assistant proxy for recipes, pre-rendering and device sensors.
+# The add-on's images are per architecture; Home Assistant's builder passes BUILD_ARCH.
+# Its version is LaraPaper's: to update LaraPaper, bump this tag and the version in
+# config.yaml.
+ARG BUILD_ARCH=amd64
+ARG BUILD_FROM=ghcr.io/usetrmnl/trmnl-larapaper-${BUILD_ARCH}:0.46.0
 FROM ${BUILD_FROM}
 
 LABEL org.opencontainers.image.title="LaraPaper (local)" \
       org.opencontainers.image.source="https://github.com/BartSchuurmans/trmnl-rolling-month-calendar"
-
-# Root so the entrypoint hook can take ownership of the Supervisor-mounted /data;
-# PHP-FPM workers still run as www-data (serversideup-php images support this).
-USER root
 
 # TRMNL framework 3.4.0 (LaraPaper's default version) with its fonts, and FullCalendar.
 # Each file is pinned by SHA-256 in assets.txt.
@@ -27,14 +27,12 @@ RUN for dir in trmnl-framework fonts rolling-month-calendar; do \
     done
 
 # Point LaraPaper at the bundled framework instead of trmnl.com (the explicit URLs win
-# over TRMNL_BLADE_FRAMEWORK_BASE_URL and the recipe's framework_version). OPcache on, as
-# in LaraPaper's own docker-compose.
+# over TRMNL_BLADE_FRAMEWORK_BASE_URL and the recipe's framework_version).
 ENV TRMNL_BLADE_FRAMEWORK_CSS_URL=/trmnl-framework/3.4.0/plugins.min.css \
-    TRMNL_BLADE_FRAMEWORK_JS_URL=/trmnl-framework/3.4.0/plugins.min.js \
-    PHP_OPCACHE_ENABLE=1
+    TRMNL_BLADE_FRAMEWORK_JS_URL=/trmnl-framework/3.4.0/plugins.min.js
 
 COPY rootfs /
-RUN chmod +x /etc/entrypoint.d/10-ha-calendar.sh /etc/s6-overlay/s6-rc.d/larapaper-local-prerender/run \
+RUN chmod +x /etc/entrypoint.d/20-larapaper-local.sh /etc/s6-overlay/s6-rc.d/larapaper-local-prerender/run \
     /etc/s6-overlay/s6-rc.d/larapaper-local-mqtt/run
 
 # Renders recipe screens ahead of time, so the TRMNL doesn't wait on a render: see
@@ -45,9 +43,5 @@ COPY prerender/prerender.php /opt/larapaper-local/
 # MQTT discovery: see mqtt.php. Started by s6 like the pre-render.
 COPY mqtt/mqtt.php /opt/larapaper-local/
 
-# Home Assistant ingress: see IngressServiceProvider.php and 10-ha-calendar.sh
-COPY --chown=www-data:www-data ingress/IngressServiceProvider.php /var/www/html/app/Providers/
+# Home Assistant ingress: the recipe preview's bundled assets (see 20-larapaper-local.sh)
 COPY --chown=www-data:www-data ingress/ingress.js /var/www/html/public/larapaper-local/
-RUN providers=/var/www/html/bootstrap/providers.php \
-    && sed -i 's/^];$/    App\\Providers\\IngressServiceProvider::class,\n];/' "$providers" \
-    && grep -q 'App\\Providers\\IngressServiceProvider::class' "$providers"

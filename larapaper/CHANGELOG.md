@@ -1,5 +1,55 @@
 # Changelog
 
+## 0.46.0-1
+
+### LaraPaper 0.46.0
+
+From the [LaraPaper 0.46.0 release](https://github.com/usetrmnl/larapaper/releases/tag/0.46.0):
+
+#### SECURITY RELEASE (2) 🚨
+
+This release fixes two security vulnerabilities, one of them Critical, see advisories [GHSA-f3rp-5j6r-j7cp](https://github.com/usetrmnl/larapaper/security/advisories/GHSA-f3rp-5j6r-j7cp) and [GHSA-8242-j995-x55j](https://github.com/usetrmnl/larapaper/security/advisories/GHSA-8242-j995-x55j). All users should upgrade. Some changes are breaking, so read the upgrade notes below before you update.
+Bare-metal deployments should also update node to v24.22.1.
+
+##### Other changes
+
+* feat: add playlist list and update API endpoints by [@lollo03](https://github.com/lollo03) in [#312](https://github.com/usetrmnl/larapaper/pull/312)
+* feat: selectable plugins for pause and sleep mode, added toggle for mirroring separate device like a physical device by [@Sammyjo20](https://github.com/Sammyjo20) in [#321](https://github.com/usetrmnl/larapaper/pull/321)
+* feat: bump `TRMNL_BLADE_FRAMEWORK_VERSION` to 3.4.6
+* feat: limit Auto-Join to 15 minutes
+* fix: harden device resolution and screen update endpoints; add rate limiting
+* fix: harden recipe owner check
+* fix(#320): bump to node v24.22.1
+
+#### Upgrade notes
+- Blade is disabled automatically once a second user account exists. Single-user instances keep Blade.
+- `INSECURE_BLADE_ALLOW_PHP_EXECUTION=true` forces Blade on in multi-user mode, and false forces it off everywhere. Only set it to true if you trust every user, for example in a family or homelab setup.
+-  `REGISTRATION_ENABLED` is replaced by `MULTIUSER_REGISTRATION_ENABLED` (default false). The first account can always register, but further signups are closed unless you set `MULTIUSER_REGISTRATION_ENABLED=true`. Remove `REGISTRATION_ENABLED` from your environment.
+    - This also applies to new accounts created through OIDC.
+- POST /api/screens with the access-token header now returns 401. Send Authorization: Bearer <token> with a token that has the update-screen ability
+- Auto-Join is turned off during the upgrade. Turn it on again when you want to add a device. It now switches off by itself after 15 minutes.
+- Re-pairing a device that has connected before (for example after a factory reset or WiFi reset) now requires Auto-Join to be on for its owner while the device runs setup. On multi-user instances, delete the device and add it again.
+
+#### New Contributors
+* [@lollo03](https://github.com/lollo03) made their first contribution in [#312](https://github.com/usetrmnl/larapaper/pull/312)
+* [@Sammyjo20](https://github.com/Sammyjo20) made their first contribution in [#321](https://github.com/usetrmnl/larapaper/pull/321)
+
+**Full Changelog**: [0.45.1...0.46.0](https://github.com/usetrmnl/larapaper/compare/0.45.1...0.46.0)
+
+### Home Assistant app
+
+- The app is now built on the official
+  [LaraPaper (BYOS) add-on](https://github.com/usetrmnl/trmnl-home-assistant/tree/main/trmnl-larapaper)
+  instead of LaraPaper's own image, and adds only what the add-on doesn't have: the
+  bundled framework and FullCalendar, the Home Assistant proxy for recipes, rendering
+  screens ahead of time and the device sensors. Your data stays where it is.
+- It also brings the add-on's AppArmor profile, which keeps the app away from Home
+  Assistant's own files (configuration, backups, media, share).
+- Opening the web UI through Home Assistant now shows LaraPaper's start page instead of
+  going straight to the dashboard.
+- LaraPaper 0.46.0 turns Auto-Join off during the update; switch it on again when you
+  add a device.
+
 ## 0.45.1-1
 
 ### LaraPaper 0.45.1
