@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.46.0-2
+
+### Home Assistant app
+
+- Bundles TRMNL framework 3.4.6 (LaraPaper 0.46.0's default) instead of 3.4.0, for the calendar recipe from the next release on.
+
 ## 0.46.0-1
 
 ### LaraPaper 0.46.0

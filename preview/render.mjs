@@ -281,7 +281,7 @@ const markup = shared + '\n' + (MASHUPS[size]
 const body = bodyFile ? fs.readFileSync(bodyFile, 'utf8') : await engine.parseAndRender(markup, context);
 
 // LaraPaper's resources/views/vendor/trmnl/components/screen.blade.php
-const fw = settings.framework_version || '3.4.0';
+const fw = settings.framework_version || '3.4.6';
 const vars = { '--screen-w': `${device.width}px`, '--screen-h': `${device.height}px`, ...device.vars };
 const html = `<!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8">

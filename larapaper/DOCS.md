@@ -7,7 +7,7 @@ which keeps the database, generated screens and app key in `/data` (so they surv
 updates and are part of Home Assistant backups) and opens the web UI through Home
 Assistant, with these additions:
 
-- **TRMNL framework 3.4.0** (CSS, JS and fonts) and **FullCalendar 7.1.0** (and 6.1.21 for recipe versions up to v1.9.0) are built
+- **TRMNL framework 3.4.6** (CSS, JS and fonts) and **FullCalendar 7.1.0** (and 6.1.21 for recipe versions up to v1.9.0) are built
   into the image. LaraPaper normally loads the framework from trmnl.com, and the
   calendar recipe loads FullCalendar from jsDelivr, every time a screen renders.
 - The calendar recipe reads Home Assistant through `http://127.0.0.1:8124`, which
