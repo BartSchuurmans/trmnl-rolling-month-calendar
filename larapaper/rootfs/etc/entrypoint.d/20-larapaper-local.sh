@@ -38,6 +38,12 @@ else
 fi
 cat "$tmp" > "$APP_DIR/.env"
 rm -f "$tmp"
+# LaraPaper caches toggles for an hour (in the database, so across restarts): forget them,
+# or a changed option would wait that long. Fails harmlessly before the first migration.
+# As www-data: a root-owned laravel.log would break the web app.
+as_www=""
+[ "$(id -u)" = 0 ] && as_www="/command/s6-setuidgid www-data"
+(cd "$APP_DIR" && $as_www php artisan toggle:cache-clear >/dev/null 2>&1) || true
 
 # Home Assistant API without a user token: with homeassistant_api in config.yaml the
 # Supervisor gives the app its own token (SUPERVISOR_TOKEN). The recipe can't read

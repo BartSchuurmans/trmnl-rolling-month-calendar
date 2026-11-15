@@ -29,6 +29,8 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Queue\Events\JobQueued;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Storage;
+use OffloadProject\Toggle\Facades\Toggle;
+use OffloadProject\Toggle\ToggleManager;
 
 $root = getenv('LARAPAPER_DIR') ?: '/var/www/html';
 require "$root/vendor/autoload.php";
@@ -158,8 +160,12 @@ switch ($command) {
         $interval = (int) ($item?->playlist->refresh_time ?? $device->default_refresh_interval);
         $device->forceFill(['last_refreshed_at' => now()->subSeconds($interval - 90)])->save();
         // On for this process only: the app's own scheduler stays off in CI (the
-        // "prerender" option), so it can't race the scenarios before this
-        config(['toggle.flags.'.PrerenderUpcomingPlaylistItemsJob::TOGGLE => true]);
+        // "prerender" option), so it can't race the scenarios before this. Toggles are
+        // cached (the scheduler's check stored "off"), so without the cache, in a fresh
+        // ToggleManager (it reads its config once).
+        config(['toggle.flags.'.PrerenderUpcomingPlaylistItemsJob::TOGGLE => true, 'toggle.cache.enabled' => false]);
+        app()->forgetInstance(ToggleManager::class);
+        Toggle::clearResolvedInstance(ToggleManager::class);
         $queued = [];
         Event::listen(JobQueued::class, function (JobQueued $event) use (&$queued): void {
             $queued[] = ['job' => class_basename($event->job), 'force' => $event->job->force ?? null];
