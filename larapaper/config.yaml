@@ -2,8 +2,7 @@ name: LaraPaper (local)
 version: "0.47.0-1"
 slug: larapaper_local
 description: >-
-  The official LaraPaper (BYOS) add-on, plus rendering without internet access (the
-  TRMNL framework and FullCalendar bundled), a Home Assistant proxy for recipes,
+  The official LaraPaper (BYOS) add-on, plus a Home Assistant proxy for recipes,
   pre-rendering and device sensors.
 url: https://github.com/BartSchuurmans/trmnl-rolling-month-calendar/tree/main/larapaper
 # Built and published by .github/workflows/app.yml when the version changes on main
