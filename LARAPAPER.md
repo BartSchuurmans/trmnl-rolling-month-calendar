@@ -5,10 +5,11 @@ This page is for running the calendar on your own TRMNL server,
 servers (trmnl.com), you don't need any of this: see the [README](README.md).
 
 On LaraPaper the calendar reads **ICS feeds** or **Home Assistant** calendar entities,
-and everything stays on your network. This repository also has a Home Assistant app,
-**LaraPaper (local)**, that runs LaraPaper with everything the calendar needs built in,
-so rendering a screen needs no internet access. LaraPaper can also run with Docker
-Compose on any machine.
+and your calendars stay on your network. This repository also has a Home Assistant app,
+**LaraPaper (local)**, that runs LaraPaper with what the calendar needs from Home
+Assistant built in. LaraPaper can also run with Docker Compose on any machine. Rendering
+a screen loads the TRMNL framework (trmnl.com) and FullCalendar (jsDelivr), so the
+server needs internet access.
 
 The [settings](README.md#settings) are the same as on TRMNL.com, apart from where the
 events come from.
@@ -21,7 +22,7 @@ flowchart LR
         end
         subgraph app["LaraPaper (local) app container"]
             LP["<b>LaraPaper</b><br>polls HA every 15 min,<br>runs the calendar recipe"]
-            CR["<b>Headless Chromium</b><br>TRMNL framework and<br>FullCalendar bundled"]
+            CR["<b>Headless Chromium</b><br>TRMNL framework and<br>FullCalendar from the web"]
             LP -- "renders to PNG" --> CR
         end
         core -- "/api/calendars/&lt;entity&gt;" --> app
@@ -32,7 +33,7 @@ flowchart LR
 
 <sub>With Docker Compose instead of the app, the LaraPaper container runs on any machine that can reach Home Assistant.</sub>
 
-The recipe is tested with LaraPaper 0.45.1 (the app's version) and still works with
+The recipe is tested with LaraPaper 0.47.0 (the app's version) and still works with
 0.43: there, ICS feeds show fewer weeks (see [ICS feeds](#ics-feeds)) and you tick
 **Remove bleed margin?** yourself.
 
@@ -41,9 +42,8 @@ The recipe is tested with LaraPaper 0.45.1 (the app's version) and still works w
 **As a Home Assistant app (recommended).** This repository is an app repository. Go to
 Settings → Apps → store → ⋮ → Repositories, add
 `https://github.com/BartSchuurmans/trmnl-rolling-month-calendar`, and install
-**LaraPaper (local)**. It bundles the TRMNL framework and FullCalendar, so rendering
-needs no internet access, and it reads your calendars with its own Home Assistant
-access, so you don't need an access token. Its web UI opens inside Home Assistant, so
+**LaraPaper (local)**. It reads your calendars with its own Home Assistant access, so
+you don't need an access token. Its web UI opens inside Home Assistant, so
 you can reach it wherever you reach Home Assistant. Setup steps are in
 [larapaper/DOCS.md](larapaper/DOCS.md).
 
@@ -161,11 +161,3 @@ and a recipe can only poll with GET. The app's proxy on `http://127.0.0.1:8124` 
 fetches the forecast from **Home Assistant URL** at its default. It doesn't work with
 a Home Assistant URL of your own (Docker Compose).
 
-## Offline rendering
-
-The recipe loads FullCalendar from `/rolling-month-calendar/...`, which the LaraPaper (local)
-app serves, and falls back to jsDelivr on any other server (TRMNL.com loads it from
-jsDelivr straight away). With plain LaraPaper, rendering also loads the TRMNL framework
-from trmnl.com, so the container needs internet access. The app avoids both. How: screens render from a
-temporary `file://` page, so root-relative paths resolve to files in the image, and to
-nginx in the browser preview.

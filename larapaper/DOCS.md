@@ -1,15 +1,12 @@
 # LaraPaper (local)
 
 [LaraPaper](https://github.com/usetrmnl/larapaper), the self-hosted TRMNL server, set
-up so that rendering a screen needs no internet access. It is the official
+up for the Rolling Month Calendar and Home Assistant. It is the official
 [LaraPaper (BYOS) add-on](https://github.com/usetrmnl/trmnl-home-assistant/tree/main/trmnl-larapaper),
 which keeps the database, generated screens and app key in `/data` (so they survive
 updates and are part of Home Assistant backups) and opens the web UI through Home
 Assistant, with these additions:
 
-- **TRMNL framework 3.4.6** (CSS, JS and fonts) and **FullCalendar 7.1.0** (and 6.1.21 for recipe versions up to v1.9.0) are built
-  into the image. LaraPaper normally loads the framework from trmnl.com, and the
-  calendar recipe loads FullCalendar from jsDelivr, every time a screen renders.
 - The calendar recipe reads Home Assistant through `http://127.0.0.1:8124`, which
   forwards calendar requests and daily weather forecasts (and nothing else) to Home
   Assistant with the app's own access. It is only reachable from inside the app.
@@ -18,15 +15,19 @@ Assistant, with these additions:
   on a Home Assistant machine can take. The app renders each polling recipe in a
   device's playlists shortly before its refresh interval runs out, so the TRMNL gets a
   ready screen. Mashups are still rendered when the TRMNL asks. The **Render screens
-  ahead of time** option turns this off.
+  ahead of time** option turns this off. LaraPaper 0.47.0 has a similar Lab feature,
+  **Pre-render playlist items** (Settings → Lab), for the next item only; turn on one of
+  the two, not both.
 - Each TRMNL shows up in Home Assistant as a device with its battery, Wi-Fi signal,
   firmware, last check-in and screen, and its sleep mode and refresh interval to change,
   through MQTT (see [Device sensors](#device-sensors)).
 
 Installing or updating the app downloads a prebuilt image
 (`ghcr.io/bartschuurmans/larapaper-local`, amd64 and aarch64), which needs internet.
-The image is built by this repository's CI from the add-on's image and the files
-listed in `assets.txt`, each checked against a pinned SHA-256.
+Rendering a screen needs it too: LaraPaper loads the TRMNL framework from trmnl.com, and
+the calendar recipe loads FullCalendar from jsDelivr (up to app 0.46.0 both were built
+in; LaraPaper 0.47.0 no longer lets screens load files from the image).
+The image is built by this repository's CI from the add-on's image.
 
 ## Setup
 

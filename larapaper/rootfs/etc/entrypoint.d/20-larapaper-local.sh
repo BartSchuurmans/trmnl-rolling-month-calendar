@@ -1,8 +1,7 @@
 #!/bin/sh
 # What LaraPaper (local) adds to the official LaraPaper add-on's glue
 # (10-homeassistant.sh in its image, which already ran: /data, options, .env and the
-# ingress server): the Home Assistant proxy for recipes, and the ingress fixes for the
-# bundled framework and FullCalendar. serversideup-php runs /etc/entrypoint.d/* in
+# ingress server): the Home Assistant proxy for recipes. serversideup-php runs /etc/entrypoint.d/* in
 # order on every start, before 50-laravel-automations.sh.
 set -e
 
@@ -85,35 +84,3 @@ CONF
     chmod 600 "$HA_PROXY_CONF"
     log "calendar and weather proxy on http://127.0.0.1:8124 → $HA_API_URL"
 fi
-
-# Home Assistant ingress: the add-on's server (10-homeassistant.sh) passes the ingress
-# path on as X-Forwarded-Prefix, so Laravel's own URLs carry it. Root-relative paths it
-# doesn't make still point at Home Assistant itself there: the bundled framework's fonts
-# (its stylesheet loads /fonts/...), and the assets the recipe preview writes into an
-# iframe, which ingress.js prefixes (larapaper/ingress/ingress.js). The add-on itself
-# turns APP_URL/storage/ links into ingress ones (since add-on 0.46.0-1 also in Livewire's
-# component snapshot, where the recipe page keeps its rendered image).
-INGRESS_CONF=/etc/nginx/conf.d/ha-ingress.conf
-# shellcheck disable=SC2016 # PHP code and nginx variables, not shell expansions
-php -r '
-    [, $file] = $argv;
-    $conf = file_get_contents($file);
-    // nginx quoted strings take \\ for one backslash
-    $q = fn ($s) => "'"'"'" . str_replace("\\", "\\\\", $s) . "'"'"'";
-    $php = "fastcgi_param HTTP_X_FORWARDED_PREFIX \$ha_ingress_path;\n";
-    $add = "        sub_filter " . $q("</head>") . " " . $q("<script src=\"\$ha_ingress_path/larapaper-local/ingress.js\"></script></head>") . ";\n";
-    $fonts = "    location ^~ /trmnl-framework/ {\n"
-        . "        sub_filter_types text/css;\n"
-        . "        sub_filter_once off;\n"
-        . "        sub_filter " . $q("url(\"/fonts/") . " " . $q("url(\"\$ha_ingress_path/fonts/") . ";\n"
-        . "        try_files \$uri =404;\n"
-        . "    }\n\n";
-    $root = "    location / {\n";
-    if (substr_count($conf, $php) !== 1 || substr_count($conf, $root) !== 1) {
-        fwrite(STDERR, "[larapaper-local] the add-on'"'"'s $file changed: ingress fixes not applied\n");
-        exit(1);
-    }
-    $conf = str_replace([$php, $root], ["$php$add", "$fonts$root"], $conf);
-    file_put_contents($file, $conf);
-' "$INGRESS_CONF"
-log "ingress: bundled framework fonts and recipe preview assets"

@@ -1,11 +1,11 @@
 #!/bin/sh
 # Download the files listed in assets.txt, check their SHA-256 and install them.
-#   fetch-assets.sh <assets.txt> [destination]   (default /opt/rolling-month-calendar-assets)
+#   fetch-assets.sh <assets.txt> <destination>
 # A source URL of the form <tarball>!<member> installs that member of the tarball.
 set -eu
 
 manifest="$1"
-dest="${2:-/opt/rolling-month-calendar-assets}"
+dest="$2"
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
 

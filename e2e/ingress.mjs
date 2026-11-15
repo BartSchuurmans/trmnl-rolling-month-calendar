@@ -87,8 +87,8 @@ try {
     `dashboard screen images load through ingress (${JSON.stringify(screens)})`);
   await page.screenshot({ path: path.join(outDir, 'ingress-dashboard.png') });
 
-  // the recipe: Livewire's update requests, the HTML preview with the bundled framework,
-  // fonts and FullCalendar, and a server-side render
+  // the recipe: Livewire's update requests, the HTML preview with the framework (trmnl.com),
+  // its fonts and FullCalendar (jsDelivr), and a server-side render
   await page.goto(`${base}/plugins/recipe/${login.plugin_id}`);
   await page.waitForLoadState('networkidle');
   await page.getByRole('button', { name: 'Preview', exact: true }).first().click();
@@ -98,7 +98,14 @@ try {
   const preview = await page.$eval('#preview-frame', async (f) => {
     const doc = f.contentDocument;
     await doc.fonts.ready;
+    // the framework's sheet is cross-origin, so its rules can't be read: probe a class it
+    // paints (only inside .screen)
+    const probe = (doc.querySelector('.screen') ?? doc.body).appendChild(doc.createElement('div'));
+    probe.className = 'bg--black';
+    const probeBg = f.contentWindow.getComputedStyle(probe).backgroundColor;
+    probe.remove();
     return {
+      probeBg,
       sheets: [...doc.styleSheets].map((s) => { try { return [s.href, s.cssRules.length]; } catch { return [s.href, -1]; } })
         .filter(([href]) => href),
       fullcalendar: !!f.contentWindow.FullCalendar,
@@ -107,10 +114,11 @@ try {
     };
   });
   console.log(JSON.stringify(preview));
-  check(preview.sheets.some(([href, n]) => href.startsWith(`${base}/trmnl-framework/`) && n > 0),
-    'preview loads the bundled framework stylesheet through ingress');
-  check(preview.fullcalendar && preview.scripts.some((s) => s.startsWith(`${base}/rolling-month-calendar/`))
-    && !preview.scripts.some((s) => s.includes('jsdelivr')), 'preview loads the bundled FullCalendar through ingress');
+  check(preview.sheets.some(([href]) => href.startsWith('https://trmnl.com/') && href.endsWith('.css'))
+    && !['', 'transparent', 'rgba(0, 0, 0, 0)'].includes(preview.probeBg),
+    `preview loads the framework stylesheet (bg--black paints ${preview.probeBg})`);
+  check(preview.fullcalendar && preview.scripts.some((s) => s.includes('cdn.jsdelivr.net/npm/fullcalendar@')),
+    'preview loads FullCalendar from jsDelivr');
   check(preview.fonts.length > 0, `preview loads the framework fonts (${[...new Set(preview.fonts)].join(', ')})`);
   await page.screenshot({ path: path.join(outDir, 'ingress-preview.png') });
 

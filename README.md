@@ -312,8 +312,8 @@ the changes in detail.
   Home Assistant from TRMNL.com, plus a serverless function (`transform.js`) that fetches
   the weather forecast, built and released the same way.
 - **LaraPaper (local)** (`larapaper/`, `repository.yaml`): a Home Assistant app that runs
-  the official LaraPaper Home Assistant add-on with the TRMNL framework, its fonts and
-  FullCalendar built in, so rendering a screen needs no internet access. See
+  the official LaraPaper Home Assistant add-on plus calendar and weather access to Home
+  Assistant without a token, rendering ahead of time and device sensors. See
   [larapaper/DOCS.md](larapaper/DOCS.md).
 - **A local preview** (`preview/`): renders the recipe to a PNG at the device's
   resolution and grey levels, from sample, random or live Home Assistant data. CI uses it
@@ -381,7 +381,7 @@ instead of LaraPaper's PHP Liquid, so small differences are possible.
 
 - **Render** (`.github/workflows/render.yml`, on changes to the recipe or preview): runs
   `preview/ci.sh`. That renders sample and random calendars on the TRMNL X and OG with
-  the framework files pinned in `larapaper/assets.txt`, and renders once through
+  the framework files pinned in `preview/assets.txt`, and renders once through
   LaraPaper's PHP Liquid engine (`preview/php/render.php`, which also checks the polling
   URLs and headers for Home Assistant and ICS feeds), and through trmnlp
   (TRMNL's own Ruby Liquid, via Docker). The sample and some random calendars are also
@@ -394,8 +394,7 @@ instead of LaraPaper's PHP Liquid, so small differences are possible.
   artifact.
 - **App** (`.github/workflows/app.yml`, on changes to `larapaper/` or the recipe): lints
   the app, builds the image (amd64) and starts it with a fake `/data`. It checks that
-  LaraPaper comes up, serves the bundled framework, fonts and FullCalendar, applied the
-  app options, and keeps its key and database across a restart. On main it then
+  LaraPaper comes up with its queue worker and scheduler, applied the app options, and keeps its key and database across a restart. On main it then
   publishes the image (amd64 and aarch64) to `ghcr.io/bartschuurmans/larapaper-local`
   when the app version is new; Home Assistant installs the app from there.
 - **End-to-end** (`e2e/run.mjs`, part of the App workflow): imports the recipe ZIP into

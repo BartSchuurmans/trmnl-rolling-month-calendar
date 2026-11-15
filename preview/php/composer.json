@@ -5,7 +5,7 @@
     "license": "MIT",
     "require": {
         "php": ">=8.2",
-        "keepsuit/liquid": "0.12.1",
+        "keepsuit/liquid": "0.13.0",
         "symfony/yaml": "^7.0"
     },
     "config": {

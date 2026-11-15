@@ -1,8 +1,8 @@
 name: App
 
 # Lints the Home Assistant app, builds its image (amd64) and starts it with a fake
-# /data to check that LaraPaper comes up, serves the bundled framework, fonts and
-# FullCalendar, and picked up the app options. It then runs the end-to-end test
+# /data to check that LaraPaper comes up with its services and picked up the app
+# options. It then runs the end-to-end test
 # (e2e/run.mjs): the recipe ZIP is imported into that LaraPaper, polls a fake Home
 # Assistant and is rendered for a TRMNL X through the device API; and drives the web UI
 # through a fake Home Assistant ingress (e2e/ingress.mjs). On pull requests it
@@ -149,34 +149,13 @@ jobs:
           docker logs app
           exit 1
 
-      - name: Check bundled assets are served
+      - name: Check the options and LaraPaper's services
         run: |
-          fw="$(yq '.framework_version' plugin/src/settings.yml)"
-          for path in "/trmnl-framework/$fw/plugins.min.css" "/trmnl-framework/$fw/plugins.min.js" \
-                      /fonts/Inter.ttf /fonts/TRMNL16-Regular.woff2 \
-                      /rolling-month-calendar/fullcalendar/7.1.0/all/global.js \
-                      /rolling-month-calendar/fullcalendar/7.1.0/locales-all/global.js \
-                      /rolling-month-calendar/fullcalendar/7.1.0/skeleton.css; do
-            curl -fsS -o /dev/null -w "%{http_code} $path\n" "http://localhost:4567$path"
-          done
-
-      - name: Check the render paths, framework settings and options
-        run: |
-          # screens render from a file:// page, so the assets must exist at the filesystem root
-          docker exec app sh -c 'test -s /trmnl-framework/3.4.6/plugins.min.css && test -s /fonts/Inter.ttf && test -s /rolling-month-calendar/fullcalendar/7.1.0/all/global.js && test -s /rolling-month-calendar/fullcalendar/7.1.0/skeleton.css'
-          docker exec app sh -c 'for f in /trmnl-framework/3.4.6/LICENSE /fonts/OFL-trmnl.txt /fonts/OFL-classic.txt /fonts/CC-BY-3.0.txt /rolling-month-calendar/fullcalendar/7.1.0/LICENSE.md; do test -s "$f" || { echo "missing $f"; exit 1; }; done'
-          docker exec app sh -c '! grep -q "fonts.bunny.net" /var/www/html/resources/views/vendor/trmnl/components/screen.blade.php'
-          docker exec app printenv TRMNL_BLADE_FRAMEWORK_CSS_URL | grep -qx '/trmnl-framework/3.4.6/plugins.min.css'
-          docker exec app sh -c 'f=/var/www/html/bootstrap/cache/config.php; ! test -f "$f" || grep -q "/trmnl-framework/3.4.6/plugins.min.css" "$f"'
           # LaraPaper's queue worker and scheduler, next to the app's own services (our s6
-          # bundle adds to the image's, in /etc/s6-overlay/user-bundles.d/user), as
-          # www-data with its own HOME (Chromium can't start in /root)
-          for service in "artisan queue:work" "artisan schedule:work"; do
+          # bundle adds to the image's, in /etc/s6-overlay/user-bundles.d/user)
+          for service in "artisan queue:work" "artisan schedule:work" "larapaper-local/mqtt.php"; do
             docker exec app ps -o user,args | grep "$service" | grep -v grep | grep -q '^www-data' \
               || { echo "$service is not running as www-data"; docker exec app ps -o user,args; exit 1; }
-            pid="$(docker exec app pgrep -f "$service" | head -1)"
-            docker exec -u www-data app sh -c "tr '\\0' '\\n' < /proc/$pid/environ" | grep -qx 'HOME=/home/www-data' \
-              || { echo "$service has no HOME=/home/www-data"; exit 1; }
           done
           docker exec app grep -qx 'APP_URL=http://localhost:4567' /var/www/html/.env
           docker exec app grep -qx 'MULTIUSER_REGISTRATION_ENABLED=0' /var/www/html/.env
