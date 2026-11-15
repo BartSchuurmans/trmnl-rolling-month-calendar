@@ -31,8 +31,7 @@ UPSTREAM.md for what differs from upstream.
   definitions in `s6-rc.d/`, enabled in `user-bundles.d/user/contents.d/`, which adds to
   the image's own bundle; an `s6-rc.d/user` bundle would replace it and drop LaraPaper's
   queue worker and scheduler); fix what the add-on does in the add-on (Bart's fork), not
-  here (exception, until the add-on has it: `user-bundles.d/laravel-{queue,scheduler}/run`
-  give those services www-data's HOME, without which Chromium can't start in queued jobs). Up to app 0.46.0 it also bundled the framework, fonts and FullCalendar (see
+  here. Up to app 0.46.0 it also bundled the framework, fonts and FullCalendar (see
   Browsershot below).
 - `e2e/` — end-to-end test against the app container: fake Home Assistant, driver,
   in-container helper.

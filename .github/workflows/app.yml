@@ -157,7 +157,7 @@ jobs:
             docker exec app ps -o user,args | grep "$service" | grep -v grep | grep -q '^www-data' \
               || { echo "$service is not running as www-data"; docker exec app ps -o user,args; exit 1; }
           done
-          # with a HOME they can write: Chromium (renders in queued jobs) fails without one
+          # with a HOME they can write (add-on 0.47.0-1+): Chromium (renders in queued jobs) fails without one
           for service in queue:work schedule:work; do
             home=$(docker exec -u www-data app sh -c "pid=\$(pgrep -f '[a]rtisan $service' | head -1);
               tr '\\0' '\\n' < /proc/\$pid/environ | sed -n 's/^HOME=//p'")

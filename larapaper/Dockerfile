@@ -15,8 +15,7 @@ LABEL org.opencontainers.image.title="LaraPaper (local)" \
       org.opencontainers.image.source="https://github.com/BartSchuurmans/trmnl-rolling-month-calendar"
 
 COPY rootfs /
-RUN chmod +x /etc/entrypoint.d/20-larapaper-local.sh /etc/s6-overlay/s6-rc.d/larapaper-local-mqtt/run \
-    /etc/s6-overlay/user-bundles.d/laravel-queue/run /etc/s6-overlay/user-bundles.d/laravel-scheduler/run
+RUN chmod +x /etc/entrypoint.d/20-larapaper-local.sh /etc/s6-overlay/s6-rc.d/larapaper-local-mqtt/run
 
 # Publishes the TRMNL devices (battery, Wi-Fi, firmware, ...) to Home Assistant through
 # MQTT discovery: see mqtt.php. Started by s6 (rootfs/etc/s6-overlay) next to LaraPaper's
