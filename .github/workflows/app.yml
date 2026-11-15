@@ -35,7 +35,9 @@ jobs:
         run: |
           version="$(yq '.version' larapaper/config.yaml)"
           base="$(sed -n 's/^ARG BUILD_FROM=//p' larapaper/Dockerfile)"
+          # the add-on's tag is LaraPaper's version, with -N for an add-on-only release
           tag="${base##*:}"
+          tag="${tag%%-*}"
           case "$version" in
             "$tag"-*) ;;
             *) echo "::error file=larapaper/config.yaml::version $version doesn't match LaraPaper $tag in the Dockerfile; use $tag-N"; exit 1 ;;
@@ -74,6 +76,7 @@ jobs:
         run: |
           version="$(yq '.version' larapaper/config.yaml)"
           tag="$(sed -n 's/^ARG BUILD_FROM=.*://p' larapaper/Dockerfile)"
+          tag="${tag%%-*}"
           entry="$(awk -v h="## $version" '$0 == h { on = 1; next } on && /^## / { exit } on' larapaper/CHANGELOG.md)"
           if [ -z "$entry" ]; then
             echo "::error file=larapaper/CHANGELOG.md::no \"## $version\" entry in larapaper/CHANGELOG.md"

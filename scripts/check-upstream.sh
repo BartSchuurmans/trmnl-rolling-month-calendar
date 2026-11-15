@@ -75,6 +75,7 @@ check() {
 }
 
 pinned=$(sed -n 's/^ARG BUILD_FROM=.*://p' "$root/larapaper/Dockerfile")
+pinned=${pinned%%-*} # an add-on-only release adds -N to LaraPaper's version
 latest=$(latest_tag usetrmnl/larapaper)
 check LaraPaper "$pinned" "$latest" "https://github.com/usetrmnl/larapaper/releases/tag/$latest" \
     'the add-on image tag (`ghcr.io/usetrmnl/trmnl-larapaper-<arch>`, once usetrmnl/trmnl-home-assistant has released this version) in `BUILD_FROM` in `larapaper/Dockerfile`, `version` in `larapaper/config.yaml` (`<version>-1`) and `larapaper/CHANGELOG.md` (LaraPaper'"'"'s notes from `sh scripts/larapaper-release-notes.sh <version>`, then `### Home Assistant app`).' \
