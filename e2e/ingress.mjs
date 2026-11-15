@@ -98,7 +98,14 @@ try {
   const preview = await page.$eval('#preview-frame', async (f) => {
     const doc = f.contentDocument;
     await doc.fonts.ready;
+    // the framework's sheet is cross-origin, so its rules can't be read: probe a class it
+    // paints (only inside .screen)
+    const probe = (doc.querySelector('.screen') ?? doc.body).appendChild(doc.createElement('div'));
+    probe.className = 'bg--black';
+    const probeBg = f.contentWindow.getComputedStyle(probe).backgroundColor;
+    probe.remove();
     return {
+      probeBg,
       sheets: [...doc.styleSheets].map((s) => { try { return [s.href, s.cssRules.length]; } catch { return [s.href, -1]; } })
         .filter(([href]) => href),
       fullcalendar: !!f.contentWindow.FullCalendar,
@@ -107,8 +114,9 @@ try {
     };
   });
   console.log(JSON.stringify(preview));
-  check(preview.sheets.some(([href, n]) => href.includes('/plugins') && href.endsWith('.css') && n > 0),
-    'preview loads the framework stylesheet');
+  check(preview.sheets.some(([href]) => href.startsWith('https://trmnl.com/') && href.endsWith('.css'))
+    && !['', 'transparent', 'rgba(0, 0, 0, 0)'].includes(preview.probeBg),
+    `preview loads the framework stylesheet (bg--black paints ${preview.probeBg})`);
   check(preview.fullcalendar && preview.scripts.some((s) => s.includes('cdn.jsdelivr.net/npm/fullcalendar@')),
     'preview loads FullCalendar from jsDelivr');
   check(preview.fonts.length > 0, `preview loads the framework fonts (${[...new Set(preview.fonts)].join(', ')})`);
