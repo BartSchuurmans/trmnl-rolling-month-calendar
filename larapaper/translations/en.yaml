@@ -10,12 +10,6 @@ configuration:
     description: >-
       The first account can always be created. Turn on to let anyone reaching the web
       UI create further accounts; LaraPaper then stops rendering Blade recipes.
-  prerender:
-    name: Render screens ahead of time
-    description: >-
-      Render each recipe shortly before it goes out of date, so the TRMNL gets a ready
-      screen. Off, LaraPaper renders while the TRMNL waits, which can take longer than
-      the 15 seconds it waits for.
   mqtt:
     name: Device sensors in Home Assistant
     description: >-

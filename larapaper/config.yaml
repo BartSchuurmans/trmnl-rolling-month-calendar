@@ -1,5 +1,5 @@
 name: LaraPaper (local)
-version: "0.47.0-1"
+version: "0.47.0-2"
 slug: larapaper_local
 description: >-
   The official LaraPaper (BYOS) add-on, plus a Home Assistant proxy for recipes,
@@ -31,10 +31,8 @@ ports_description:
 options:
   app_url: ""
   multiuser_registration: false
-  prerender: true
   mqtt: true
 schema:
   app_url: url
   multiuser_registration: bool
-  prerender: bool
   mqtt: bool

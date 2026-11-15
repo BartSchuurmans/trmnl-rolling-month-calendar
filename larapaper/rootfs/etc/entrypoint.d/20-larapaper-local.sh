@@ -1,8 +1,9 @@
 #!/bin/sh
 # What LaraPaper (local) adds to the official LaraPaper add-on's glue
 # (10-homeassistant.sh in its image, which already ran: /data, options, .env and the
-# ingress server): the Home Assistant proxy for recipes. serversideup-php runs /etc/entrypoint.d/* in
-# order on every start, before 50-laravel-automations.sh.
+# ingress server): the Home Assistant proxy for recipes.
+# serversideup-php runs /etc/entrypoint.d/* in order on every start, before
+# 50-laravel-automations.sh.
 set -e
 
 DATA_DIR="${DATA_DIR:-/data}"
@@ -17,9 +18,8 @@ opt() {
             echo is_bool($v) ? ($v ? "1" : "0") : $v;' "$DATA_DIR/options.json" "$1"
 }
 
-PRERENDER="${LARAPAPER_LOCAL_PRERENDER:-$(opt prerender)}"
 MQTT="${LARAPAPER_LOCAL_MQTT:-$(opt mqtt)}"
-log "prerender=${PRERENDER:-1} mqtt=${MQTT:-1}"
+log "mqtt=${MQTT:-1}"
 
 # Home Assistant API without a user token: with homeassistant_api in config.yaml the
 # Supervisor gives the app its own token (SUPERVISOR_TOKEN). The recipe can't read

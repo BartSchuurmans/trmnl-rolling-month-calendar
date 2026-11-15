@@ -12,9 +12,10 @@
 //
 // Controls (sleep mode and its times, the refresh interval, installing a firmware update)
 // arrive on <base>/<mac>/set/<key> and change the device the way LaraPaper's device page
-// does; the TRMNL picks them up at its next request. Refresh screen runs prerender.php
-// for the device in the background: its recipes poll and render now, so the TRMNL gets
-// fresh screens when it next wakes (a server can't wake it).
+// does; the TRMNL picks them up at its next request. Refresh screen queues LaraPaper's
+// own render job (RenderPlaylistItemImageJob, as its playlist item "Refresh cache") for
+// each recipe in the device's playlists: they poll and render now, in LaraPaper's queue
+// worker, so the TRMNL gets fresh screens when it next wakes (a server can't wake it).
 //
 // Every INTERVAL seconds it builds each device's discovery config and state and
 // publishes those that changed (retained). Devices deleted in LaraPaper are removed
@@ -27,6 +28,7 @@
 //   php mqtt.php           publish until stopped
 //   php mqtt.php --once    publish once, wait for the broker to take it, exit
 
+use App\Jobs\RenderPlaylistItemImageJob;
 use App\Models\Device;
 use App\Models\Firmware;
 use App\Services\DeviceSensorService;
@@ -395,13 +397,18 @@ function command(string $mac, string $key, string $payload): void
     }
     $name = $device->name ?: $device->friendly_id;
     if ($key === 'refresh') {
-        // A mirror shows its source's screens
-        $id = $device->mirror_device_id ?? $device->id;
-        $script = getenv('LARAPAPER_LOCAL_PRERENDER_SCRIPT') ?: '/opt/larapaper-local/prerender.php';
-        // In the background, its output in this service's log; reaped in the main loop
-        $GLOBALS['renders'][] = proc_open(['php', $script, '--device', (string) $id],
-            [0 => ['file', '/dev/null', 'r'], 1 => STDOUT, 2 => STDERR], $pipes);
-        say("$name: refreshing its screens");
+        // A mirror shows its source's screens. A recipe keeps one screen, so once each.
+        $source = $device->mirrorDevice ?? $device;
+        $queued = [];
+        foreach ($source->playlists()->where('is_active', true)->get() as $playlist) {
+            foreach ($playlist->getActiveItems() as $item) {
+                if ($item->supportsImageCache() && ! isset($queued[$item->plugin_id])) {
+                    $queued[$item->plugin_id] = true;
+                    RenderPlaylistItemImageJob::dispatch($item->id, force: true);
+                }
+            }
+        }
+        say("$name: refreshing its screens (".count($queued).')');
 
         return;
     }
@@ -437,8 +444,6 @@ $published = [];
 $haRestarted = false;
 // Controls received and not yet applied: [[mac, key, payload]]
 $commands = [];
-// Running Refresh screen renders (proc_open handles)
-$renders = [];
 
 $broker = broker();
 if ($broker === null) {
@@ -473,12 +478,6 @@ while (true) {
         say('Home Assistant restarted, publishing again');
         $published = [];
         $haRestarted = false;
-    }
-    foreach ($renders as $i => $render) {
-        if (! is_resource($render) || ! proc_get_status($render)['running']) {
-            is_resource($render) && proc_close($render);
-            unset($renders[$i]);
-        }
     }
     foreach ($commands as [$mac, $key, $payload]) {
         command($mac, $key, $payload);
