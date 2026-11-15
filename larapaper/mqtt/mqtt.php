@@ -68,25 +68,12 @@ function say(string $message): void
 function broker(): ?array
 {
     if ($host = getenv('MQTT_HOST')) {
-        return ['host' => $host, 'port' => (int) (getenv('MQTT_PORT') ?: 1883), 'ssl' => false,
+        return ['host' => $host, 'port' => (int) (getenv('MQTT_PORT') ?: 1883), 'ssl' => (bool) getenv('MQTT_SSL'),
             'username' => getenv('MQTT_USERNAME') ?: null, 'password' => getenv('MQTT_PASSWORD') ?: null];
     }
-    $token = getenv('SUPERVISOR_TOKEN');
-    if (! $token) {
-        return null;
-    }
-    // {"result": "ok", "data": {"host", "port", "ssl", "username", "password", ...}};
-    // an error when no MQTT app (Mosquitto) provides the service
-    $context = stream_context_create(['http' => [
-        'header' => "Authorization: Bearer $token", 'timeout' => 10, 'ignore_errors' => true]]);
-    $response = json_decode((string) @file_get_contents('http://supervisor/services/mqtt', false, $context), true);
-    $data = $response['data'] ?? null;
-    if (($response['result'] ?? null) !== 'ok' || empty($data['host'])) {
-        return null;
-    }
-
-    return ['host' => $data['host'], 'port' => (int) ($data['port'] ?? 1883), 'ssl' => (bool) ($data['ssl'] ?? false),
-        'username' => $data['username'] ?? null, 'password' => $data['password'] ?? null];
+    // In Home Assistant the run script asks the Supervisor for the broker (as root, with the
+    // token LaraPaper doesn't get) and passes it in MQTT_*; none: no MQTT app installed
+    return null;
 }
 
 // Just enough MQTT 3.1.1 for this: QoS 0 publish and subscribe, a last will, keepalive

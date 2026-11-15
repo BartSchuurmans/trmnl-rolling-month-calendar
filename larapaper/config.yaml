@@ -1,5 +1,5 @@
 name: LaraPaper (local)
-version: "0.47.0-3"
+version: "0.47.0-4"
 slug: larapaper_local
 description: >-
   The official LaraPaper (BYOS) add-on, plus a Home Assistant proxy for recipes,
@@ -11,7 +11,7 @@ arch:
   - aarch64
   - amd64
 init: false
-# The Supervisor token lets the read-only Home Assistant proxy for recipes
+# The Supervisor token lets the add-on's read-only Home Assistant proxy for recipes
 # (home_assistant_key) read Home Assistant
 homeassistant_api: true
 startup: services
@@ -32,11 +32,20 @@ ports_description:
 options:
   app_url: ""
   multiuser_registration: false
+  log_level: info
   mqtt: true
   home_assistant_key: ""
+  env_vars: []
+# The add-on's options (its 10-homeassistant.sh reads them), plus mqtt
 schema:
   app_url: url
   multiuser_registration: bool
+  log_level: list(debug|info|notice|warning|error|critical)
+  transform_runner_url: url?
+  transform_runner_token: password?
   mqtt: bool
   # masked in the UI; the entrypoint checks its format (it goes into nginx config)
   home_assistant_key: password?
+  env_vars:
+    - name: match(^[A-Z][A-Z0-9_]*$)
+      value: str
