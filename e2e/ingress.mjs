@@ -87,8 +87,8 @@ try {
     `dashboard screen images load through ingress (${JSON.stringify(screens)})`);
   await page.screenshot({ path: path.join(outDir, 'ingress-dashboard.png') });
 
-  // the recipe: Livewire's update requests, the HTML preview with the bundled framework,
-  // fonts and FullCalendar, and a server-side render
+  // the recipe: Livewire's update requests, the HTML preview with the framework (trmnl.com),
+  // its fonts and FullCalendar (jsDelivr), and a server-side render
   await page.goto(`${base}/plugins/recipe/${login.plugin_id}`);
   await page.waitForLoadState('networkidle');
   await page.getByRole('button', { name: 'Preview', exact: true }).first().click();
@@ -107,10 +107,10 @@ try {
     };
   });
   console.log(JSON.stringify(preview));
-  check(preview.sheets.some(([href, n]) => href.startsWith(`${base}/trmnl-framework/`) && n > 0),
-    'preview loads the bundled framework stylesheet through ingress');
-  check(preview.fullcalendar && preview.scripts.some((s) => s.startsWith(`${base}/rolling-month-calendar/`))
-    && !preview.scripts.some((s) => s.includes('jsdelivr')), 'preview loads the bundled FullCalendar through ingress');
+  check(preview.sheets.some(([href, n]) => href.includes('/plugins') && href.endsWith('.css') && n > 0),
+    'preview loads the framework stylesheet');
+  check(preview.fullcalendar && preview.scripts.some((s) => s.includes('cdn.jsdelivr.net/npm/fullcalendar@')),
+    'preview loads FullCalendar from jsDelivr');
   check(preview.fonts.length > 0, `preview loads the framework fonts (${[...new Set(preview.fonts)].join(', ')})`);
   await page.screenshot({ path: path.join(outDir, 'ingress-preview.png') });
 

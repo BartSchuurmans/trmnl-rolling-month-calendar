@@ -4,23 +4,84 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "84b9093ab5279f060bffc737b9469b96",
+    "content-hash": "b920ca3beb5b5d1892663b8cc7e40da4",
     "packages": [
         {
-            "name": "keepsuit/liquid",
-            "version": "v0.12.1",
+            "name": "brick/math",
+            "version": "1.0.0",
             "source": {
                 "type": "git",
-                "url": "https://github.com/keepsuit/php-liquid.git",
-                "reference": "3b7b9ab816ea6fa573884cfbaa89b48fefd55ef1"
+                "url": "https://github.com/brick/math.git",
+                "reference": "2effe05d2177c451b86c6a073196a4034c02f211"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/keepsuit/php-liquid/zipball/3b7b9ab816ea6fa573884cfbaa89b48fefd55ef1",
-                "reference": "3b7b9ab816ea6fa573884cfbaa89b48fefd55ef1",
+                "url": "https://api.github.com/repos/brick/math/zipball/2effe05d2177c451b86c6a073196a4034c02f211",
+                "reference": "2effe05d2177c451b86c6a073196a4034c02f211",
                 "shasum": ""
             },
             "require": {
+                "php": "^8.2"
+            },
+            "require-dev": {
+                "phpstan/phpstan": "2.2.13",
+                "phpstan/phpstan-phpunit": "2.0.18",
+                "phpunit/phpunit": "^11.5"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Brick\\Math\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "description": "Arbitrary-precision arithmetic library",
+            "keywords": [
+                "Arbitrary-precision",
+                "BigInteger",
+                "BigRational",
+                "arithmetic",
+                "bigdecimal",
+                "bignum",
+                "bignumber",
+                "brick",
+                "decimal",
+                "integer",
+                "math",
+                "mathematics",
+                "rational"
+            ],
+            "support": {
+                "issues": "https://github.com/brick/math/issues",
+                "source": "https://github.com/brick/math/tree/1.0.0"
+            },
+            "funding": [
+                {
+                    "url": "https://github.com/BenMorel",
+                    "type": "github"
+                }
+            ],
+            "time": "2026-09-12T10:28:18+00:00"
+        },
+        {
+            "name": "keepsuit/liquid",
+            "version": "v0.13.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/keepsuit/php-liquid.git",
+                "reference": "787922bbe71b483377e88378ccf96142f58e46bd"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/keepsuit/php-liquid/zipball/787922bbe71b483377e88378ccf96142f58e46bd",
+                "reference": "787922bbe71b483377e88378ccf96142f58e46bd",
+                "shasum": ""
+            },
+            "require": {
+                "brick/math": "^0.14.3 || ^0.15 || ^0.16 || ^0.17 || ^0.18 || ^0.19 || ^0.20 || ^1.0",
                 "ext-mbstring": "*",
                 "php": "^8.2"
             },
@@ -34,6 +95,7 @@
                 "phpstan/phpstan-deprecation-rules": "^2.0",
                 "spatie/invade": "^2.0",
                 "spatie/ray": "^1.28",
+                "spatie/temporary-directory": "^2.3",
                 "symfony/console": "^7.0 || ^8.0",
                 "symfony/var-exporter": "^7.0 || ^8.0"
             },
@@ -62,9 +124,9 @@
             ],
             "support": {
                 "issues": "https://github.com/keepsuit/php-liquid/issues",
-                "source": "https://github.com/keepsuit/php-liquid/tree/v0.12.1"
+                "source": "https://github.com/keepsuit/php-liquid/tree/v0.13.0"
             },
-            "time": "2026-09-30T10:10:25+00:00"
+            "time": "2026-10-19T10:15:41+00:00"
         },
         {
             "name": "symfony/deprecation-contracts",

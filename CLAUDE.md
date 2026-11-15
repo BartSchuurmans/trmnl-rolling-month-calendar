@@ -24,11 +24,14 @@ UPSTREAM.md for what differs from upstream.
   today, plus the weather forecast's POST).
 - `larapaper/` + `repository.yaml` — Home Assistant app: the official LaraPaper add-on's
   image (`ghcr.io/usetrmnl/trmnl-larapaper-<arch>`, from usetrmnl/trmnl-home-assistant:
-  /data, options, ingress) plus what it lacks: bundled TRMNL framework, fonts and
-  FullCalendar (`assets.txt`, pinned by SHA-256), the Home Assistant proxy, pre-render and
+  /data, options, ingress) plus what it lacks: the Home Assistant proxy, pre-render and
   device sensors. Its extras run in `rootfs/etc/entrypoint.d/20-larapaper-local.sh`, after
-  the add-on's own `10-homeassistant.sh`; fix what the add-on does in the add-on (Bart's
-  fork), not here.
+  the add-on's own `10-homeassistant.sh`, and as s6 services (`rootfs/etc/s6-overlay/`:
+  definitions in `s6-rc.d/`, enabled in `user-bundles.d/user/contents.d/`, which adds to
+  the image's own bundle; an `s6-rc.d/user` bundle would replace it and drop LaraPaper's
+  queue worker and scheduler); fix what the add-on does in the add-on (Bart's fork), not
+  here. Up to app 0.46.0 it also bundled the framework, fonts and FullCalendar (see
+  Browsershot below).
 - `e2e/` — end-to-end test against the app container: fake Home Assistant, driver,
   in-container helper.
 - `plugin/<variant>/` (now `trmnl-com-merge/` and `trmnl-com-polling/`, see `plugin/README.md`) — the
@@ -39,8 +42,7 @@ UPSTREAM.md for what differs from upstream.
   markup on TRMNL.com; releases upload it.
 - `scripts/build-zip.sh` — builds `dist/rolling-month-calendar.zip` for LaraPaper's recipe import;
   `scripts/build-variant.sh` builds the variants (`dist/<variant>/src`, ZIP each).
-- `LICENSE` (MIT, own code) and `THIRD_PARTY_NOTICES.md` (upstream plugin, bundled
-  assets) — keep the notices table in step with `assets.txt`.
+- `LICENSE` (MIT, own code) and `THIRD_PARTY_NOTICES.md` (upstream plugin, the app's base).
 
 ## Checks
 
@@ -108,12 +110,13 @@ reads `getBoundingClientRect()` gets transformed pixels; compare rects, don't us
 CSS lengths. The random renders in `ci.sh` catch layouts that don't settle; keep them
 passing after layout changes.
 
-**Browsershot content filter.** `setHtml` rejects any page containing `file:`,
-`view-source`, `//localhost`, `//127.` etc. So assets can't be inlined (FullCalendar's
-bundle contains `file:`) and can't point at localhost. Screens render from a temporary
-`file://` page, so root-relative paths (`/fonts/...`, `/rolling-month-calendar/...`) resolve to the
-filesystem there and to nginx in the browser preview — that is how the app serves
-assets locally.
+**Browsershot content filter.** `setHtml` rejects any page containing `view-source`,
+`//localhost`, `//127.` etc. (and, before spatie/browsershot 5.5 / LaraPaper 0.47.0,
+`file:`), so assets can't point at localhost. Screens render from a temporary `file://`
+page, and since Browsershot 5.5 every other `file://` request from it is aborted, so
+root-relative assets can't load from the filesystem either (the app bundled the
+framework and FullCalendar that way up to 0.46.0; upstream item 49). Assets come from the
+web: the framework from trmnl.com, FullCalendar from jsDelivr.
 
 **LaraPaper Liquid context.** Custom field values are under
 `trmnl.plugin_settings.custom_fields_values` (not top level). The polled payload is
@@ -162,12 +165,14 @@ Daily Weather recipe; a recipe's data arrives as `private_plugin_<id>: {merge_va
 LaraPaper recipe dropped its Plugin Data API source (plugin IDs + API key): ICS feeds
 cover those calendars there.
 
-**Serverless functions.** TRMNL.com only: `plugin/<variant>/transform.js` (Node 24 there,
+**Serverless functions.** TRMNL.com (and LaraPaper 0.47.0+, see below): `plugin/<variant>/transform.js` (Node 24 there,
 `fetch`, 128 MB and 5 s, no packages but `temporal-polyfill`) runs after polling, with the
 polled data (IDX_n, or `data` for one URL) plus `trmnl` (custom fields under
 `trmnl.plugin_settings.custom_fields_values`), and returns the template's data. Only the
-Polling and Webhook strategies run it, not Plugin Merge. LaraPaper has no such runtime,
-so the output must be a shape `shared.liquid` already reads. trmnlp runs it too:
+Polling and Webhook strategies run it, not Plugin Merge. LaraPaper runs `transform.js`
+from 0.47.0 on (Polling and Static; Node in its container, same limits and `fetch`, on by
+default); older LaraPaper has none and the LaraPaper recipe ships no transform yet, so the
+output must be a shape `shared.liquid` already reads. trmnlp runs it too:
 `plugin/trmnl-com-polling/tests` (`trmnlp test`) checks it against fake APIs, and
 `preview/transforms.mjs` against the stand-in Home Assistant (`preview/sample-server/`).
 
@@ -189,11 +194,8 @@ add-on's nginx server on port 8099 (`10-homeassistant.sh` in its image), which a
 only the Supervisor (172.30.32.2; `HA_INGRESS_PROXY` in CI). HA strips
 `/api/hassio_ingress/<token>` and sends it as `X-Ingress-Path`; nginx passes it to
 Laravel as `X-Forwarded-Prefix` (the Supervisor is a trusted proxy), so Laravel's URLs
-carry it, and rewrites APP_URL storage links. `20-larapaper-local.sh` adds to that server
-what our bundled assets need: the framework's `/fonts/` (`sub_filter`), the recipe
-preview's assets (`larapaper/ingress/ingress.js`), and storage links in Livewire's
-component snapshot (JSON in JSON, missed by the add-on); it fails the start if the
-add-on's config no longer has the lines it hooks into.
+carry it, and rewrites APP_URL storage links (pages, JSON and Livewire snapshots). The
+app adds nothing to that server.
 
 **Pre-rendering.** LaraPaper renders only inside the device's GET `/api/display` (when
 the recipe's data is older than its refresh interval), and the TRMNL firmware gives that
@@ -305,9 +307,8 @@ dates with `getUTC*`.
   ZIP updates the recipe in LaraPaper in place (same `id`).
 - Bumping LaraPaper: the add-on image's tag (LaraPaper's version, once the add-on has
   released it) in `BUILD_FROM` in `larapaper/Dockerfile` + `version` in `config.yaml`. Bumping the
-  framework or FullCalendar: update `assets.txt` hashes (a tarball member is pinned by
-  the tarball's hash) and the license texts listed there, and the paths in the
-  Dockerfile, `shared.liquid` and `settings.yml`.
+  framework: `preview/assets.txt` hashes and paths, `framework_version` in every
+  `settings.yml`. FullCalendar: the jsDelivr URL in `shared.liquid` and `preview/package.json`.
 - Dependabot (`.github/dependabot.yml`) only bumps GitHub Actions and `preview/` npm
   packages, monthly. FullCalendar is ignored there; it and the versions above are bumped by
   hand across all their files. `upstream.yml` (weekly, `scripts/check-upstream.sh`) opens an

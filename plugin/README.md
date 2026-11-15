@@ -9,9 +9,7 @@ another place to publish it. A variant has only what differs:
 - `settings.yml` — its whole trmnlp settings: strategy, form fields, framework.
 - optional `*.liquid` — put in front of `src/shared.liquid` (in name order), for data
   handling `src/` can't hold. `trmnl-com-merge/merge.liquid` is one: LaraPaper's Liquid can't
-  parse its lookup. The TRMNL.com variants' `fullcalendar.liquid` loads FullCalendar from
-  jsDelivr straight away, without trying the LaraPaper app's local copy first.
-  Their `text-scale.liquid` makes the calendar's text follow the device's Scale, which
+  parse its lookup. The TRMNL.com variants' `text-scale.liquid` makes the calendar's text follow the device's Scale, which
   TRMNL.com sets from the owner's choice (LaraPaper derives it from the screen width).
 - optional `transform.js` — a TRMNL.com serverless function: runs after polling (Polling
   and Webhook strategies only) and returns the template's data. `trmnl-com-polling/transform.js`

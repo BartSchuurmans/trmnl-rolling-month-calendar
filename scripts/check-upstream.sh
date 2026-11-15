@@ -83,12 +83,12 @@ check LaraPaper "$pinned" "$latest" "https://github.com/usetrmnl/larapaper/relea
 pinned=$(sed -n 's/^framework_version: *//p' "$root/plugin/src/settings.yml")
 latest=$(latest_tag usetrmnl/trmnl-framework)
 check "TRMNL framework" "$pinned" "$latest" "https://github.com/usetrmnl/trmnl-framework/releases/tag/v$latest" \
-    '`larapaper/assets.txt` and `preview/assets.txt` (paths and hashes), `larapaper/Dockerfile`, `.github/workflows/app.yml`, `framework_version` in every `plugin/*/settings.yml`, `e2e/run.mjs`, `preview/render.mjs`; then regenerate the README screenshots. Best done when LaraPaper moves its default framework version.'
+    '`preview/assets.txt` (paths and hashes), `framework_version` in every `plugin/*/settings.yml`, `e2e/run.mjs`, `preview/render.mjs`; then regenerate the README screenshots. Best done when LaraPaper moves its default framework version.'
 
 pinned=$(jq -r '.dependencies.fullcalendar' "$root/preview/package.json")
 latest=$(npm view fullcalendar version 2>/dev/null || true)
 check FullCalendar "$pinned" "$latest" "https://github.com/fullcalendar/fullcalendar/releases" \
-    '`larapaper/assets.txt` (paths and hashes), `plugin/src/shared.liquid`, `.github/workflows/app.yml`, `preview/package.json` (both packages); then regenerate the README screenshots.'
+    '`plugin/src/shared.liquid`, `preview/package.json` (both packages); then regenerate the README screenshots.'
 
 pinned=$(sed -n "s#^const IMAGE = 'trmnl/trmnlp:v\(.*\)';#\1#p" "$root/preview/trmnlp.mjs")
 latest=$(latest_tag usetrmnl/trmnlp)
