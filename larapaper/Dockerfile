@@ -6,7 +6,7 @@
 # Its version is LaraPaper's: to update LaraPaper, bump this tag and the version in
 # config.yaml.
 ARG BUILD_ARCH=amd64
-ARG BUILD_FROM=ghcr.io/usetrmnl/trmnl-larapaper-${BUILD_ARCH}:0.46.0
+ARG BUILD_FROM=ghcr.io/usetrmnl/trmnl-larapaper-${BUILD_ARCH}:0.46.0-2
 FROM ${BUILD_FROM}
 
 LABEL org.opencontainers.image.title="LaraPaper (local)" \
@@ -33,6 +33,7 @@ ENV TRMNL_BLADE_FRAMEWORK_CSS_URL=/trmnl-framework/3.4.6/plugins.min.css \
 
 COPY rootfs /
 RUN chmod +x /etc/entrypoint.d/20-larapaper-local.sh /etc/s6-overlay/s6-rc.d/larapaper-local-prerender/run \
+    /etc/s6-overlay/user-bundles.d/laravel-queue/run /etc/s6-overlay/user-bundles.d/laravel-scheduler/run \
     /etc/s6-overlay/s6-rc.d/larapaper-local-mqtt/run
 
 # Renders recipe screens ahead of time, so the TRMNL doesn't wait on a render: see

@@ -1,0 +1,12 @@
+#!/command/execlineb -P
+# The add-on's own run file (add-on 0.46.0-2) plus HOME, which the add-on has from 0.47.0-1
+# (usetrmnl/trmnl-home-assistant#153). Drop this file once BUILD_FROM has it.
+# As www-data, like LaraPaper's own image: the add-on runs as root to take ownership of
+# /data, and s6 would otherwise start this as root too. s6-setuidgid keeps root's HOME
+# (/root, which www-data can't write), where Chromium fails to start ("Failed to create
+# headless user data directory"), so every render in a queued job failed: give it
+# www-data's own.
+s6-setuidgid www-data
+export HOME /home/www-data
+cd /var/www/html
+php /var/www/html/artisan queue:work -v --tries=3

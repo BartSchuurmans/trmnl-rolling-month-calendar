@@ -1,5 +1,5 @@
 name: LaraPaper (local)
-version: "0.46.0-2"
+version: "0.46.0-3"
 slug: larapaper_local
 description: >-
   The official LaraPaper (BYOS) add-on, plus rendering without internet access (the
@@ -31,11 +31,11 @@ ports_description:
   8080/tcp: TRMNL device API and LaraPaper web UI
 options:
   app_url: ""
-  registration_enabled: true
+  multiuser_registration: false
   prerender: true
   mqtt: true
 schema:
   app_url: url
-  registration_enabled: bool
+  multiuser_registration: bool
   prerender: bool
   mqtt: bool
