@@ -13,18 +13,17 @@
 // (weather.get_forecasts), and the server polls every URL with one verb, so the function
 // makes that call itself, with the token, to Home Assistant only (also with ICS feeds,
 // which don't get the token). The response goes last, in the same { service_response:
-// { <entity>: { forecast: [...] } } } shape the LaraPaper (local) app's proxy answers, so
-// shared.liquid reads it unchanged. A failed call goes last as { message }, which the
-// calendar shows as "Could not load <entity>: ...", and the calendars still show. With
-// the app's proxy as Home Assistant URL (127.0.0.1:8124, which only answers GETs), the
-// forecast was already polled as the last URL (polling_url in settings.yml), so the data
-// stays as it is.
+// { <entity>: { forecast: [...] } } } shape Home Assistant answers, which shared.liquid
+// reads. A failed call goes last as { message }, which the calendar shows as "Could not
+// load <entity>: ...", and the calendars still show. The Home Assistant add-on's
+// read-only proxy (127.0.0.1:8124, the default URL) passes this call on like Home
+// Assistant itself.
 async function run(input) {
   var fields = (input && input.trmnl && input.trmnl.plugin_settings && input.trmnl.plugin_settings.custom_fields_values) || {};
   var entity = String(fields.weather_entity || '').trim();
   var output = {};
   var haUrl = String(fields.ha_url || '').trim().replace(/\/+$/, '');
-  if (entity.indexOf('weather.') !== 0 || haUrl.indexOf('127.0.0.1:8124') !== -1) {
+  if (entity.indexOf('weather.') !== 0) {
     Object.keys(input).forEach(function(key) { if (key !== 'trmnl') output[key] = input[key]; });
     return output;
   }

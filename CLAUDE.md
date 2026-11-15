@@ -176,9 +176,8 @@ default; switched off with `TRANSFORM_PROVIDER`); older LaraPaper ignores it. On
 `plugin/src/transform.js` serves both: it adds the weather (POST `weather.get_forecasts` with
 the token) as the last `IDX_n`; `plugin/trmnl-com-polling/transform.js` is a symlink to it
 (build-variant.sh copies the file). Data a transform doesn't touch must stay a shape
-`shared.liquid` already reads, and with the app's proxy (`ha_url` 127.0.0.1:8124) the
-polling URL fetches the forecast itself (GET `/api/weather/<entity>`) and the transform
-leaves the data alone. trmnlp runs it too:
+`shared.liquid` already reads; through the add-on's proxy (`ha_url` 127.0.0.1:8124) it
+makes the same call. trmnlp runs it too:
 `plugin/trmnl-com-polling/tests` (`trmnlp test`) checks it against fake APIs, and
 `preview/transforms.mjs` against the stand-in Home Assistant (`preview/sample-server/`).
 
@@ -188,12 +187,17 @@ purifies them down to `href` (since 0.44.0 opening in a new tab, and the About
 (`author_bio`) text is purified HTML too; before, it was escaped, so links there go in
 `github_url`/`learn_more_url`).
 
-**Home Assistant access.** In the app, the recipe's default URL `http://127.0.0.1:8124`
-is an nginx proxy written by `larapaper/rootfs/etc/entrypoint.d/20-larapaper-local.sh`: it
-forwards only GET `/api/calendars/` to `http://supervisor/core/api` with the app's
-`SUPERVISOR_TOKEN` (`homeassistant_api: true`), so no user token is needed. It listens
-on loopback only; don't publish it or widen its paths. Docker Compose setups still use a
-URL and long-lived token. CI and the e2e test point it at the fake HA via `HA_API_URL`.
+**Home Assistant access.** The recipe's default URL `http://127.0.0.1:8124` is a
+read-only nginx proxy in the official add-on (`home_assistant_key` option, from add-on
+0.47.0-2, fork PR BartSchuurmans/trmnl-home-assistant#8) and, until the app builds on
+that, a copy of it in `larapaper/rootfs/etc/entrypoint.d/20-larapaper-local.sh`. It
+answers only requests with the key as Bearer token (the recipe's `ha_token`), swaps in
+the `SUPERVISOR_TOKEN` (`homeassistant_api: true`) and forwards to
+`http://supervisor/core/api` only reads (states, calendars, history, logbook, template)
+and `weather.get_forecasts`, `calendar.get_events`, `todo.get_items`; browser requests
+(`Sec-Fetch-*`, `Origin`) are refused. It listens on loopback only; don't publish it or
+add paths that act. Without a key: `http://homeassistant:8123` and a long-lived token,
+as with Docker Compose. CI and the e2e test point it at the fake HA via `HA_API_URL`.
 
 **Ingress.** The web UI also opens through Home Assistant (`ingress: true`), on the
 add-on's nginx server on port 8099 (`10-homeassistant.sh` in its image), which answers

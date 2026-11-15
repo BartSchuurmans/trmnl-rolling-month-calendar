@@ -4,9 +4,9 @@
 //
 // Needs a running app container (see .github/workflows/app.yml) that reaches this
 // machine as http://homeassistant:8123 (docker run --add-host homeassistant:host-gateway),
-// with its calendar proxy pointed there (-e SUPERVISOR_TOKEN=e2e-supervisor-token
-// -e HA_API_URL=http://homeassistant:8123/api), with LaraPaper's Lab pre-render off (its
-// default).
+// with its Home Assistant proxy pointed there (-e SUPERVISOR_TOKEN=e2e-supervisor-token
+// -e HA_API_URL=http://homeassistant:8123/api, home_assistant_key APP_HA_KEY in its
+// options), with LaraPaper's Lab pre-render off (its default).
 // Imports the recipe ZIP into LaraPaper, points it at the fake HA (entities and ICS
 // feeds), then fetches the
 // screen the way a TRMNL X does (GET /api/display) and checks what was polled and
@@ -22,7 +22,7 @@
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
-import { FEEDS, FORECAST_DAYS, startFakeHa, SUPERVISOR_TOKEN, TOKEN } from './fake-ha.mjs';
+import { APP_HA_KEY, FEEDS, FORECAST_DAYS, startFakeHa, SUPERVISOR_TOKEN, TOKEN } from './fake-ha.mjs';
 
 const dir = path.dirname(new URL(import.meta.url).pathname);
 const opt = { container: 'app', url: 'http://localhost:4567', zip: path.join(dir, '../dist/rolling-month-calendar.zip'),
@@ -112,11 +112,11 @@ try {
     { name: 'transform-weather', config: { calendars: 'calendar.family,calendar.work', calendar_colors: '-,black',
       weather_entity: 'weather.forecast_home' },
       keys: ['IDX_0', 'IDX_1', 'IDX_2'], events: { IDX_0: 100, IDX_1: 8 }, forecast: { IDX_2: FORECAST_DAYS } },
-    // the app's calendar proxy (the recipe's default URL) instead of a user token, with a
-    // weather entity's forecast through the same proxy (a GET there, a POST service call
-    // to HA); last, since configure merges into the settings
+    // the app's Home Assistant proxy (the recipe's default URL) with the app's key instead
+    // of a user token, which reaches HA as the Supervisor token, also for the forecast
+    // transform.js asks for through the proxy; last, since configure merges into the settings
     ...(opt.local ? [] : [{ name: 'app-proxy', token: SUPERVISOR_TOKEN,
-      config: { ha_url: 'http://127.0.0.1:8124', ha_token: '', calendars: 'calendar.family,calendar.work', calendar_colors: '-,black',
+      config: { ha_url: 'http://127.0.0.1:8124', ha_token: APP_HA_KEY, calendars: 'calendar.family,calendar.work', calendar_colors: '-,black',
         weather_entity: 'weather.forecast_home' },
       keys: ['IDX_0', 'IDX_1', 'IDX_2'], events: { IDX_0: 100, IDX_1: 8 }, forecast: { IDX_2: FORECAST_DAYS } }]),
   ];

@@ -1,5 +1,5 @@
 name: LaraPaper (local)
-version: "0.47.0-2"
+version: "0.47.0-3"
 slug: larapaper_local
 description: >-
   The official LaraPaper (BYOS) add-on, plus a Home Assistant proxy for recipes,
@@ -11,7 +11,8 @@ arch:
   - aarch64
   - amd64
 init: false
-# The Supervisor token lets the bundled calendar proxy read Home Assistant calendars
+# The Supervisor token lets the read-only Home Assistant proxy for recipes
+# (home_assistant_key) read Home Assistant
 homeassistant_api: true
 startup: services
 # The Mosquitto broker's address and login, for the device sensors (mqtt.php); the app
@@ -32,7 +33,10 @@ options:
   app_url: ""
   multiuser_registration: false
   mqtt: true
+  home_assistant_key: ""
 schema:
   app_url: url
   multiuser_registration: bool
   mqtt: bool
+  # masked in the UI; the entrypoint checks its format (it goes into nginx config)
+  home_assistant_key: password?

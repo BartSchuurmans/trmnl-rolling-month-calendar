@@ -3,12 +3,15 @@
 // every request. The events are placed around today so they land in the rolling month.
 // It also serves ICS feeds under /feeds/<name>.ics (no token, like a secret feed link),
 // and weather.forecast_home's daily forecast to a weather.get_forecasts service call
-// (POST, as HA only gives forecasts to that), which the app's proxy makes.
+// (POST, as HA only gives forecasts to that), which the recipe's transform.js makes.
 import http from 'node:http';
 
 export const TOKEN = 'e2e-token';
-// what the app's calendar proxy adds (SUPERVISOR_TOKEN in app.yml)
+// what the app's Home Assistant proxy adds (SUPERVISOR_TOKEN in app.yml)
 export const SUPERVISOR_TOKEN = 'e2e-supervisor-token';
+// the app's "Home Assistant key for recipes" (options.json in app.yml), which a recipe
+// sends to the proxy as its token
+export const APP_HA_KEY = 'e2e-recipe-key-0123456789abcdef';
 
 const day = (n) => new Date(Date.now() + n * 86400000).toISOString().slice(0, 10);
 

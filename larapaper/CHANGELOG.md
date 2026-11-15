@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.47.0-3
+
+### Home Assistant app
+
+- **Set the new Home Assistant key for recipes option and enter it as the calendar
+  recipe's access token**: Home Assistant access through `http://127.0.0.1:8124` now
+  needs that key, so only recipes you give it can read Home Assistant. It is the same
+  read-only proxy the official add-on gets: besides calendars, recipes can read states,
+  history, the logbook and templates, and get forecasts and to-do items, all with the
+  service calls Home Assistant itself takes, so the recipe's weather now comes through
+  its transform (POST `weather.get_forecasts`) instead of the old `/api/weather/<entity>`
+  address, which is gone. Requests from browsers are refused.
+
 ## 0.47.0-2
 
 ### Home Assistant app

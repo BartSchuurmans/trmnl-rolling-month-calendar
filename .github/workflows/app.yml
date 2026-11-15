@@ -127,9 +127,10 @@ jobs:
       - name: Start with a fake /data
         run: |
           mkdir -p "$RUNNER_TEMP/data"
-          echo '{"app_url": "http://localhost:4567/", "multiuser_registration": false}' > "$RUNNER_TEMP/data/options.json"
+          echo '{"app_url": "http://localhost:4567/", "multiuser_registration": false, "home_assistant_key": "e2e-recipe-key-0123456789abcdef"}' > "$RUNNER_TEMP/data/options.json"
           # homeassistant:8123 is the fake Home Assistant of the end-to-end test; the
-          # calendar proxy goes there too, with the token the Supervisor would provide
+          # Home Assistant proxy goes there too, with the token the Supervisor would provide
+          # (the key is APP_HA_KEY in e2e/fake-ha.mjs)
           # the ingress port is published for e2e/ingress.mjs, which plays Home Assistant
           # (Home Assistant itself reaches it over its own network, as 172.30.32.2).
           # LaraPaper's Lab pre-render is off by default; the end-to-end test runs it by hand.
@@ -169,20 +170,28 @@ jobs:
           test -s "$RUNNER_TEMP/data/app_key"
           test -s "$RUNNER_TEMP/data/database/database.sqlite"
 
-      - name: Check the calendar proxy only allows calendar reads and forecasts from inside the app
+      - name: Check the Home Assistant proxy only allows reads, with the key, from inside the app
         run: |
+          # status <method> <url> [header]: the status code, asked from inside the app as PHP does
           status() {
             # shellcheck disable=SC2016 # PHP code
-            docker exec app php -r '$c = stream_context_create(["http" => ["method" => $argv[1], "ignore_errors" => true]]);
-              @file_get_contents($argv[2], false, $c); echo explode(" ", $http_response_header[0] ?? "x 000")[1];' "$1" "$2"
+            docker exec app php -r '$c = stream_context_create(["http" => ["method" => $argv[1], "ignore_errors" => true,
+                "header" => "Authorization: Bearer e2e-recipe-key-0123456789abcdef\r\n" . ($argv[3] ?? "")]]);
+              @file_get_contents($argv[2], false, $c); echo explode(" ", $http_response_header[0] ?? "x 000")[1];' "$@"
           }
+          # (what reaches the fake Home Assistant, and with which token, the end-to-end test checks)
           test "$(status POST http://127.0.0.1:8124/api/calendars/calendar.work)" = 403
-          test "$(status GET http://127.0.0.1:8124/api/states)" = 404
-          # forecasts: a GET for a weather.* entity only (the end-to-end test checks the call it makes)
-          test "$(status POST http://127.0.0.1:8124/api/weather/weather.forecast_home)" = 403
-          test "$(status GET http://127.0.0.1:8124/api/weather/sensor.secret)" = 404
-          test "$(status GET http://127.0.0.1:8124/api/weather/weather.home/../../states)" = 404
-          test "$(status GET http://127.0.0.1:8124/api/services/light/turn_on)" = 404
+          test "$(status POST http://127.0.0.1:8124/api/services/light/turn_on)" = 404
+          test "$(status GET http://127.0.0.1:8124/api/events)" = 404
+          # the old GET for forecasts is gone: recipes POST weather.get_forecasts
+          test "$(status GET http://127.0.0.1:8124/api/weather/weather.forecast_home)" = 404
+          # browsers (a recipe's page while it renders) are refused
+          test "$(status GET http://127.0.0.1:8124/api/calendars/calendar.work 'Sec-Fetch-Mode: cors')" = 403
+          test "$(status GET http://127.0.0.1:8124/api/calendars/calendar.work 'Origin: null')" = 403
+          # without the key
+          # shellcheck disable=SC2016 # PHP code
+          test "$(docker exec app php -r '$c = stream_context_create(["http" => ["ignore_errors" => true]]);
+            @file_get_contents("http://127.0.0.1:8124/api/calendars/calendar.work", false, $c); echo explode(" ", $http_response_header[0])[1];')" = 401
           # not published: the port only listens inside the container
           ! curl -fsS -o /dev/null --max-time 5 http://localhost:8124/api/calendars/calendar.work
 

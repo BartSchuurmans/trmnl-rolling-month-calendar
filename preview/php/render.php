@@ -67,8 +67,8 @@ $icsUrls === ['https://calendar.example/a.ics', 'https://calendar.example/b.ics?
 $header($ics) === '' || fail('the Home Assistant token is sent to ICS feeds: '.$header($ics));
 
 // A weather entity: transform.js fetches its forecast (LaraPaper 0.47.0+), so the
-// polling URLs stay as they are; only with the app's proxy as Home Assistant URL does it
-// add its forecast, through the proxy, as the last URL; with ICS feeds too
+// polling URLs stay as they are, with ICS feeds too and with the add-on's proxy as Home
+// Assistant URL (which takes the same service call)
 $weather = fn (array $values) => array_values(array_filter(array_map('trim',
     explode("\n", $resolve($settings['polling_url'], [...$values, 'weather_entity' => ' weather.forecast_home '])))));
 $weather($config) === $urls
@@ -77,10 +77,8 @@ $weather($ics) === $icsUrls
     || fail('unexpected ICS polling URLs with a weather entity: '.implode(' ', $weather($ics)));
 $proxy = 'http://127.0.0.1:8124';
 $proxied = fn (array $urls) => array_map(fn ($url) => str_replace('http://homeassistant:8123', $proxy, $url), $urls);
-$weather([...$config, 'ha_url' => $proxy]) === [...$proxied($urls), $proxy.'/api/weather/weather.forecast_home']
-    || fail('unexpected polling URLs with a weather entity and the app proxy: '.implode(' ', $weather([...$config, 'ha_url' => $proxy])));
-$weather([...$ics, 'ha_url' => $proxy]) === [...$icsUrls, $proxy.'/api/weather/weather.forecast_home']
-    || fail('unexpected ICS polling URLs with a weather entity and the app proxy: '.implode(' ', $weather([...$ics, 'ha_url' => $proxy])));
+$weather([...$config, 'ha_url' => $proxy]) === $proxied($urls)
+    || fail('unexpected polling URLs with a weather entity and the add-on proxy: '.implode(' ', $weather([...$config, 'ha_url' => $proxy])));
 
 // Markup, with the same filters and context shape as Plugin::render; the view wrapper is
 // what PluginImportService::ensureLiquidViewWrapper adds to full.liquid on import
