@@ -24,9 +24,10 @@ UPSTREAM.md for what differs from upstream.
   today, plus the weather forecast's POST).
 - `larapaper/` + `repository.yaml` — Home Assistant app: the official LaraPaper add-on's
   image (`ghcr.io/usetrmnl/trmnl-larapaper-<arch>`, from usetrmnl/trmnl-home-assistant:
-  /data, options, ingress) plus what it lacks: the Home Assistant proxy, pre-render and
-  device sensors. Its extras run in `rootfs/etc/entrypoint.d/20-larapaper-local.sh`, after
-  the add-on's own `10-homeassistant.sh`, and as s6 services (`rootfs/etc/s6-overlay/`:
+  /data, options, ingress) plus what it lacks: the Home Assistant proxy, the pre-render
+  default and device sensors. Its extras run in
+  `rootfs/etc/entrypoint.d/20-larapaper-local.sh`, after the add-on's own
+  `10-homeassistant.sh`, and as s6 services (`rootfs/etc/s6-overlay/`:
   definitions in `s6-rc.d/`, enabled in `user-bundles.d/user/contents.d/`, which adds to
   the image's own bundle; an `s6-rc.d/user` bundle would replace it and drop LaraPaper's
   queue worker and scheduler); fix what the add-on does in the add-on (Bart's fork), not
@@ -199,13 +200,15 @@ app adds nothing to that server.
 
 **Pre-rendering.** LaraPaper renders only inside the device's GET `/api/display` (when
 the recipe's data is older than its refresh interval), and the TRMNL firmware gives that
-request 15 s. So the app runs `larapaper/prerender/prerender.php` once a minute (s6
-service `larapaper-local-prerender` in `larapaper/rootfs/etc/s6-overlay/`): it renders
-each polling recipe in a device's playlists 2 minutes before it goes stale, through
-LaraPaper's own services, without setting the device's screen. The app option `prerender`
-turns it off, as does `LARAPAPER_LOCAL_PRERENDER=0`, which wins (CI sets it, and
-`e2e/run.mjs` runs the script by hand). It doesn't change LaraPaper's
-code; LaraPaper bugs still go upstream.
+request 15 s. LaraPaper 0.47.0's Lab setting "Pre-render playlist items"
+(`PrerenderUpcomingPlaylistItemsJob`, every minute from its scheduler, renders in its
+queue worker) renders a device's next playlist item 61-120 s before it's due
+(`last_refreshed_at` + refresh interval). The app turns it on by default:
+`20-larapaper-local.sh` writes `TOGGLE_PRERENDER_PLAYLIST_ITEMS` to `.env` from the app
+option `prerender`, or `LARAPAPER_LOCAL_PRERENDER=0`, which wins (CI sets it, and
+`e2e/run.mjs` runs the job by hand through `e2e/larapaper.php prerender`). A value set in
+Settings → Lab (database) beats `.env`. Up to app 0.47.0-1 the app had its own script
+(`larapaper/prerender/prerender.php`, see git history).
 
 **Device sensors.** The app also publishes every LaraPaper device to Home Assistant through
 MQTT discovery (`larapaper/mqtt/mqtt.php`, s6 service `larapaper-local-mqtt`, as
@@ -214,9 +217,10 @@ www-data): one retained device-based discovery config per MAC address
 a JSON state, every 10 s (`LARAPAPER_LOCAL_MQTT_INTERVAL`), through LaraPaper's models,
 plus the device's current screen as image bytes when it changes. Controls (sleep mode and
 times, refresh interval, firmware install) arrive on `larapaper/<instance>/<mac>/set/<key>`
-and update the `Device` as LaraPaper's device page does; the Refresh screen button runs
-`prerender.php --device <id>` in the background (polls and renders that device's
-recipes, due or not). It finds deleted devices from the broker's retained configs. The
+and update the `Device` as LaraPaper's device page does; the Refresh screen button
+queues LaraPaper's `RenderPlaylistItemImageJob` (force, as a playlist item's "Refresh
+cache") for each recipe in that device's active playlists (polls and renders, due or
+not). It finds deleted devices from the broker's retained configs. The
 broker comes from the Supervisor (`services: mqtt:want`) or `MQTT_HOST` (CI, with a
 Mosquitto container; `e2e/run.mjs --mqtt`). Its MQTT client is a minimal 3.1.1 one in
 the script (QoS 0, last will), so the image needs no Composer packages. The app option

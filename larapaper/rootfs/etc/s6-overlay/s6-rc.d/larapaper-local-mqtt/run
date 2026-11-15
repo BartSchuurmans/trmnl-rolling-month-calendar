@@ -9,7 +9,8 @@ if [ "$enabled" = 0 ]; then
     exec sleep infinity
 fi
 cd /var/www/html || exit 1
-# As www-data, like PHP-FPM (see larapaper-local-prerender)
+# As www-data, like PHP-FPM: files it creates (a first laravel.log) must stay writable
+# for the web app. The container itself runs as root (see the add-on's Dockerfile).
 if [ "$(id -u)" = 0 ]; then
     /command/s6-setuidgid www-data php /opt/larapaper-local/mqtt.php
 else

@@ -132,7 +132,7 @@ jobs:
           # calendar proxy goes there too, with the token the Supervisor would provide
           # the ingress port is published for e2e/ingress.mjs, which plays Home Assistant
           # (Home Assistant itself reaches it over its own network, as 172.30.32.2). The
-          # end-to-end test runs the pre-render itself, so the background one is off.
+          # end-to-end test runs LaraPaper's pre-render itself, so the background one is off.
           # The device sensors go to a Mosquitto broker on this machine (the Supervisor's
           # MQTT service in Home Assistant), published every 2 s instead of 10.
           docker run -d --name mqtt -p 1883:1883 eclipse-mosquitto:2 mosquitto -c /mosquitto-no-auth.conf
@@ -159,6 +159,12 @@ jobs:
           done
           docker exec app grep -qx 'APP_URL=http://localhost:4567' /var/www/html/.env
           docker exec app grep -qx 'MULTIUSER_REGISTRATION_ENABLED=0' /var/www/html/.env
+          # LARAPAPER_LOCAL_PRERENDER=0 (above) turns LaraPaper's Lab pre-render off
+          docker exec app grep -qx 'TOGGLE_PRERENDER_PLAYLIST_ITEMS=false' /var/www/html/.env
+          # shellcheck disable=SC2016 # PHP code
+          docker exec -u www-data -w /var/www/html app php -r 'require "vendor/autoload.php";
+            $app = require "bootstrap/app.php"; $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+            exit(OffloadProject\Toggle\Facades\Toggle::active("prerender-playlist-items") ? 1 : 0);'
           docker exec app grep -qx 'APP_TIMEZONE=Europe/Amsterdam' /var/www/html/.env
           test -s "$RUNNER_TEMP/data/app_key"
           test -s "$RUNNER_TEMP/data/database/database.sqlite"

@@ -13,9 +13,10 @@ configuration:
   prerender:
     name: Render screens ahead of time
     description: >-
-      Render each recipe shortly before it goes out of date, so the TRMNL gets a ready
-      screen. Off, LaraPaper renders while the TRMNL waits, which can take longer than
-      the 15 seconds it waits for.
+      Turns on LaraPaper's Lab setting "Pre-render playlist items" by default: the next
+      screen is rendered shortly before the TRMNL asks for it. Off, LaraPaper renders
+      while the TRMNL waits, which can take longer than the 15 seconds it waits for.
+      Changing the setting in Settings → Lab overrides this.
   mqtt:
     name: Device sensors in Home Assistant
     description: >-

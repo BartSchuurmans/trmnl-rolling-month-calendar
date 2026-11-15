@@ -13,7 +13,11 @@
 //       a new password for the user (after setup), to log in to the web UI
 //   php larapaper.php device add|delete
 //       a second device (no playlist), for the device sensors in Home Assistant
+//   php larapaper.php prerender
+//       LaraPaper's Lab pre-render (PrerenderUpcomingPlaylistItemsJob), once, as if the
+//       device were due in 90 s; lists the render jobs it queued for the queue worker
 
+use App\Jobs\PrerenderUpcomingPlaylistItemsJob;
 use App\Models\Device;
 use App\Models\DeviceModel;
 use App\Models\Playlist;
@@ -22,6 +26,8 @@ use App\Models\Plugin;
 use App\Models\User;
 use App\Services\PluginImportService;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Queue\Events\JobQueued;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Storage;
 
 $root = getenv('LARAPAPER_DIR') ?: '/var/www/html';
@@ -145,7 +151,23 @@ switch ($command) {
         }
         out(['devices' => Device::pluck('mac_address')]);
 
+    case 'prerender':
+        // The job looks 61-120 s ahead: last check-in plus the refresh interval
+        $device = Device::where('api_key', API_KEY)->firstOrFail();
+        $item = $device->getNextPlaylistItem();
+        $interval = (int) ($item?->playlist->refresh_time ?? $device->default_refresh_interval);
+        $device->forceFill(['last_refreshed_at' => now()->subSeconds($interval - 90)])->save();
+        // On for this process only: the app's own scheduler stays off in CI (the
+        // "prerender" option), so it can't race the scenarios before this
+        config(['toggle.flags.'.PrerenderUpcomingPlaylistItemsJob::TOGGLE => true]);
+        $queued = [];
+        Event::listen(JobQueued::class, function (JobQueued $event) use (&$queued): void {
+            $queued[] = ['job' => class_basename($event->job), 'force' => $event->job->force ?? null];
+        });
+        (new PrerenderUpcomingPlaylistItemsJob)->handle();
+        out(['queued' => $queued]);
+
     default:
-        fwrite(STDERR, "usage: php larapaper.php setup|configure|check|login|device ...\n");
+        fwrite(STDERR, "usage: php larapaper.php setup|configure|check|login|device|prerender ...\n");
         exit(2);
 }
