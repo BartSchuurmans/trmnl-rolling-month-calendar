@@ -35,7 +35,9 @@ jobs:
         run: |
           version="$(yq '.version' larapaper/config.yaml)"
           base="$(sed -n 's/^ARG BUILD_FROM=//p' larapaper/Dockerfile)"
+          # the add-on's tag is LaraPaper's version, with -N for an add-on-only release
           tag="${base##*:}"
+          tag="${tag%%-*}"
           case "$version" in
             "$tag"-*) ;;
             *) echo "::error file=larapaper/config.yaml::version $version doesn't match LaraPaper $tag in the Dockerfile; use $tag-N"; exit 1 ;;
@@ -74,6 +76,7 @@ jobs:
         run: |
           version="$(yq '.version' larapaper/config.yaml)"
           tag="$(sed -n 's/^ARG BUILD_FROM=.*://p' larapaper/Dockerfile)"
+          tag="${tag%%-*}"
           entry="$(awk -v h="## $version" '$0 == h { on = 1; next } on && /^## / { exit } on' larapaper/CHANGELOG.md)"
           if [ -z "$entry" ]; then
             echo "::error file=larapaper/CHANGELOG.md::no \"## $version\" entry in larapaper/CHANGELOG.md"
@@ -124,7 +127,7 @@ jobs:
       - name: Start with a fake /data
         run: |
           mkdir -p "$RUNNER_TEMP/data"
-          echo '{"app_url": "http://localhost:4567/", "registration_enabled": false}' > "$RUNNER_TEMP/data/options.json"
+          echo '{"app_url": "http://localhost:4567/", "multiuser_registration": false}' > "$RUNNER_TEMP/data/options.json"
           # homeassistant:8123 is the fake Home Assistant of the end-to-end test; the
           # calendar proxy goes there too, with the token the Supervisor would provide
           # the ingress port is published for e2e/ingress.mjs, which plays Home Assistant
@@ -165,8 +168,18 @@ jobs:
           docker exec app sh -c '! grep -q "fonts.bunny.net" /var/www/html/resources/views/vendor/trmnl/components/screen.blade.php'
           docker exec app printenv TRMNL_BLADE_FRAMEWORK_CSS_URL | grep -qx '/trmnl-framework/3.4.6/plugins.min.css'
           docker exec app sh -c 'f=/var/www/html/bootstrap/cache/config.php; ! test -f "$f" || grep -q "/trmnl-framework/3.4.6/plugins.min.css" "$f"'
+          # LaraPaper's queue worker and scheduler, next to the app's own services (our s6
+          # bundle adds to the image's, in /etc/s6-overlay/user-bundles.d/user), as
+          # www-data with its own HOME (Chromium can't start in /root)
+          for service in "artisan queue:work" "artisan schedule:work"; do
+            docker exec app ps -o user,args | grep "$service" | grep -v grep | grep -q '^www-data' \
+              || { echo "$service is not running as www-data"; docker exec app ps -o user,args; exit 1; }
+            pid="$(docker exec app pgrep -f "$service" | head -1)"
+            docker exec -u www-data app sh -c "tr '\\0' '\\n' < /proc/$pid/environ" | grep -qx 'HOME=/home/www-data' \
+              || { echo "$service has no HOME=/home/www-data"; exit 1; }
+          done
           docker exec app grep -qx 'APP_URL=http://localhost:4567' /var/www/html/.env
-          docker exec app grep -qx 'REGISTRATION_ENABLED=0' /var/www/html/.env
+          docker exec app grep -qx 'MULTIUSER_REGISTRATION_ENABLED=0' /var/www/html/.env
           docker exec app grep -qx 'APP_TIMEZONE=Europe/Amsterdam' /var/www/html/.env
           test -s "$RUNNER_TEMP/data/app_key"
           test -s "$RUNNER_TEMP/data/database/database.sqlite"

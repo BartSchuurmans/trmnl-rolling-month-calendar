@@ -304,7 +304,8 @@ dates with `getUTC*`.
 - After changing `plugin/src/`, rebuild with `scripts/build-zip.sh`; re-importing the
   ZIP updates the recipe in LaraPaper in place (same `id`).
 - Bumping LaraPaper: the add-on image's tag (LaraPaper's version, once the add-on has
-  released it) in `BUILD_FROM` in `larapaper/Dockerfile` + `version` in `config.yaml`. Bumping the
+  released it; a `-N` tag is an add-on-only fix on that version, and the app stays
+  `<LaraPaper version>-N`) in `BUILD_FROM` in `larapaper/Dockerfile` + `version` in `config.yaml`. Bumping the
   framework or FullCalendar: update `assets.txt` hashes (a tarball member is pinned by
   the tarball's hash) and the license texts listed there, and the paths in the
   Dockerfile, `shared.liquid` and `settings.yml`.

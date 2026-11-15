@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.46.0-3
+
+### Home Assistant app
+
+- LaraPaper's queue worker and scheduler run again: the app's own services had replaced
+  them since the base image's newer s6 layout, so LaraPaper's scheduled jobs (firmware
+  checks, log cleanup) and queued jobs never ran. They run as `www-data`, with its own
+  home directory, so Chromium can start for renders in queued jobs.
+- Built on the LaraPaper add-on 0.46.0-2 (was 0.46.0), which brings its own fixes:
+  **Allow registration** is now **Allow more accounts** (off by default; the old option did
+  nothing since LaraPaper 0.46.0, and the first account can always register), and the
+  rendered image loads through ingress (the app's own fix for that is gone).
+
 ## 0.46.0-2
 
 ### Home Assistant app

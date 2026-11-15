@@ -90,25 +90,18 @@ fi
 # path on as X-Forwarded-Prefix, so Laravel's own URLs carry it. Root-relative paths it
 # doesn't make still point at Home Assistant itself there: the bundled framework's fonts
 # (its stylesheet loads /fonts/...), and the assets the recipe preview writes into an
-# iframe, which ingress.js prefixes (larapaper/ingress/ingress.js). The add-on turns
-# APP_URL/storage/ links into ingress ones in pages and in Livewire's JSON, but not in
-# Livewire's component snapshot (JSON inside JSON), where the recipe page keeps its
-# rendered image: add that form too.
+# iframe, which ingress.js prefixes (larapaper/ingress/ingress.js). The add-on itself
+# turns APP_URL/storage/ links into ingress ones (since add-on 0.46.0-1 also in Livewire's
+# component snapshot, where the recipe page keeps its rendered image).
 INGRESS_CONF=/etc/nginx/conf.d/ha-ingress.conf
-APP_URL="$(opt app_url)"
-APP_URL="${APP_URL%/}"
 # shellcheck disable=SC2016 # PHP code and nginx variables, not shell expansions
 php -r '
-    [, $file, $appUrl] = $argv;
+    [, $file] = $argv;
     $conf = file_get_contents($file);
     // nginx quoted strings take \\ for one backslash
     $q = fn ($s) => "'"'"'" . str_replace("\\", "\\\\", $s) . "'"'"'";
     $php = "fastcgi_param HTTP_X_FORWARDED_PREFIX \$ha_ingress_path;\n";
     $add = "        sub_filter " . $q("</head>") . " " . $q("<script src=\"\$ha_ingress_path/larapaper-local/ingress.js\"></script></head>") . ";\n";
-    if ($appUrl !== "") {
-        $snapshot = str_replace("/", "\\\\\\/", "$appUrl/storage/");
-        $add .= "        sub_filter " . $q($snapshot) . " " . $q("\$ha_ingress_path/storage/") . ";\n";
-    }
     $fonts = "    location ^~ /trmnl-framework/ {\n"
         . "        sub_filter_types text/css;\n"
         . "        sub_filter_once off;\n"
@@ -122,5 +115,5 @@ php -r '
     }
     $conf = str_replace([$php, $root], ["$php$add", "$fonts$root"], $conf);
     file_put_contents($file, $conf);
-' "$INGRESS_CONF" "$APP_URL"
-log "ingress: bundled framework fonts, recipe preview assets and rendered image"
+' "$INGRESS_CONF"
+log "ingress: bundled framework fonts and recipe preview assets"
