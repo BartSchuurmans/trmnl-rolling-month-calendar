@@ -306,9 +306,11 @@ dates with `getUTC*`.
 - After changing `plugin/src/`, rebuild with `scripts/build-zip.sh`; re-importing the
   ZIP updates the recipe in LaraPaper in place (same `id`).
 - Bumping LaraPaper: the add-on image's tag (LaraPaper's version, once the add-on has
-  released it) in `BUILD_FROM` in `larapaper/Dockerfile` + `version` in `config.yaml`. Bumping the
-  framework: `preview/assets.txt` hashes and paths, `framework_version` in every
-  `settings.yml`. FullCalendar: the jsDelivr URL in `shared.liquid` and `preview/package.json`.
+  released it; a `-N` tag is an add-on-only fix on that version, and the app stays
+  `<LaraPaper version>-N`) in `BUILD_FROM` in `larapaper/Dockerfile` + `version` in
+  `config.yaml`. Bumping the framework: `preview/assets.txt` hashes and paths,
+  `framework_version` in every `settings.yml`. FullCalendar: the jsDelivr URL in
+  `shared.liquid` and `preview/package.json`.
 - Dependabot (`.github/dependabot.yml`) only bumps GitHub Actions and `preview/` npm
   packages, monthly. FullCalendar is ignored there; it and the versions above are bumped by
   hand across all their files. `upstream.yml` (weekly, `scripts/check-upstream.sh`) opens an
