@@ -38,8 +38,8 @@ UPSTREAM.md for what differs from upstream.
 - `plugin/<variant>/` (now `trmnl-com-merge/` and `trmnl-com-polling/`, see `plugin/README.md`) — the
   recipe for another channel: its own `settings.yml` and `*.liquid` put in front of
   `src/shared.liquid`. `trmnl-com-merge/`: TRMNL.com, Plugin Merge strategy, `merge.liquid`.
-  `trmnl-com-polling/`: TRMNL.com polling a public Home Assistant with a token (no ICS), plus
-  `transform.js`, a TRMNL.com serverless function that adds the weather. Never edit the
+  `trmnl-com-polling/`: TRMNL.com polling a public Home Assistant with a token (no ICS); its
+  `transform.js` links to `src/transform.js` (see Serverless functions). Never edit the
   markup on TRMNL.com; releases upload it.
 - `scripts/build-zip.sh` — builds `dist/rolling-month-calendar.zip` for LaraPaper's recipe import;
   `scripts/build-variant.sh` builds the variants (`dist/<variant>/src`, ZIP each).
@@ -166,14 +166,19 @@ Daily Weather recipe; a recipe's data arrives as `private_plugin_<id>: {merge_va
 LaraPaper recipe dropped its Plugin Data API source (plugin IDs + API key): ICS feeds
 cover those calendars there.
 
-**Serverless functions.** TRMNL.com (and LaraPaper 0.47.0+, see below): `plugin/<variant>/transform.js` (Node 24 there,
+**Serverless functions.** TRMNL.com (and LaraPaper 0.47.0+, see below): `transform.js` (Node 24 there,
 `fetch`, 128 MB and 5 s, no packages but `temporal-polyfill`) runs after polling, with the
 polled data (IDX_n, or `data` for one URL) plus `trmnl` (custom fields under
 `trmnl.plugin_settings.custom_fields_values`), and returns the template's data. Only the
 Polling and Webhook strategies run it, not Plugin Merge. LaraPaper runs `transform.js`
 from 0.47.0 on (Polling and Static; Node in its container, same limits and `fetch`, on by
-default); older LaraPaper has none and the LaraPaper recipe ships no transform yet, so the
-output must be a shape `shared.liquid` already reads. trmnlp runs it too:
+default; switched off with `TRANSFORM_PROVIDER`); older LaraPaper ignores it. One
+`plugin/src/transform.js` serves both: it adds the weather (POST `weather.get_forecasts` with
+the token) as the last `IDX_n`; `plugin/trmnl-com-polling/transform.js` is a symlink to it
+(build-variant.sh copies the file). Data a transform doesn't touch must stay a shape
+`shared.liquid` already reads, and with the app's proxy (`ha_url` 127.0.0.1:8124) the
+polling URL fetches the forecast itself (GET `/api/weather/<entity>`) and the transform
+leaves the data alone. trmnlp runs it too:
 `plugin/trmnl-com-polling/tests` (`trmnlp test`) checks it against fake APIs, and
 `preview/transforms.mjs` against the stand-in Home Assistant (`preview/sample-server/`).
 

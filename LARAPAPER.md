@@ -7,7 +7,8 @@ servers (trmnl.com), you don't need any of this: see the [README](README.md).
 On LaraPaper the calendar reads **ICS feeds** or **Home Assistant** calendar entities,
 and your calendars stay on your network. This repository also has a Home Assistant app,
 **LaraPaper (local)**, that runs LaraPaper with what the calendar needs from Home
-Assistant built in. LaraPaper can also run with Docker Compose on any machine. Rendering
+Assistant built in. LaraPaper also runs as the official LaraPaper add-on for Home
+Assistant, or with Docker Compose on any machine. Rendering
 a screen loads the TRMNL framework (trmnl.com) and FullCalendar (jsDelivr), so the
 server needs internet access.
 
@@ -31,11 +32,12 @@ flowchart LR
     app -- "screen image<br>over Wi-Fi" --> X
 ```
 
-<sub>With Docker Compose instead of the app, the LaraPaper container runs on any machine that can reach Home Assistant.</sub>
+<sub>The official add-on runs in the same place as the app; with Docker Compose, the LaraPaper container runs on any machine that can reach Home Assistant.</sub>
 
 The recipe is tested with LaraPaper 0.47.0 (the app's version) and still works with
 0.43: there, ICS feeds show fewer weeks (see [ICS feeds](#ics-feeds)) and you tick
-**Remove bleed margin?** yourself.
+**Remove bleed margin?** yourself. The weather needs LaraPaper 0.47.0 or the app (see
+[Weather](#weather)).
 
 ## 1. Run LaraPaper
 
@@ -46,6 +48,12 @@ Settings → Apps → store → ⋮ → Repositories, add
 you don't need an access token. Its web UI opens inside Home Assistant, so
 you can reach it wherever you reach Home Assistant. Setup steps are in
 [larapaper/DOCS.md](larapaper/DOCS.md).
+
+**Or as the official LaraPaper add-on.** Add
+`https://github.com/usetrmnl/trmnl-home-assistant` the same way and install **LaraPaper
+(BYOS)**. It runs LaraPaper with its web UI inside Home Assistant, but without the app's
+own Home Assistant access, so the calendar reads Home Assistant with a URL and an access
+token, as with Docker Compose.
 
 **Or with Docker Compose** on any machine:
 
@@ -94,8 +102,10 @@ anyone with the link can read the calendar, so keep it private):
 Entities (filter on `calendar.`). Any calendar integration works (Local Calendar,
 Google, CalDAV, iCloud…).
 
-**Docker Compose only:** LaraPaper needs a token to read Home Assistant. HA → your profile →
-**Security** → **Long-lived access tokens** → Create. Check it from the LaraPaper host:
+**Official add-on or Docker Compose:** LaraPaper needs a token to read Home Assistant.
+Preferably make a Home Assistant user for it that isn't an administrator, as the token
+can do anything its user can. Log in as that user → your profile → **Security** →
+**Long-lived access tokens** → Create. With Docker Compose, check it from the LaraPaper host:
 
 ```sh
 curl -H "Authorization: Bearer $TOKEN" \
@@ -111,14 +121,14 @@ open the settings of the **Rolling Month Calendar** recipe and fill in either:
 - **ICS feed URLs**, one per calendar. When these are set, the Home Assistant fields are
   not used. Or:
 - **Home Assistant calendar entities**, e.g. `calendar.family`, `calendar.work`. With
-  Docker Compose also **Home Assistant URL**, e.g. `http://homeassistant.local:8123`
-  (must be reachable from the LaraPaper container), and **Access token**. With the
-  Home Assistant app, leave the URL at its default `http://127.0.0.1:8124` and the
-  token empty: that is the app's own access to Home Assistant.
+  the official add-on also **Home Assistant URL** `http://homeassistant:8123` and
+  **Access token**; with Docker Compose the same with a URL the LaraPaper container
+  reaches, e.g. `http://homeassistant.local:8123`. With the LaraPaper (local) app, leave
+  the URL at its default `http://127.0.0.1:8124` and the token empty: that is the app's
+  own access to Home Assistant.
 
-With the Home Assistant app you can also fill in **Home Assistant weather entity**, e.g.
-`weather.forecast_home`, for each day's forecast next to its day number (see
-[Weather](#weather)).
+You can also fill in **Home Assistant weather entity**, e.g. `weather.forecast_home`,
+for each day's forecast next to its day number (see [Weather](#weather)).
 
 The calendar is made to run to the screen's edges, as it does on TRMNL.com. LaraPaper
 0.44.0 and later take that from the recipe; on an older LaraPaper, tick **Remove bleed
@@ -150,14 +160,19 @@ to the feeds.
 ## Weather
 
 Each day from today on can get its daily forecast next to its day number (see
-[Weather](README.md#weather) in the README). On LaraPaper this takes the LaraPaper
-(local) app: set **Home Assistant weather entity**, and the forecast comes from that
-entity. It works with ICS feeds as well as with Home Assistant calendars. Prefer Home
-Assistant's Open-Meteo integration over Met.no, as the README explains.
+[Weather](README.md#weather) in the README): set **Home Assistant weather entity**, and
+the forecast comes from that entity in the Home Assistant at **Home Assistant URL**. It
+works with ICS feeds as well as with Home Assistant calendars (with ICS feeds, the
+Home Assistant URL and token are only used for the weather). Prefer Home Assistant's
+Open-Meteo integration over Met.no, as the README explains.
 
 Home Assistant gives forecasts only to a `weather.get_forecasts` service call (a POST),
-and a recipe can only poll with GET. The app's proxy on `http://127.0.0.1:8124` turns
-`GET /api/weather/<weather entity>` into that one call (`type: daily`), so the recipe
-fetches the forecast from **Home Assistant URL** at its default. It doesn't work with
-a Home Assistant URL of your own (Docker Compose).
+and a recipe can only poll with GET. So the recipe brings a transform (`transform.js`, a
+script LaraPaper runs after polling, from LaraPaper 0.47.0 on) that makes that call
+(`type: daily`) with your access token. An older LaraPaper doesn't run it: there the
+calendar shows without the weather, unless you use the LaraPaper (local) app. Its proxy
+on `http://127.0.0.1:8124` turns `GET /api/weather/<weather entity>` into the same call,
+so at that default URL the recipe polls the forecast like a calendar. Transforms are on
+by default; if the server switched them off (`TRANSFORM_PROVIDER`), the weather needs
+that proxy too.
 
