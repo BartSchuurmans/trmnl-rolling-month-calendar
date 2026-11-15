@@ -51,7 +51,8 @@ The image is built by this repository's CI from the add-on's image.
 4. Install the calendar recipe: **Plugins** → add menu → **Import from OSS Catalog** →
    **Install** on **Rolling Month Calendar** (see [LARAPAPER.md](https://github.com/BartSchuurmans/trmnl-rolling-month-calendar/blob/main/LARAPAPER.md)). Fill in your
    calendar entities, leave **Home Assistant URL** at `http://127.0.0.1:8124` and enter
-   the app's **Home Assistant key for recipes** (make one up in the app's options) as the
+   the app's **Home Assistant key for recipes** (while it's empty, the app's Log tab
+   suggests a random one to copy into the app's options) as the
    access token: the app reads your calendars with its own Home Assistant access, so you
    don't need to create a Home Assistant token. Up to app 0.47.0-2 that address needed no
    key; a recipe set up then shows "401: Unauthorized" until you enter it. For the weather
