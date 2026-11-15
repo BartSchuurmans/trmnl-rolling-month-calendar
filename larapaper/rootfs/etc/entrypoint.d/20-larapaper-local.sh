@@ -1,7 +1,7 @@
 #!/bin/sh
 # What LaraPaper (local) adds to the official LaraPaper add-on's glue
 # (10-homeassistant.sh in its image, which already ran: /data, options, .env and the
-# ingress server): the Home Assistant proxy for recipes and the pre-render default.
+# ingress server): the Home Assistant proxy for recipes.
 # serversideup-php runs /etc/entrypoint.d/* in order on every start, before
 # 50-laravel-automations.sh.
 set -e
@@ -18,33 +18,8 @@ opt() {
             echo is_bool($v) ? ($v ? "1" : "0") : $v;' "$DATA_DIR/options.json" "$1"
 }
 
-PRERENDER="${LARAPAPER_LOCAL_PRERENDER:-1}"
 MQTT="${LARAPAPER_LOCAL_MQTT:-$(opt mqtt)}"
-log "prerender=${PRERENDER:-1} mqtt=${MQTT:-1}"
-
-# Pre-rendering is LaraPaper's own since 0.47.0, a Lab setting ("Pre-render playlist
-# items", run by its scheduler and queue worker): the TRMNL firmware gives GET
-# /api/display 15 s, and a render inside that request can take longer. The app turns it
-# on by default (LARAPAPER_LOCAL_PRERENDER=0 for the end-to-end test); once someone flips
-# it in Settings -> Lab, that wins.
-# Like the add-on's 10-homeassistant.sh, write .env before 50-laravel-automations.sh
-# caches the config.
-APP_DIR="${APP_DIR:-/var/www/html}"
-tmp="$APP_DIR/.env.tmp"
-grep -v '^TOGGLE_PRERENDER_PLAYLIST_ITEMS=' "$APP_DIR/.env" > "$tmp" || true
-if [ "${PRERENDER:-1}" = 0 ]; then
-    echo 'TOGGLE_PRERENDER_PLAYLIST_ITEMS=false' >> "$tmp"
-else
-    echo 'TOGGLE_PRERENDER_PLAYLIST_ITEMS=true' >> "$tmp"
-fi
-cat "$tmp" > "$APP_DIR/.env"
-rm -f "$tmp"
-# LaraPaper caches toggles for an hour (in the database, so across restarts): forget them,
-# or a changed option would wait that long. Fails harmlessly before the first migration.
-# As www-data: a root-owned laravel.log would break the web app.
-as_www=""
-[ "$(id -u)" = 0 ] && as_www="/command/s6-setuidgid www-data"
-(cd "$APP_DIR" && $as_www php artisan toggle:cache-clear >/dev/null 2>&1) || true
+log "mqtt=${MQTT:-1}"
 
 # Home Assistant API without a user token: with homeassistant_api in config.yaml the
 # Supervisor gives the app its own token (SUPERVISOR_TOKEN). The recipe can't read

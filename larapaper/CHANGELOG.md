@@ -4,11 +4,10 @@
 
 ### Home Assistant app
 
-- Screens are rendered ahead of time by LaraPaper's own Lab setting **Pre-render
-  playlist items**, which the app now turns on by default, instead of the app's own
-  script. LaraPaper renders the next playlist item a minute or two before the TRMNL is
-  due. The **Render screens ahead of time** option is gone: turn the Lab setting off
-  there instead.
+- The app's own pre-render script and its **Render screens ahead of time** option are
+  gone. **Turn on Pre-render playlist items in Settings → Lab** instead (off by
+  default): LaraPaper renders the next playlist item a minute or two before the TRMNL
+  is due, so it doesn't time out waiting for a render.
 - The **Refresh screen** button in Home Assistant queues LaraPaper's own render of the
   device's recipes.
 

@@ -12,12 +12,11 @@ Assistant, with these additions:
   Assistant with the app's own access. It is only reachable from inside the app.
 - Recipe screens are rendered ahead of time. Otherwise LaraPaper renders when the TRMNL
   asks for its screen, and the TRMNL gives up after 15 seconds, which a render on a
-  Home Assistant machine can take. The app turns on LaraPaper's own Lab setting
-  **Pre-render playlist items** (Settings → Lab): a minute or two before a TRMNL is
-  due, LaraPaper renders its next playlist item, so it gets a ready screen. Mashups are
-  still rendered when the TRMNL asks. Turn it off there if you like (up to app 0.47.0-1
-  the app pre-rendered with a script of its own and had a **Render screens ahead of
-  time** option for it).
+  Home Assistant machine can take. Turn on LaraPaper's own Lab setting **Pre-render
+  playlist items** (Settings → Lab): a minute or two before a TRMNL is due, LaraPaper
+  renders its next playlist item, so it gets a ready screen. Mashups are still rendered
+  when the TRMNL asks. (Up to app 0.47.0-1 the app pre-rendered with a script of its
+  own, the **Render screens ahead of time** option.)
 - Each TRMNL shows up in Home Assistant as a device with its battery, Wi-Fi signal,
   firmware, last check-in and screen, and its sleep mode and refresh interval to change,
   through MQTT (see [Device sensors](#device-sensors)).

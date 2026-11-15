@@ -5,8 +5,8 @@
 // Needs a running app container (see .github/workflows/app.yml) that reaches this
 // machine as http://homeassistant:8123 (docker run --add-host homeassistant:host-gateway),
 // with its calendar proxy pointed there (-e SUPERVISOR_TOKEN=e2e-supervisor-token
-// -e HA_API_URL=http://homeassistant:8123/api) and LaraPaper's background pre-render off
-// (-e LARAPAPER_LOCAL_PRERENDER=0).
+// -e HA_API_URL=http://homeassistant:8123/api), with LaraPaper's Lab pre-render off (its
+// default).
 // Imports the recipe ZIP into LaraPaper, points it at the fake HA (entities and ICS
 // feeds), then fetches the
 // screen the way a TRMNL X does (GET /api/display) and checks what was polled and
@@ -178,8 +178,8 @@ try {
     results[s.name] = state.image;
   }
 
-  // LaraPaper renders screens ahead of time (its Lab pre-render, on in the app by
-  // default; off in the CI container, so it can't race the scenarios above): run it once
+  // LaraPaper renders screens ahead of time (its Lab pre-render, off by default, so it
+  // can't race the scenarios above): run it once
   // by hand as if the device were due, then the device gets that screen without
   // LaraPaper polling or rendering again. The render runs in the app's queue worker.
   console.log('\n== prerender');
