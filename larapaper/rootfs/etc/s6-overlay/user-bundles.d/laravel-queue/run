@@ -1,5 +1,5 @@
 #!/command/execlineb -P
-# Until the add-on has it (fork branch claude/project-thread-o60aet-queue-home, add-on
+# Until the add-on has it (usetrmnl/trmnl-home-assistant#153, add-on
 # 0.47.0-1): the add-on's own run file plus HOME. Drop this file once BUILD_FROM has it.
 # As www-data, like LaraPaper's own image: the add-on runs as root to take ownership of
 # /data, and s6 would otherwise start this as root too. s6-setuidgid keeps root's HOME
