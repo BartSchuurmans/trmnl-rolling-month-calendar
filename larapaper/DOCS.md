@@ -4,15 +4,10 @@
 up for the Rolling Month Calendar and Home Assistant. It is the official
 [LaraPaper (BYOS) add-on](https://github.com/usetrmnl/trmnl-home-assistant/tree/main/trmnl-larapaper),
 which keeps the database, generated screens and app key in `/data` (so they survive
-updates and are part of Home Assistant backups) and opens the web UI through Home
-Assistant, with these additions:
-
-- Recipes can read Home Assistant through `http://127.0.0.1:8124` without a Home
-  Assistant token, if you set **Home Assistant key for recipes**: that address passes
-  reads (states, calendars, history, logbook, templates) and forecast, calendar event and
-  to-do item requests, and nothing else, to Home Assistant with the app's own access,
-  for requests that carry the key. It is only reachable from inside the app. (The
-  official add-on gets the same with fork PR BartSchuurmans/trmnl-home-assistant#8.)
+updates and are part of Home Assistant backups), opens the web UI through Home
+Assistant and, with **Home Assistant key for recipes** set, lets recipes read Home
+Assistant through `http://127.0.0.1:8124` without a Home Assistant token (its
+Documentation explains these and its other options). This app adds:
 - Recipe screens are rendered ahead of time. Otherwise LaraPaper renders when the TRMNL
   asks for its screen, and the TRMNL gives up after 15 seconds, which a render on a
   Home Assistant machine can take. Turn on LaraPaper's own Lab setting **Pre-render

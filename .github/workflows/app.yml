@@ -164,6 +164,14 @@ jobs:
             docker exec -u www-data app test -w "${home:-/missing}" \
               || { echo "$service has no writable HOME (${home:-none})"; exit 1; }
           done
+          # Home Assistant's token stays root's: no www-data process (LaraPaper, recipes, the
+          # device sensors) holds it, nor can read the sensors' copy (docker exec itself would
+          # carry the container's environment, so it's cleared for the check's own shell)
+          holders=$(docker exec -u www-data -e SUPERVISOR_TOKEN= app sh -c \
+            'for f in /proc/[0-9]*/environ; do grep -qs e2e-supervisor-token $f && echo ${f%/environ}; done; true')
+          test -z "$holders" || { echo "www-data processes hold the Supervisor token: $holders"; exit 1; }
+          ! docker exec -u www-data app cat /etc/larapaper-local/supervisor_token 2>/dev/null
+          docker exec app test -s /etc/larapaper-local/supervisor_token
           docker exec app grep -qx 'APP_URL=http://localhost:4567' /var/www/html/.env
           docker exec app grep -qx 'MULTIUSER_REGISTRATION_ENABLED=0' /var/www/html/.env
           docker exec app grep -qx 'APP_TIMEZONE=Europe/Amsterdam' /var/www/html/.env

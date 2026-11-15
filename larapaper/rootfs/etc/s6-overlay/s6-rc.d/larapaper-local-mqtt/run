@@ -9,6 +9,24 @@ if [ "$enabled" = 0 ]; then
     exec sleep infinity
 fi
 cd /var/www/html || exit 1
+# The broker's address and login from the Supervisor (the Mosquitto app's MQTT service),
+# asked here as root with the root-only copy of the Supervisor token
+# (larapaper-local-entrypoint), so mqtt.php gets only these, never the token.
+# MQTT_HOST (CI) skips it. SUPERVISOR_API is for testing.
+token_file=/etc/larapaper-local/supervisor_token
+if [ -z "${MQTT_HOST:-}" ] && [ "$(id -u)" = 0 ] && [ -s "$token_file" ]; then
+    # shellcheck disable=SC2016 # PHP code, not shell expansions
+    broker="$(php -r '
+        $context = stream_context_create(["http" => ["timeout" => 10, "ignore_errors" => true,
+            "header" => "Authorization: Bearer " . trim(file_get_contents($argv[1]))]]);
+        $r = json_decode((string) @file_get_contents($argv[2] . "/services/mqtt", false, $context), true);
+        $d = $r["data"] ?? [];
+        if (($r["result"] ?? null) !== "ok" || empty($d["host"])) exit;
+        foreach (["MQTT_HOST" => $d["host"], "MQTT_PORT" => $d["port"] ?? 1883, "MQTT_SSL" => empty($d["ssl"]) ? "" : "1",
+                  "MQTT_USERNAME" => $d["username"] ?? "", "MQTT_PASSWORD" => $d["password"] ?? ""] as $k => $v)
+            echo "export $k=", escapeshellarg((string) $v), "\n";' "$token_file" "${SUPERVISOR_API:-http://supervisor}")"
+    eval "$broker"
+fi
 # As www-data, like PHP-FPM: files it creates (a first laravel.log) must stay writable
 # for the web app. The container itself runs as root (see the add-on's Dockerfile).
 if [ "$(id -u)" = 0 ]; then

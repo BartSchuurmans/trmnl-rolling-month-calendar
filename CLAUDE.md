@@ -24,10 +24,10 @@ UPSTREAM.md for what differs from upstream.
   today, plus the weather forecast's POST).
 - `larapaper/` + `repository.yaml` — Home Assistant app: the official LaraPaper add-on's
   image (`ghcr.io/usetrmnl/trmnl-larapaper-<arch>`, from usetrmnl/trmnl-home-assistant:
-  /data, options, ingress) plus what it lacks: the Home Assistant proxy, the pre-render
-  default and device sensors. Its extras run in
-  `rootfs/etc/entrypoint.d/20-larapaper-local.sh`, after the add-on's own
-  `10-homeassistant.sh`, and as s6 services (`rootfs/etc/s6-overlay/`:
+  /data, options, ingress, the Home Assistant proxy for recipes) plus what it lacks: the
+  device sensors. Its extras run from `rootfs/usr/local/bin/larapaper-local-entrypoint`
+  (before the add-on's own `homeassistant-entrypoint` and `10-homeassistant.sh`) and as
+  s6 services (`rootfs/etc/s6-overlay/`:
   definitions in `s6-rc.d/`, enabled in `user-bundles.d/user/contents.d/`, which adds to
   the image's own bundle; an `s6-rc.d/user` bundle would replace it and drop LaraPaper's
   queue worker and scheduler); fix what the add-on does in the add-on (Bart's fork), not
@@ -189,8 +189,7 @@ purifies them down to `href` (since 0.44.0 opening in a new tab, and the About
 
 **Home Assistant access.** The recipe's default URL `http://127.0.0.1:8124` is a
 read-only nginx proxy in the official add-on (`home_assistant_key` option, from add-on
-0.47.0-2, fork PR BartSchuurmans/trmnl-home-assistant#8) and, until the app builds on
-that, a copy of it in `larapaper/rootfs/etc/entrypoint.d/20-larapaper-local.sh`. It
+0.47.0-3, which the app builds on). It
 answers only requests with the key as Bearer token (the recipe's `ha_token`), swaps in
 the `SUPERVISOR_TOKEN` (`homeassistant_api: true`) and forwards to
 `http://supervisor/core/api` only reads (states, calendars, history, logbook, template)
@@ -229,7 +228,9 @@ and update the `Device` as LaraPaper's device page does; the Refresh screen butt
 queues LaraPaper's `RenderPlaylistItemImageJob` (force, as a playlist item's "Refresh
 cache") for each recipe in that device's active playlists (polls and renders, due or
 not). It finds deleted devices from the broker's retained configs. The
-broker comes from the Supervisor (`services: mqtt:want`) or `MQTT_HOST` (CI, with a
+broker comes from the Supervisor (`services: mqtt:want`; asked by the s6 run script as root with
+the root-only token copy `larapaper-local-entrypoint` keeps, since the add-on takes
+`SUPERVISOR_TOKEN` out of the environment) or `MQTT_HOST` (CI, with a
 Mosquitto container; `e2e/run.mjs --mqtt`). Its MQTT client is a minimal 3.1.1 one in
 the script (QoS 0, last will), so the image needs no Composer packages. The app option
 `mqtt` turns it off, as does `LARAPAPER_LOCAL_MQTT=0`, which wins.

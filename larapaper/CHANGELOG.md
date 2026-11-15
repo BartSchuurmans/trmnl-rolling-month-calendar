@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.47.0-4
+
+### Home Assistant app
+
+- Built on the official add-on 0.47.0-3, which now has the read-only Home Assistant
+  proxy for recipes (same **Home Assistant key for recipes** option, nothing to change)
+  and keeps Home Assistant's token away from LaraPaper and its recipes. The app's own
+  copy of the proxy is gone.
+- The add-on's other new options are here too: **Log level**, **Transform runner URL**
+  and **token**, and **Extra environment variables**.
+- The device sensors no longer get Home Assistant's token either: the app asks the
+  Supervisor for the MQTT broker itself and passes only its address and login on.
+
 ## 0.47.0-3
 
 ### Home Assistant app
