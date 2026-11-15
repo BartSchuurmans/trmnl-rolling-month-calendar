@@ -7,9 +7,12 @@ which keeps the database, generated screens and app key in `/data` (so they surv
 updates and are part of Home Assistant backups) and opens the web UI through Home
 Assistant, with these additions:
 
-- The calendar recipe reads Home Assistant through `http://127.0.0.1:8124`, which
-  forwards calendar requests and daily weather forecasts (and nothing else) to Home
-  Assistant with the app's own access. It is only reachable from inside the app.
+- Recipes can read Home Assistant through `http://127.0.0.1:8124` without a Home
+  Assistant token, if you set **Home Assistant key for recipes**: that address passes
+  reads (states, calendars, history, logbook, templates) and forecast, calendar event and
+  to-do item requests, and nothing else, to Home Assistant with the app's own access,
+  for requests that carry the key. It is only reachable from inside the app. (The
+  official add-on gets the same with fork PR BartSchuurmans/trmnl-home-assistant#8.)
 - Recipe screens are rendered ahead of time. Otherwise LaraPaper renders when the TRMNL
   asks for its screen, and the TRMNL gives up after 15 seconds, which a render on a
   Home Assistant machine can take. Turn on LaraPaper's own Lab setting **Pre-render
@@ -47,10 +50,12 @@ The image is built by this repository's CI from the add-on's image.
    **Custom Server** option and needs a firmware update first.
 4. Install the calendar recipe: **Plugins** → add menu → **Import from OSS Catalog** →
    **Install** on **Rolling Month Calendar** (see [LARAPAPER.md](https://github.com/BartSchuurmans/trmnl-rolling-month-calendar/blob/main/LARAPAPER.md)). Fill in your
-   calendar entities and leave **Home Assistant URL** at `http://127.0.0.1:8124` and the access token empty: the app
-   reads your calendars with its own Home Assistant access, so you don't need to create
-   a token. A recipe you set up before keeps its URL and token when you update; change
-   the URL to `http://127.0.0.1:8124` and clear the token to switch. For the weather
+   calendar entities, leave **Home Assistant URL** at `http://127.0.0.1:8124` and enter
+   the app's **Home Assistant key for recipes** (while it's empty, the app's Log tab
+   suggests a random one to copy into the app's options) as the
+   access token: the app reads your calendars with its own Home Assistant access, so you
+   don't need to create a Home Assistant token. Up to app 0.47.0-2 that address needed no
+   key; a recipe set up then shows "401: Unauthorized" until you enter it. For the weather
    forecast next to each day, also fill in **Home Assistant weather entity**, e.g.
    `weather.forecast_home`. Prefer an entity from Home Assistant's Open-Meteo
    integration (named after its zone, e.g. `weather.home`) over Met.no

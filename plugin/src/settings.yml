@@ -13,15 +13,12 @@ polling_verb: get
 # 25-hour DST day from moving the date), which PHP (LaraPaper) and Ruby (TRMNL, Terminus)
 # Liquid read alike. ICS feeds are fetched whole; the server parses them and keeps the
 # events around today. The weather: Home Assistant itself only gives forecasts to a POST
-# service call, which transform.js makes (LaraPaper 0.47.0 and later). Only with the
-# LaraPaper (local) app's Home Assistant proxy as Home Assistant URL does a weather entity
-# add one more URL here, last: its daily forecast, a GET there (transform.js then leaves
-# the data as it is).
+# service call, which transform.js makes (LaraPaper 0.47.0 and later), also through the
+# Home Assistant add-on's proxy (the default URL).
 polling_url: |-
   {% if ics_urls contains "/" %}{% assign feeds = ics_urls | split: "," %}{% for feed in feeds %}{{ feed | strip | replace: "webcal://", "https://" }}
   {% endfor %}{% else %}{% assign cals = calendars | split: "," %}{% for cal in cals %}{{ ha_url }}/api/calendars/{{ cal | strip }}?start={{ "now" | date: "%Y-%m-%d" | date: "%s" | minus: 561600 | date: "%Y-%m-%d" }}&end={{ "now" | date: "%Y-%m-%d" | date: "%s" | plus: 3758400 | date: "%Y-%m-%d" }}
-  {% endfor %}{% endif %}{% if weather_entity contains "weather." and ha_url contains "127.0.0.1:8124" %}{{ ha_url }}/api/weather/{{ weather_entity | strip }}
-  {% endif %}
+  {% endfor %}{% endif %}
 # Only Home Assistant gets the token. No "=" in the Liquid here, not even in an assign:
 # LaraPaper's importer turns every "=" into ":".
 polling_headers: '{% unless ics_urls contains "/" %}Authorization=Bearer {{ ha_token }}{% endunless %}'
@@ -53,14 +50,14 @@ custom_fields:
   - keyname: ha_url
     field_type: url
     name: Home Assistant URL
-    description: Instead of ICS feeds, Home Assistant calendar entities. Base URL of your Home Assistant instance, reachable from the server, without a trailing slash. In LaraPaper's Home Assistant add-on that is http://homeassistant:8123; with Docker Compose e.g. http://homeassistant.local:8123. The default is the <a href="https://github.com/BartSchuurmans/trmnl-rolling-month-calendar/blob/main/LARAPAPER.md" class="underline" target="_blank">LaraPaper (local) Home Assistant app</a>'s own calendar access, which needs no token.
+    description: Instead of ICS feeds, Home Assistant calendar entities. Base URL of your Home Assistant instance, reachable from the server, without a trailing slash. With Docker Compose e.g. http://homeassistant.local:8123. The default is <a href="https://github.com/BartSchuurmans/trmnl-rolling-month-calendar/blob/main/LARAPAPER.md" class="underline" target="_blank">LaraPaper's Home Assistant add-on</a>'s own read-only access (add-on 0.47.0-2 and later), with its "Home Assistant key for recipes" as the token; without that key, use http://homeassistant:8123 there.
     default: http://127.0.0.1:8124
     placeholder: http://homeassistant:8123
     optional: true
   - keyname: ha_token
     field_type: password
     name: Home Assistant access token
-    description: <a href="https://www.home-assistant.io/docs/authentication/" class="underline" target="_blank">Long-lived access token</a> (HA profile → Security → Long-lived access tokens), preferably of a Home Assistant user made for this that isn't an administrator. Leave empty with the LaraPaper (local) app's default URL.
+    description: <a href="https://www.home-assistant.io/docs/authentication/" class="underline" target="_blank">Long-lived access token</a> (HA profile → Security → Long-lived access tokens), preferably of a Home Assistant user made for this that isn't an administrator. With the default URL, the add-on's Home Assistant key for recipes instead.
     optional: true
   - keyname: calendars
     field_type: multi_string

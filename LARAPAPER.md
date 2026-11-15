@@ -120,12 +120,14 @@ open the settings of the **Rolling Month Calendar** recipe and fill in either:
 
 - **ICS feed URLs**, one per calendar. When these are set, the Home Assistant fields are
   not used. Or:
-- **Home Assistant calendar entities**, e.g. `calendar.family`, `calendar.work`. With
-  the official add-on also **Home Assistant URL** `http://homeassistant:8123` and
-  **Access token**; with Docker Compose the same with a URL the LaraPaper container
-  reaches, e.g. `http://homeassistant.local:8123`. With the LaraPaper (local) app, leave
-  the URL at its default `http://127.0.0.1:8124` and the token empty: that is the app's
-  own access to Home Assistant.
+- **Home Assistant calendar entities**, e.g. `calendar.family`, `calendar.work`, with
+  **Home Assistant URL** and **Access token**: with Docker Compose a URL the LaraPaper
+  container reaches, e.g. `http://homeassistant.local:8123`, and a long-lived access
+  token. In Home Assistant's LaraPaper add-on (or the LaraPaper (local) app) with
+  **Home Assistant key for recipes** set, leave the URL at its default
+  `http://127.0.0.1:8124` and enter that key as the token: the add-on reads Home
+  Assistant with its own, read-only access, so you don't need a Home Assistant token.
+  Without that key, use `http://homeassistant:8123` and a long-lived access token.
 
 You can also fill in **Home Assistant weather entity**, e.g. `weather.forecast_home`,
 for each day's forecast next to its day number (see [Weather](#weather)).
@@ -170,9 +172,9 @@ Home Assistant gives forecasts only to a `weather.get_forecasts` service call (a
 and a recipe can only poll with GET. So the recipe brings a transform (`transform.js`, a
 script LaraPaper runs after polling, from LaraPaper 0.47.0 on) that makes that call
 (`type: daily`) with your access token. An older LaraPaper doesn't run it: there the
-calendar shows without the weather, unless you use the LaraPaper (local) app. Its proxy
-on `http://127.0.0.1:8124` turns `GET /api/weather/<weather entity>` into the same call,
-so at that default URL the recipe polls the forecast like a calendar. Transforms are on
-by default; if the server switched them off (`TRANSFORM_PROVIDER`), the weather needs
-that proxy too.
+calendar shows without the weather. The add-on's `http://127.0.0.1:8124` passes that call
+on too. Transforms are on by default; if the server switched them off
+(`TRANSFORM_PROVIDER`), there is no weather. (Up to recipe v2.10.0, with the LaraPaper
+(local) app up to 0.47.0-2, the app's proxy turned a `GET /api/weather/<entity>` into the
+call and the recipe polled that.)
 
