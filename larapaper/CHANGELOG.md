@@ -11,6 +11,8 @@
   the TRMNL is due.
 - The **Refresh screen** button in Home Assistant queues LaraPaper's own render of the
   device's recipes.
+- Renders in LaraPaper's queue worker work: since the add-on runs it as `www-data`, it had
+  root's home directory, where Chromium can't start (fixed here until the add-on has it).
 
 ## 0.47.0-1
 
