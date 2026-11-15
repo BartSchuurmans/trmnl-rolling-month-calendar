@@ -8,7 +8,7 @@
 # Its version is LaraPaper's: to update LaraPaper, bump this tag and the version in
 # config.yaml.
 ARG BUILD_ARCH=amd64
-ARG BUILD_FROM=ghcr.io/usetrmnl/trmnl-larapaper-${BUILD_ARCH}:0.47.0
+ARG BUILD_FROM=ghcr.io/usetrmnl/trmnl-larapaper-${BUILD_ARCH}:0.47.0-1
 FROM ${BUILD_FROM}
 
 LABEL org.opencontainers.image.title="LaraPaper (local)" \

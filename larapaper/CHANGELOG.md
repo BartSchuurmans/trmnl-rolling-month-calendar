@@ -39,17 +39,25 @@ This release also adds a new Lab feature that refreshes the cache for the next p
   renderer no longer lets a screen load files from the image, so the app stopped bundling
   them. Calendar recipe versions up to v1.9.0 (FullCalendar 6) need updating to the latest
   release.
-- LaraPaper's queue worker and scheduler run again: the app's own services had replaced
-  them since the base image's newer s6 layout, so LaraPaper's scheduled jobs (firmware
-  checks, log cleanup, the new "Pre-render playlist items" Lab feature) and queued jobs
-  never ran. They run as `www-data`.
-- Built on the LaraPaper add-on 0.47.0 (was 0.46.0), which brings its own fixes:
-  **Allow registration** is now **Allow more accounts** (off by default; the old option did
-  nothing since LaraPaper 0.46.0, and the first account can always register), and the
-  rendered image loads through ingress.
+- Built on the LaraPaper add-on 0.47.0-1 (was 0.46.0-2), which now gives LaraPaper's queue
+  worker and scheduler `www-data`'s home directory itself (the app's own fix for that is
+  gone).
 - Recipes can now carry a transform (`transform.js`), which LaraPaper runs with the Node
   in the app. "Pre-render playlist items" (Settings → Lab) is LaraPaper's own take on the
   app's **Render screens ahead of time**; keep only one of them on.
+
+## 0.46.0-3
+
+### Home Assistant app
+
+- LaraPaper's queue worker and scheduler run again: the app's own services had replaced
+  them since the base image's newer s6 layout, so LaraPaper's scheduled jobs (firmware
+  checks, log cleanup) and queued jobs never ran. They run as `www-data`, with its own
+  home directory, so Chromium can start for renders in queued jobs.
+- Built on the LaraPaper add-on 0.46.0-2 (was 0.46.0), which brings its own fixes:
+  **Allow registration** is now **Allow more accounts** (off by default; the old option did
+  nothing since LaraPaper 0.46.0, and the first account can always register), and the
+  rendered image loads through ingress (the app's own fix for that is gone).
 
 ## 0.46.0-2
 
