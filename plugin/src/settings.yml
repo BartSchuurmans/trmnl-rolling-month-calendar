@@ -12,13 +12,15 @@ polling_verb: get
 # (561600 s = 6.5 days back, 3758400 s = 43.5 days ahead: the half day keeps a 23- or
 # 25-hour DST day from moving the date), which PHP (LaraPaper) and Ruby (TRMNL, Terminus)
 # Liquid read alike. ICS feeds are fetched whole; the server parses them and keeps the
-# events around today. A weather entity adds one more URL, last: its daily forecast,
-# through the LaraPaper (local) app's Home Assistant proxy (a GET there; Home Assistant
-# itself only gives forecasts to a POST service call).
+# events around today. The weather: Home Assistant itself only gives forecasts to a POST
+# service call, which transform.js makes (LaraPaper 0.47.0 and later). Only with the
+# LaraPaper (local) app's Home Assistant proxy as Home Assistant URL does a weather entity
+# add one more URL here, last: its daily forecast, a GET there (transform.js then leaves
+# the data as it is).
 polling_url: |-
   {% if ics_urls contains "/" %}{% assign feeds = ics_urls | split: "," %}{% for feed in feeds %}{{ feed | strip | replace: "webcal://", "https://" }}
   {% endfor %}{% else %}{% assign cals = calendars | split: "," %}{% for cal in cals %}{{ ha_url }}/api/calendars/{{ cal | strip }}?start={{ "now" | date: "%Y-%m-%d" | date: "%s" | minus: 561600 | date: "%Y-%m-%d" }}&end={{ "now" | date: "%Y-%m-%d" | date: "%s" | plus: 3758400 | date: "%Y-%m-%d" }}
-  {% endfor %}{% endif %}{% if weather_entity contains "weather." %}{{ ha_url }}/api/weather/{{ weather_entity | strip }}
+  {% endfor %}{% endif %}{% if weather_entity contains "weather." and ha_url contains "127.0.0.1:8124" %}{{ ha_url }}/api/weather/{{ weather_entity | strip }}
   {% endif %}
 # Only Home Assistant gets the token. No "=" in the Liquid here, not even in an assign:
 # LaraPaper's importer turns every "=" into ":".
@@ -51,14 +53,14 @@ custom_fields:
   - keyname: ha_url
     field_type: url
     name: Home Assistant URL
-    description: Instead of ICS feeds, Home Assistant calendar entities. Base URL of your Home Assistant instance, reachable from the server. No trailing slash. The default is the <a href="https://github.com/BartSchuurmans/trmnl-rolling-month-calendar/blob/main/LARAPAPER.md" class="underline" target="_blank">LaraPaper (local) Home Assistant app</a>'s own calendar access, which needs no token.
+    description: Instead of ICS feeds, Home Assistant calendar entities. Base URL of your Home Assistant instance, reachable from the server, without a trailing slash. In LaraPaper's Home Assistant add-on that is http://homeassistant:8123; with Docker Compose e.g. http://homeassistant.local:8123. The default is the <a href="https://github.com/BartSchuurmans/trmnl-rolling-month-calendar/blob/main/LARAPAPER.md" class="underline" target="_blank">LaraPaper (local) Home Assistant app</a>'s own calendar access, which needs no token.
     default: http://127.0.0.1:8124
-    placeholder: http://homeassistant.local:8123
+    placeholder: http://homeassistant:8123
     optional: true
   - keyname: ha_token
     field_type: password
     name: Home Assistant access token
-    description: <a href="https://www.home-assistant.io/docs/authentication/" class="underline" target="_blank">Long-lived access token</a> (HA profile → Security → Long-lived access tokens). Leave empty with the LaraPaper (local) app's default URL.
+    description: <a href="https://www.home-assistant.io/docs/authentication/" class="underline" target="_blank">Long-lived access token</a> (HA profile → Security → Long-lived access tokens), preferably of a Home Assistant user made for this that isn't an administrator. Leave empty with the LaraPaper (local) app's default URL.
     optional: true
   - keyname: calendars
     field_type: multi_string
@@ -97,7 +99,7 @@ custom_fields:
     field_type: string
     name: Home Assistant weather entity
     group: Weather
-    description: Optional. A <a href="https://www.home-assistant.io/integrations/weather/" class="underline" target="_blank">weather entity</a> (e.g. weather.forecast_home) whose daily forecast is shown next to each day number, from today on. Needs the LaraPaper (local) Home Assistant app (<a href="https://github.com/BartSchuurmans/trmnl-rolling-month-calendar/blob/main/LARAPAPER.md#weather" class="underline" target="_blank">how it works</a>) and its default Home Assistant URL above; works with ICS feeds too.
+    description: Optional. A <a href="https://www.home-assistant.io/integrations/weather/" class="underline" target="_blank">weather entity</a> (e.g. weather.forecast_home) whose daily forecast is shown next to each day number, from today on, through the Home Assistant URL and token above (also with ICS feeds). Needs LaraPaper 0.47.0 or later, or the LaraPaper (local) app (<a href="https://github.com/BartSchuurmans/trmnl-rolling-month-calendar/blob/main/LARAPAPER.md#weather" class="underline" target="_blank">how it works</a>).
     placeholder: weather.forecast_home
     optional: true
   - keyname: weather_temperatures

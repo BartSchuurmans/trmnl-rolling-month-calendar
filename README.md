@@ -100,8 +100,9 @@ Any other recipe that polls Open-Meteo's daily `weather_code`, `temperature_2m_m
 serverless function on TRMNL.com asks your Home Assistant for that entity's forecast,
 with the same token as the calendars.
 
-**With LaraPaper**, it takes the LaraPaper (local) app: set **Home Assistant weather
-entity**, and the forecast comes from that entity (see [Weather on
+**With LaraPaper**, set **Home Assistant weather entity** (and **Home Assistant URL**
+and token, also with ICS feeds). This takes LaraPaper 0.47.0 or later, which asks Home
+Assistant for the forecast the same way, or the LaraPaper (local) app (see [Weather on
 LaraPaper](LARAPAPER.md#weather)).
 
 Use Home Assistant's [Open-Meteo](https://www.home-assistant.io/integrations/open_meteo/)
@@ -137,7 +138,7 @@ toggles.
 | Setting | Default | Notes |
 |---|---|---|
 | Weather (*TRMNL.com*) | – | TRMNL's Weather plugin or the Daily Weather recipe, see [Weather](#weather) |
-| Home Assistant weather entity (*LaraPaper*) | – | With the Home Assistant app: the daily forecast next to each day number, see [Weather](#weather) |
+| Home Assistant weather entity (*LaraPaper*) | – | The daily forecast next to each day number (LaraPaper 0.47.0 or the Home Assistant app), see [Weather](#weather) |
 | Weather temperatures | High | `High and low` adds the low where it fits |
 
 #### Grid
@@ -309,8 +310,8 @@ the changes in detail.
   strategy, built from `plugin/src` and uploaded to TRMNL.com on each release. See
   [plugin/README.md](plugin/README.md).
 - **The TRMNL.com Home Assistant recipe** (`plugin/trmnl-com-polling/`): the same markup polling
-  Home Assistant from TRMNL.com, plus a serverless function (`transform.js`) that fetches
-  the weather forecast, built and released the same way.
+  Home Assistant from TRMNL.com, plus the serverless function (`plugin/src/transform.js`,
+  which LaraPaper runs too) that fetches the weather forecast, built and released the same way.
 - **LaraPaper (local)** (`larapaper/`, `repository.yaml`): a Home Assistant app that runs
   the official LaraPaper Home Assistant add-on plus calendar and weather access to Home
   Assistant without a token, rendering ahead of time and device sensors. See
@@ -325,7 +326,8 @@ the changes in detail.
 | `plugin/src/full.liquid`, `half_horizontal.liquid`, `half_vertical.liquid`, `quadrant.liquid` | The views: each prints the calendar from `shared.liquid` |
 | `plugin/src/shared.liquid` | CSS + JS (fork of `_common.html.erb` + the ICS / HA / TRMNL plugin event mapping) and the markup (fork of `_full_month.html.erb`) |
 | `plugin/trmnl-com-merge/` | The TRMNL.com Plugin Merge variant: its settings and `merge.liquid` |
-| `plugin/trmnl-com-polling/` | The TRMNL.com polling variant (Home Assistant): its settings and serverless function (`transform.js`) |
+| `plugin/src/transform.js` | Serverless function (LaraPaper 0.47.0+, TRMNL.com polling variant): fetches the weather forecast from Home Assistant |
+| `plugin/trmnl-com-polling/` | The TRMNL.com polling variant (Home Assistant): its settings, and `transform.js` linking to `plugin/src/transform.js` |
 | `preview/` | Local renderer and CI render checks |
 | `preview/sample-data.mjs`, `docs/sample-ics/`, `docs/sample-ha/`, `preview/sample-server/` | The sample calendars: six weeks that repeat, drawn in the screenshots and published as ICS feeds for TRMNL.com's marketplace preview and as a stand-in Home Assistant (static files, and a Cloudflare Worker that adds the weather) |
 | `scripts/build-zip.sh` | Packages `plugin/src` for import into LaraPaper (attached to each release) |

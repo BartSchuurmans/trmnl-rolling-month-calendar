@@ -11,17 +11,18 @@ another place to publish it. A variant has only what differs:
   handling `src/` can't hold. `trmnl-com-merge/merge.liquid` is one: LaraPaper's Liquid can't
   parse its lookup. The TRMNL.com variants' `text-scale.liquid` makes the calendar's text follow the device's Scale, which
   TRMNL.com sets from the owner's choice (LaraPaper derives it from the screen width).
-- optional `transform.js` — a TRMNL.com serverless function: runs after polling (Polling
-  and Webhook strategies only) and returns the template's data. `trmnl-com-polling/transform.js`
-  fetches the weather. LaraPaper has nothing like it, so its output must be a shape
-  `src/shared.liquid` already reads.
+- optional `transform.js` — a serverless function: runs after polling (on TRMNL.com the
+  Polling and Webhook strategies; LaraPaper 0.47.0 and later) and returns the template's
+  data. `src/transform.js` fetches the weather, for LaraPaper and, through the symlink
+  `trmnl-com-polling/transform.js`, for TRMNL.com. Older LaraPaper ignores it, so data it
+  doesn't change must stay a shape `src/shared.liquid` already reads.
 - optional `tests/*_spec.rb` — its tests, run by `trmnlp test` on the built variant
   (`node preview/trmnlp.mjs --test`, in `preview/ci.sh`): the views on TRMNL's devices and,
   with fake APIs and a fixed clock, its polling and serverless function. Not uploaded.
 
 | Variant | Where | Data |
 |---|---|---|
-| `src/` | LaraPaper | ICS feeds, Home Assistant (polling) |
+| `src/` | LaraPaper | ICS feeds, Home Assistant (polling) and weather (transform, LaraPaper 0.47.0+) |
 | [`trmnl-com-merge/`](trmnl-com-merge/README.md) | TRMNL.com | TRMNL calendar and weather plugins (Plugin Merge) |
 | [`trmnl-com-polling/`](trmnl-com-polling/README.md) | TRMNL.com | Home Assistant calendar entities (polling, public URL + token) and weather (serverless function) |
 

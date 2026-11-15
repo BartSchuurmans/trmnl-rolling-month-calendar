@@ -1,6 +1,6 @@
 // Checks the stand-in Home Assistant on Cloudflare Workers (sample-server/worker.mjs, served
-// here by Node) with TRMNL.com's serverless function (plugin/trmnl-com-polling/transform.js),
-// run the way TRMNL.com and trmnlp run it: a Node process with the payload on stdin, the
+// here by Node) with the recipe's serverless function (plugin/src/transform.js, which the
+// TRMNL.com polling variant links to), run the way TRMNL.com and trmnlp run it: a Node process with the payload on stdin, the
 // file's code, then run(input), awaited. The function itself is tested by
 // plugin/trmnl-com-polling/tests (trmnlp test, against fake APIs).
 //
@@ -17,7 +17,7 @@ import http from 'node:http';
 import worker from './sample-server/worker.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-const code = fs.readFileSync(path.join(here, '..', 'plugin', 'trmnl-com-polling', 'transform.js'), 'utf8');
+const code = fs.readFileSync(path.join(here, '..', 'plugin', 'src', 'transform.js'), 'utf8');
 
 // as trmnlp's Node wrapper (lib/trmnlp/transform_backend/wrapper.rb) and TRMNL.com do it
 // (async: the fake Home Assistant answers from this process)

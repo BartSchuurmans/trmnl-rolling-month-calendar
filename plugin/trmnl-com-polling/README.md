@@ -10,7 +10,8 @@ What it leaves out of `plugin/src` (see `VARIANTS` in `preview/variants.mjs`):
 
 - **ICS feeds**: TRMNL.com only polls JSON (an `.ics` URL fails as "Malformed JSON").
 
-**Weather** comes from `transform.js`, TRMNL.com's serverless function for this plugin.
+**Weather** comes from `transform.js`, TRMNL.com's serverless function for this plugin
+(a symlink to `plugin/src/transform.js`, which LaraPaper runs the same way).
 Home Assistant gives forecasts only to `weather.get_forecasts`, a POST, while its
 calendars answer only GET, and TRMNL.com polls every URL with the same verb and body. So
 after the calendars are polled, the function makes that call itself (to **Home Assistant
@@ -26,7 +27,7 @@ The tests poll and draw it through trmnlp, as TRMNL does.
 ## Built from the repo
 
 This folder holds `settings.yml` (polling URL and header, framework 3.4.6, bleed margin
-removed, its form fields) and `transform.js`.
+removed, its form fields) and `transform.js` (the link to `plugin/src/transform.js`).
 `scripts/build-variant.sh trmnl-com-polling` builds the plugin, and releases upload it to
 TRMNL.com once the `TRMNL_PLUGIN_ID_POLLING` variable names its plugin; see [the variants
 overview](../README.md). Don't edit the plugin on TRMNL.com itself.

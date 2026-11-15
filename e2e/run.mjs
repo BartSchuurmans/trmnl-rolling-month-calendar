@@ -107,6 +107,11 @@ try {
     { name: 'ics-feeds', feeds: ['family', 'work'],
       config: { ics_urls: `${opt.ha}/feeds/family.ics, ${opt.ha}/feeds/work.ics`, calendar_colors: '-,black' },
       keys: ['IDX_0', 'IDX_1'] },
+    // a weather entity with Home Assistant's own URL and a user token: the recipe's
+    // transform.js asks for the forecast (a POST service call) after polling and adds it last
+    { name: 'transform-weather', config: { calendars: 'calendar.family,calendar.work', calendar_colors: '-,black',
+      weather_entity: 'weather.forecast_home' },
+      keys: ['IDX_0', 'IDX_1', 'IDX_2'], events: { IDX_0: 100, IDX_1: 8 }, forecast: { IDX_2: FORECAST_DAYS } },
     // the app's calendar proxy (the recipe's default URL) instead of a user token, with a
     // weather entity's forecast through the same proxy (a GET there, a POST service call
     // to HA); last, since configure merges into the settings
@@ -162,7 +167,7 @@ try {
         check(weather.length === 1 && weather[0].weather === s.config.weather_entity && weather[0].method === 'POST'
           && weather[0].type === 'daily' && weather[0].query === '?return_response',
           `forecast fetched with one daily get_forecasts call (${JSON.stringify(weather)})`);
-        check(weather.every((r) => r.authorization === `Bearer ${token}`), 'sent the app access token for the forecast');
+        check(weather.every((r) => r.authorization === `Bearer ${token}`), `sent the ${s.token ? 'app' : 'user'} access token for the forecast`);
       }
     }
     // A render error leaves the plugin without an image and shows LaraPaper's error screen
