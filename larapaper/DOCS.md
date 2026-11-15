@@ -15,9 +15,9 @@ Assistant, with these additions:
   Home Assistant machine can take. The app turns on LaraPaper's own Lab setting
   **Pre-render playlist items** (Settings → Lab): a minute or two before a TRMNL is
   due, LaraPaper renders its next playlist item, so it gets a ready screen. Mashups are
-  still rendered when the TRMNL asks. The **Render screens ahead of time** option sets
-  the default; the Lab setting, once changed, wins (up to app 0.47.0-1 the app
-  pre-rendered with a script of its own).
+  still rendered when the TRMNL asks. Turn it off there if you like (up to app 0.47.0-1
+  the app pre-rendered with a script of its own and had a **Render screens ahead of
+  time** option for it).
 - Each TRMNL shows up in Home Assistant as a device with its battery, Wi-Fi signal,
   firmware, last check-in and screen, and its sleep mode and refresh interval to change,
   through MQTT (see [Device sensors](#device-sensors)).

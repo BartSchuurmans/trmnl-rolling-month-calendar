@@ -160,7 +160,7 @@ switch ($command) {
         $interval = (int) ($item?->playlist->refresh_time ?? $device->default_refresh_interval);
         $device->forceFill(['last_refreshed_at' => now()->subSeconds($interval - 90)])->save();
         // On for this process only: the app's own scheduler stays off in CI (the
-        // "prerender" option), so it can't race the scenarios before this. Toggles are
+        // LARAPAPER_LOCAL_PRERENDER=0), so it can't race the scenarios before this. Toggles are
         // cached (the scheduler's check stored "off"), so without the cache, in a fresh
         // ToggleManager (it reads its config once).
         config(['toggle.flags.'.PrerenderUpcomingPlaylistItemsJob::TOGGLE => true, 'toggle.cache.enabled' => false]);

@@ -31,10 +31,8 @@ ports_description:
 options:
   app_url: ""
   multiuser_registration: false
-  prerender: true
   mqtt: true
 schema:
   app_url: url
   multiuser_registration: bool
-  prerender: bool
   mqtt: bool

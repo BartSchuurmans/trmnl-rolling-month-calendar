@@ -204,8 +204,8 @@ request 15 s. LaraPaper 0.47.0's Lab setting "Pre-render playlist items"
 (`PrerenderUpcomingPlaylistItemsJob`, every minute from its scheduler, renders in its
 queue worker) renders a device's next playlist item 61-120 s before it's due
 (`last_refreshed_at` + refresh interval). The app turns it on by default:
-`20-larapaper-local.sh` writes `TOGGLE_PRERENDER_PLAYLIST_ITEMS` to `.env` from the app
-option `prerender`, or `LARAPAPER_LOCAL_PRERENDER=0`, which wins (CI sets it, and
+`20-larapaper-local.sh` writes `TOGGLE_PRERENDER_PLAYLIST_ITEMS=true` to `.env` (no app
+option), or `false` with `LARAPAPER_LOCAL_PRERENDER=0` (CI sets it, and
 `e2e/run.mjs` runs the job by hand through `e2e/larapaper.php prerender`). A value set in
 Settings → Lab (database) beats `.env`. Up to app 0.47.0-1 the app had its own script
 (`larapaper/prerender/prerender.php`, see git history).

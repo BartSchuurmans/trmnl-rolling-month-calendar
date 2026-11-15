@@ -18,14 +18,15 @@ opt() {
             echo is_bool($v) ? ($v ? "1" : "0") : $v;' "$DATA_DIR/options.json" "$1"
 }
 
-PRERENDER="${LARAPAPER_LOCAL_PRERENDER:-$(opt prerender)}"
+PRERENDER="${LARAPAPER_LOCAL_PRERENDER:-1}"
 MQTT="${LARAPAPER_LOCAL_MQTT:-$(opt mqtt)}"
 log "prerender=${PRERENDER:-1} mqtt=${MQTT:-1}"
 
 # Pre-rendering is LaraPaper's own since 0.47.0, a Lab setting ("Pre-render playlist
 # items", run by its scheduler and queue worker): the TRMNL firmware gives GET
-# /api/display 15 s, and a render inside that request can take longer. The "prerender"
-# option sets its default; once someone flips it in Settings -> Lab, that wins.
+# /api/display 15 s, and a render inside that request can take longer. The app turns it
+# on by default (LARAPAPER_LOCAL_PRERENDER=0 for the end-to-end test); once someone flips
+# it in Settings -> Lab, that wins.
 # Like the add-on's 10-homeassistant.sh, write .env before 50-laravel-automations.sh
 # caches the config.
 APP_DIR="${APP_DIR:-/var/www/html}"
