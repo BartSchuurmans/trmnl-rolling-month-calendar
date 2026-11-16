@@ -6,6 +6,7 @@
 //   node render.mjs                         sample events → out/preview.png
 //   HA_URL=http://ha:8123 HA_TOKEN=... HA_CALENDARS=calendar.family,calendar.work node render.mjs
 //   node render.mjs --set first_day=0 --set time_format=am/pm --device og
+//   node render.mjs --device frame                      the TRMNL Frame (frame-portrait), as LaraPaper draws it
 //   node render.mjs --set weather_entity=weather.home      with a sample weather forecast
 //
 // For CI: --dump-context <file> writes the Liquid render context as JSON, --body <file>
@@ -48,7 +49,10 @@
 //
 // Like LaraPaper's image stage (bnussbau/epaper-pipeline-php), the screenshot is
 // reduced to the device's grey levels: 4-bit is always Floyd–Steinberg dithered,
-// 1-/2-bit only when the page contains <img class="image-dither">. --raw skips this.
+// 1-/2-bit only when the page contains <img class="image-dither">. A colour panel (the
+// Frame's six Spectra inks, TRMNL's color-6a palette) maps every pixel to its nearest ink,
+// as TRMNL and trmnlp do (the framework already dithers greys and colours it can't print),
+// dithered only for image-dither. --raw skips this.
 //
 // The TRMNL framework (CSS, JS, fonts) loads from trmnl.com, or from a local copy when
 // FRAMEWORK_DIR points at a directory with css/<v>/, js/<v>/ and fonts/ (the public/
@@ -68,10 +72,17 @@ const outDir = path.join(here, 'out');
 
 // Screen classes and CSS variables as LaraPaper sets them for its seeded device models
 // (DeviceModel css_name / color_depth / scale_level / css_variables).
+// The Frame (2560x1440 at 1x, Spectra 6) is width > 1400, so LaraPaper makes it xxlarge.
+// TRMNL.com draws it at regular (--scale regular), with pixel fonts that Chromium blurs at
+// some positions, so faint text there is this preview's, not TRMNL's (Firefox): see the
+// TRMNL.com specs (trmnlp test) for that.
+const SPECTRA_6 = ['#000000', '#FFFFFF', '#FF0000', '#00FF00', '#0000FF', '#FFFF00'];
 const DEVICES = {
   x: { width: 1872, height: 1404, classes: 'screen--v2 screen--4bit screen--scale-xxlarge', depth: '4bit', vars: {} },
   og: { width: 800, height: 480, classes: 'screen--og_png screen--1bit', depth: '1bit', vars: { '--ui-scale': '1.0', '--gap-scale': '1.0' } },
   og2: { width: 800, height: 480, classes: 'screen--og_png screen--2bit', depth: '2bit', vars: { '--ui-scale': '1.0', '--gap-scale': '1.0' } },
+  frame: { width: 2560, height: 1440, classes: 'screen--frame screen--color-6a screen--scale-xxlarge', depth: 'color-6a', palette: SPECTRA_6, vars: {} },
+  'frame-portrait': { width: 1440, height: 2560, classes: 'screen--frame screen--portrait screen--color-6a screen--scale-xxlarge', depth: 'color-6a', palette: SPECTRA_6, vars: {} },
 };
 
 const args = process.argv.slice(2);
@@ -332,8 +343,9 @@ if (raw) {
   fs.writeFileSync(out, shot);
 } else {
   const bits = parseInt(device.depth, 10);
+  const palette = (device.palette || []).map((hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16)));
   const dither = bits > 2 || /<img\b[^>]*\bclass\s*=\s*(["'])(?:[^"']*\s)?image--?dither(?:\s[^"']*)?\1/i.test(html);
-  const png = await page.evaluate(async ({ src, bits, dither }) => {
+  const png = await page.evaluate(async ({ src, bits, palette, dither }) => {
     const img = new Image();
     img.src = src;
     await img.decode();
@@ -343,6 +355,35 @@ if (raw) {
     ctx.drawImage(img, 0, 0);
     const im = ctx.getImageData(0, 0, img.width, img.height);
     const d = im.data, w = img.width, h = img.height;
+    if (palette.length) {
+      // nearest ink, with Floyd–Steinberg spreading each channel's error when dithering
+      const rgb = new Float32Array(w * h * 3);
+      for (let i = 0; i < w * h; i++) for (let c = 0; c < 3; c++) rgb[i * 3 + c] = d[i * 4 + c];
+      const spread = (i, err, f) => { for (let c = 0; c < 3; c++) rgb[i * 3 + c] += err[c] * f; };
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          const i = y * w + x;
+          const px = [0, 1, 2].map((c) => rgb[i * 3 + c]);
+          let best = palette[0], bestDist = Infinity;
+          for (const ink of palette) {
+            const dist = (px[0] - ink[0]) ** 2 + (px[1] - ink[1]) ** 2 + (px[2] - ink[2]) ** 2;
+            if (dist < bestDist) { best = ink; bestDist = dist; }
+          }
+          for (let c = 0; c < 3; c++) d[i * 4 + c] = best[c];
+          d[i * 4 + 3] = 255;
+          if (!dither) continue;
+          const err = px.map((v, c) => v - best[c]);
+          if (x + 1 < w) spread(i + 1, err, 7 / 16);
+          if (y + 1 < h) {
+            if (x > 0) spread(i + w - 1, err, 3 / 16);
+            spread(i + w, err, 5 / 16);
+            if (x + 1 < w) spread(i + w + 1, err, 1 / 16);
+          }
+        }
+      }
+      ctx.putImageData(im, 0, 0);
+      return canvas.toDataURL('image/png').split(',')[1];
+    }
     const levels = (1 << bits) - 1;
     const grey = new Float32Array(w * h);
     for (let i = 0; i < w * h; i++) grey[i] = 0.299 * d[i * 4] + 0.587 * d[i * 4 + 1] + 0.114 * d[i * 4 + 2];
@@ -364,7 +405,7 @@ if (raw) {
     for (let i = 0; i < w * h; i++) { d[i * 4] = d[i * 4 + 1] = d[i * 4 + 2] = grey[i]; d[i * 4 + 3] = 255; }
     ctx.putImageData(im, 0, 0);
     return canvas.toDataURL('image/png').split(',')[1];
-  }, { src: `data:image/png;base64,${shot.toString('base64')}`, bits, dither });
+  }, { src: `data:image/png;base64,${shot.toString('base64')}`, bits, palette, dither });
   fs.writeFileSync(out, Buffer.from(png, 'base64'));
   console.log(`${device.depth}${dither ? ', dithered' : ''}`);
 }

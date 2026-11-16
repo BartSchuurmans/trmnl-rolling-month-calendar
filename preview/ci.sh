@@ -89,6 +89,11 @@ render sample-x
 render sample-og --device og
 render sample-og-2bit --device og2
 render colors-x --set calendar_colors=black,-,gray-65 --set calendar_labels=-,M:,S: --set month_header=true
+# The TRMNL Frame (Spectra 6) as LaraPaper draws it (xxlarge): colour names print in its inks,
+# greys as patterns (drawn like 1-bit). TRMNL.com draws it at regular with pixel fonts, which
+# Chromium blurs at that size; the TRMNL.com specs (trmnlp test, Firefox as on TRMNL) cover that.
+render frame --device frame --set calendar_colors=red,blue,gray-35 --set calendar_labels=-,M:,S: --set weather_entity=weather.forecast_home
+render frame-portrait --device frame-portrait --set calendar_colors=green,-,gray-60 --expect-events
 # Dark mode (the plugin's dark_mode setting), with coloured calendars and a forecast
 render dark-x --dark --set calendar_colors=gray-35,white,gray-60 --set calendar_labels=-,M:,S: --set weather_entity=weather.forecast_home
 render dark-og --device og --dark --set calendar_colors=gray-35,white,gray-60 --set calendar_labels=-,M:,S:
