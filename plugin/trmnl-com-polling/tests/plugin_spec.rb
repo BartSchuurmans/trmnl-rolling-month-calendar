@@ -49,10 +49,15 @@ RSpec.describe 'Rolling Month Calendar (Home Assistant)' do
   # without error, within TRMNL's limits. The examples below check what is drawn.
   it_behaves_like 'a publishable recipe'
 
+  # The TRMNL Frame (31.5" Spectra 6) in its default palette, which trmnlp doesn't pick by
+  # itself (upstream item 51)
+  FRAME = { device: 'frame', palette: 'color-6a' }.freeze
+  FRAME_SCREENS = [FRAME, FRAME.merge(orientation: :portrait)].freeze
+
   TRMNLP::Testing::PUBLISHABLE_RECIPE_VIEWS.each do |view|
     # TRMNL's devices as trmnlp's publishable-recipe checks draw them: the OG at 1 and 2 bits
-    # and the TRMNL X, in landscape and portrait
-    TRMNLP::Testing::PUBLISHABLE_RECIPE_SCREENS.each do |screen_options|
+    # and the TRMNL X, in landscape and portrait; and the Frame
+    (TRMNLP::Testing::PUBLISHABLE_RECIPE_SCREENS + FRAME_SCREENS).each do |screen_options|
       device = screen_options[:device]
       name = [device, screen_options[:orientation]].compact.join(' ')
       it "draws the #{view} view on #{name} with events and the forecast" do
@@ -87,6 +92,32 @@ RSpec.describe 'Rolling Month Calendar (Home Assistant)' do
       expect(screen).to have_text('Parent-teacher meeting')
       expect(screen.evaluate(UNREADABLE_EVENTS)).to eq([])
       expect(screen).to have_no_overflow(except: CLIPPED)
+    end
+  end
+
+  # Colour names print in the Frame's inks, greys as patterns, which get the 1-bit treatment
+  # (outlined text, weekends shaded in the header only); each event's text stays readable
+  it 'draws readable events in colour on the Frame' do
+    colors = custom_fields.merge(calendar_colors: 'red,gray-35,yellow')
+    screen = trmnl.render(**FRAME, now:, custom_fields: colors, mocks:)
+
+    expect(screen).to have_text('Parent-teacher meeting')
+    expect(screen).to have_css('.trmnl-calendar--patterned')
+    expect(screen).to have_css('.mono-event.bg--gray-35.text-stroke')
+    expect(screen).to have_no_css('.mono-event.bg--red.text-stroke')
+    expect(screen.evaluate(UNREADABLE_EVENTS)).to eq([])
+    expect(screen).to have_no_overflow(except: CLIPPED)
+  end
+
+  # Text Scale, which an owner picks per device or playlist item: the text grows, the grid stays
+  %w[large xlarge].each do |text_scale|
+    FRAME_SCREENS.each do |screen_options|
+      it "draws the full view on frame #{screen_options[:orientation] || 'landscape'} at Text Scale #{text_scale}" do
+        screen = trmnl.render(**screen_options, text_scale:, now:, custom_fields:, mocks:)
+
+        expect(screen).to have_text('Parent-teacher meeting')
+        expect(screen).to have_no_overflow(except: CLIPPED)
+      end
     end
   end
 

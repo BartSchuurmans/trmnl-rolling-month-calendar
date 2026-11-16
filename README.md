@@ -3,7 +3,7 @@
 A rolling-month calendar for [TRMNL](https://trmnl.com) e-ink displays: the current week
 and the weeks after it in one grid, with several calendars side by side, a color and a
 prefix per calendar, and half and quadrant views for mashups. Made for the
-**TRMNL X**, and it works on the original TRMNL too.
+**TRMNL X**, and it works on the original TRMNL and the [TRMNL Frame](#on-the-trmnl-frame) too.
 
 ![preview](docs/preview.png)
 
@@ -77,6 +77,16 @@ For the weather next to the day numbers, fill in **Home Assistant weather entity
 
 To try it before connecting your own Home Assistant, point it at the sample calendars in
 this repository instead ([how](plugin/trmnl-com-polling/README.md#trying-it-without-your-own-home-assistant)).
+
+### On the TRMNL Frame
+
+The [Frame](https://trmnl.com/blog/introducing-frame) is a 31.5" color screen (2560×1440,
+Spectra 6). The calendar fills it like any other screen, but TRMNL.com draws its text at
+the regular size, which is small from across a room. Set **Text Scale** to Large or
+X-Large on the device (or on the calendar's playlist item): the calendar's text follows
+it, and the grid stays as it is. For colored calendars, use the panel's own inks in
+**Calendar colors**: `red`, `green`, `blue` and `yellow` print solid, other names (greys,
+`blue-40`…) as dot patterns.
 
 ## Weather
 
@@ -214,7 +224,9 @@ show, with a weather forecast and **Weather temperatures** on `High and low` (se
   Text turns black or white depending on how light the color is.
   - Color names use the framework's classes: solid greys on the TRMNL X (hues fall back
     to a grey), dither patterns with outlined text on 1-/2-bit screens, and real
-    colors on color panels.
+    colors on full-color screens. A color panel with a few inks, like the TRMNL Frame's,
+    prints the names it has an ink for solid (`red`, `green`, `blue`, `yellow`) and the
+    rest as patterns with outlined text, like a 1-bit screen.
   - Hex colors are painted as-is. A 1-bit screen snaps them to black or white.
   - `white` (or `#fff`) gets a thin grey outline, dotted on 1-/2-bit screens, like the
     grid lines, so its events don't vanish on a white day. Where such an event goes on
@@ -343,7 +355,8 @@ The recipe renders inside the [TRMNL framework](https://github.com/usetrmnl/trmn
 - **Text**: `text--small` / `text--base` on FullCalendar's elements. That's Inter at the
   device's scale on the TRMNL X, and TRMNL pixel fonts on low-density 1-bit screens.
 - **Greys**: `bg--gray-75` for weekends and `text--muted` for past days. Solid on 4-bit,
-  dither patterns on 1-/2-bit.
+  dither patterns on 1-/2-bit and on color panels with a few inks (the TRMNL Frame,
+  `screen--color-6a`), which the calendar draws like 1-bit.
 - **Layout**: `layout` → optional `title_bar` (the `view` wrapper comes from TRMNL or LaraPaper), with spacing from `--ui-scale`.
 
 The calendar grid itself (borders, cells, event blocks) is custom CSS, as upstream,
@@ -382,7 +395,7 @@ instead of LaraPaper's PHP Liquid, so small differences are possible.
 ## CI
 
 - **Render** (`.github/workflows/render.yml`, on changes to the recipe or preview): runs
-  `preview/ci.sh`. That renders sample and random calendars on the TRMNL X and OG with
+  `preview/ci.sh`. That renders sample and random calendars on the TRMNL X, OG and Frame with
   the framework files pinned in `preview/assets.txt`, and renders once through
   LaraPaper's PHP Liquid engine (`preview/php/render.php`, which also checks the polling
   URLs and headers for Home Assistant and ICS feeds), and through trmnlp

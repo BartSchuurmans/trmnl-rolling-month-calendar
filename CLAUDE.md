@@ -65,7 +65,7 @@ UPSTREAM.md for what differs from upstream.
   clock and TRMNL's devices, drawn as TRMNL's converter does (framework from trmnl.com,
   FullCalendar from jsDelivr, so it needs internet access); its report, with every screen
   drawn, is the `trmnlp-test-report` artifact (`preview/out/ci/trmnlp-test/`).
-- `node preview/render.mjs --device x|og|og2 --set key=value ...` for one-off renders;
+- `node preview/render.mjs --device x|og|og2|frame|frame-portrait --set key=value ...` for one-off renders;
   `--size half_horizontal|half_vertical|quadrant` renders that view inside a mashup;
   `--dark` renders in dark mode (`screen--dark-mode`); `--theme dark|white-and-red|black-and-yellow`
   in a framework theme (stylesheets pinned in `preview/assets.txt`).
@@ -93,10 +93,10 @@ TRMNL X it uses a 1872×1404 window at 1×, classes `screen--v2 screen--4bit
 screen--scale-xxlarge`. The framework lays that out at 1040×780 and applies
 `transform: scale(1.8)` to `.screen`, plus `--ui-scale: 1.5`. `render.mjs` reproduces
 this; previews without the framework loaded are misleading (no fonts → Times New
-Roman, wrong sizes). TRMNL.com renders the X at the scale its owner picked (regular,
-`--ui-scale: 1`, by default; `render.mjs --scale regular`). Scale is meant as the owner's
-preference, not density, so on TRMNL.com the calendar's text follows `--text-ui-scale`
-(`plugin/<variant>/text-scale.liquid`); on LaraPaper it doesn't follow Scale (see the
+Roman, wrong sizes). TRMNL.com renders the X at regular scale (`--ui-scale: 1`;
+`render.mjs --scale regular`); owners pick only Text Scale (per device or playlist item),
+and TRMNL applies Scale itself (today only xxsmall, for a 3x3 mashup cell). So on TRMNL.com
+the calendar's text follows `--text-ui-scale` (`plugin/<variant>/text-scale.liquid`); on LaraPaper it doesn't follow Scale (see the
 `--font-small-font-size` override in `shared.liquid`) and `event_text_size` (LaraPaper only)
 makes it smaller.
 Every recipe sets `no_screen_padding: 'yes'` (`screen--no-bleed`, which `render.mjs` adds);
@@ -251,6 +251,17 @@ grid has no day numbers (FullCalendar shows them from two weeks on).
 `text--muted`) on FullCalendar elements via its class hooks, so each bit depth gets its
 own rendering (solid on 4-bit, dither patterns on 1-/2-bit, pixel fonts on low-density
 screens).
+
+**Colour panels (TRMNL Frame).** The Frame (`frame`: 2560×1440 at 1x, Spectra 6) gets
+`screen--color-6a`, which the framework gives `--framework-bit-depth: 4`, yet it paints
+greys and any colour it has no ink for as dither patterns (a `background-image`); only
+black, white, red, green, blue and yellow are solid. So the 1-bit treatment (header-only
+weekend shading, dotted lines, outlined text on patterned fills) keys off
+`.trmnl-calendar--patterned`, which the JS sets from a probe of `bg--gray-75`, never off
+`.screen--1bit`/`--2bit`; a fill's own pattern is probed per token. `render.mjs --device
+frame` maps to the six inks; at `--scale regular` (TRMNL.com) Chromium blurs the pixel
+fonts, which TRMNL (Firefox) doesn't, so trust the trmnlp specs' Frame screens there
+(`palette: 'color-6a'`: trmnlp picks `bw` by itself, upstream item 51).
 
 **Dark mode.** The plugin's `dark_mode` setting (TRMNL.com, LaraPaper 0.44+) adds
 `screen--dark-mode`, which swaps the framework's semantic colours

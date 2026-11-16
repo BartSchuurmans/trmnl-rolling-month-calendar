@@ -19,10 +19,15 @@ RSpec.describe 'Rolling Month Calendar' do
   # field's options, without page errors or leaked values. The examples below check what is drawn.
   it_behaves_like 'a publishable recipe'
 
+  # The TRMNL Frame (31.5" Spectra 6) in its default palette, which trmnlp doesn't pick by
+  # itself (upstream item 51)
+  FRAME = { device: 'frame', palette: 'color-6a' }.freeze
+  FRAME_SCREENS = [FRAME, FRAME.merge(orientation: :portrait)].freeze
+
   TRMNLP::Testing::PUBLISHABLE_RECIPE_VIEWS.each do |view|
     # TRMNL's devices as trmnlp's publishable-recipe checks draw them: the OG at 1 and 2 bits
-    # and the TRMNL X, in landscape and portrait
-    TRMNLP::Testing::PUBLISHABLE_RECIPE_SCREENS.each do |screen_options|
+    # and the TRMNL X, in landscape and portrait; and the Frame
+    (TRMNLP::Testing::PUBLISHABLE_RECIPE_SCREENS + FRAME_SCREENS).each do |screen_options|
       device = screen_options[:device]
       name = [device, screen_options[:orientation]].compact.join(' ')
       it "draws the #{view} view on #{name} with events and the forecast" do
