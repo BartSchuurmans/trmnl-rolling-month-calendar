@@ -928,7 +928,8 @@
         // behind bg--* (--bg-<token>-color), a theme (screen--theme-*) remaps the class itself
         // (Dark paints bg--white black), so it is read from a probe element. Where the fill
         // is a dither pattern (1-/2-bit, a grey on the Frame), text in the ink colour with
-        // the framework's contrast outline (text-stroke), like upstream's adaptiveEventStroke.
+        // the framework's contrast outline (text-stroke), like upstream's adaptiveEventStroke;
+        // on a colour panel, white text outlined in black on a dark mix.
         built.events.forEach(function(ev) {
           var color = ev.extendedProps.color || { token: 'gray-70' };
           var raw = color.hex || screenStyles.getPropertyValue('--' + color.token).trim();
@@ -940,8 +941,12 @@
           // patterned: every token but black and white on 1-/2-bit; on a colour panel only the
           // tokens it has no ink for (red, blue, ... print solid on the Frame, greys don't)
           var patterned = color.token && color.token !== 'black' && color.token !== 'white' && isPatterned(color.token);
-          ev.contrastColor = patterned ? 'var(--mono-ink)' : !isDark(painted) ? 'var(--black)' : 'var(--white)';
+          // a colour panel mixes its inks for the fill, so a dark one (purple-30, green-25)
+          // gets white text outlined in black; 1-/2-bit keep the ink colour, as upstream
+          var darkMix = patterned && depth > 2 && isDark(raw);
+          ev.contrastColor = darkMix ? 'var(--white)' : patterned ? 'var(--mono-ink)' : !isDark(painted) ? 'var(--black)' : 'var(--white)';
           if (patterned) classes.push('text-stroke', 'text-stroke--small');
+          if (darkMix) classes.push('text-stroke--black');
           ev.extendedProps.fillClass = classes.join(' ');
         });
         node.removeChild(probe);

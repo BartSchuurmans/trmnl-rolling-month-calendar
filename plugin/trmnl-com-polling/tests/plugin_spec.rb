@@ -76,7 +76,15 @@ RSpec.describe 'Rolling Month Calendar (Home Assistant)' do
   UNREADABLE_EVENTS = <<~JS
     [...document.querySelectorAll('.mono-event')].map(function(el) {
       var title = el.querySelector('.mono-event-title') || el;
-      var fill = getComputedStyle(el).backgroundColor, text = getComputedStyle(title).color;
+      var style = getComputedStyle(title), text = style.color;
+      // a dither pattern (1-/2-bit, a tint on the Frame) mixes inks: the text needs its outline
+      var patterned = /url\\(/.test(getComputedStyle(el).backgroundImage);
+      var stroke = el.classList.contains('text-stroke') && style.getPropertyValue('--tn-text-stroke-color').trim();
+      var probe = document.createElement('span');
+      probe.style.color = stroke || text;
+      title.appendChild(probe);
+      var fill = patterned ? getComputedStyle(probe).color : getComputedStyle(el).backgroundColor;
+      probe.remove();
       var lum = function(c) { var v = c.match(/[\\d.]+/g).map(Number); return 0.299 * v[0] + 0.587 * v[1] + 0.114 * v[2]; };
       return [title.textContent, fill, text, Math.abs(lum(fill) - lum(text))];
     }).filter(function(e) { return e[3] < 100; }).map(function(e) { return e.slice(0, 3); })
@@ -95,16 +103,18 @@ RSpec.describe 'Rolling Month Calendar (Home Assistant)' do
     end
   end
 
-  # Colour names print in the Frame's inks, greys as patterns, which get the 1-bit treatment
-  # (outlined text, weekends shaded in the header only); each event's text stays readable
+  # Colour names print in the Frame's inks, greys and tints as patterns, which get the 1-bit
+  # treatment (outlined text, weekends shaded in the header only), white text outlined in black
+  # on a dark mix; each event's text stays readable
   it 'draws readable events in colour on the Frame' do
-    colors = custom_fields.merge(calendar_colors: 'red,gray-35,yellow')
+    colors = custom_fields.merge(calendar_colors: 'red,gray-35,purple-30')
     screen = trmnl.render(**FRAME, now:, custom_fields: colors, mocks:)
 
     expect(screen).to have_text('Parent-teacher meeting')
     expect(screen).to have_css('.trmnl-calendar--patterned')
     expect(screen).to have_css('.mono-event.bg--gray-35.text-stroke')
     expect(screen).to have_no_css('.mono-event.bg--red.text-stroke')
+    expect(screen).to have_css('.mono-event.bg--purple-30.text-stroke.text-stroke--black')
     expect(screen.evaluate(UNREADABLE_EVENTS)).to eq([])
     expect(screen).to have_no_overflow(except: CLIPPED)
   end

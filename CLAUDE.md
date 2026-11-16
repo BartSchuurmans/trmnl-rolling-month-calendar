@@ -258,7 +258,8 @@ greys and any colour it has no ink for as dither patterns (a `background-image`)
 black, white, red, green, blue and yellow are solid. So the 1-bit treatment (header-only
 weekend shading, dotted lines, outlined text on patterned fills) keys off
 `.trmnl-calendar--patterned`, which the JS sets from a probe of `bg--gray-75`, never off
-`.screen--1bit`/`--2bit`; a fill's own pattern is probed per token. `render.mjs --device
+`.screen--1bit`/`--2bit`; a fill's own pattern is probed per token, and a dark mix
+(`purple-30`, `green-25`) gets white text outlined in black, judged from the token's colour. `render.mjs --device
 frame` maps to the six inks; at `--scale regular` (TRMNL.com) Chromium blurs the pixel
 fonts, which TRMNL (Firefox) doesn't, so trust the trmnlp specs' Frame screens there
 (`palette: 'color-6a'`: trmnlp picks `bw` by itself, upstream item 51).
