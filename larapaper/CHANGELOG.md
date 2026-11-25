@@ -1,5 +1,61 @@
 # Changelog
 
+## 0.49.0-1
+
+### LaraPaper 0.49.0
+
+From the [LaraPaper 0.49.0 release](https://github.com/usetrmnl/larapaper/releases/tag/0.49.0):
+
+LaraPaper 0.49 upgrades the Docker base image to PHP 8.5 and Node.js 26, introduces support for field groups and conditional visibility in recipe configurations, as well as support for private certificates. It also includes improvements to transforms, markup rendering, and boolean configuration values. The open source catalog continues to grow, now featuring over 300 LaraPaper-compatible recipes.
+
+#### What's Changed
+* feat(#335): Support private/internal CA for Chromium renders (SPKI pinning) by [@Z0nd0R](https://github.com/Z0nd0R) in [#337](https://github.com/usetrmnl/larapaper/pull/337)
+* feat(#318): add support for recipe field groups
+* feat: add support for conditional visibility in recipe configuration
+* feat(transform): add support for URL, URLSearchParams
+* refactor: markup rendering
+* fix: inject boolean configuration values as string into Liquid templates
+* fix: boolean does not need to be optional in recipe configuration; default: false
+* fix: recipes with only shared template should render
+* chore: bump default versions: PHP 8.5; node 26
+* chore: bump TRMNL_BLADE_FRAMEWORK_VERSION to 3.4.7
+* chore: move playlist item text scale into submenu
+
+#### New Contributors
+* [@Z0nd0R](https://github.com/Z0nd0R) made their first contribution in [#337](https://github.com/usetrmnl/larapaper/pull/337)
+
+**Full Changelog**: [0.48.0...0.49.0](https://github.com/usetrmnl/larapaper/compare/0.48.0...0.49.0)
+
+### LaraPaper 0.48.0
+
+From the [LaraPaper 0.48.0 release](https://github.com/usetrmnl/larapaper/releases/tag/0.48.0):
+
+#### SECURITY RELEASE 🚨
+
+* Critical PHP and nginx security release 2026-11-19 (#336)
+  * Bumps the Docker base image to PHP 8.4.28
+  * Bumps the Docker base image to nginx 1.30.7
+
+Updating is recommended for Docker Image deployments. Bare-metal deployments should upgrade PHP and nginx.
+
+##### Other changes
+
+* feat: share Chromium's HTTP disk cache between renders by [@BartSchuurmans](https://github.com/BartSchuurmans) in [#332](https://github.com/usetrmnl/larapaper/pull/332)
+* feat: per-device scale and per-playlist-item text scale setting by [@BartSchuurmans](https://github.com/BartSchuurmans) in [#309](https://github.com/usetrmnl/larapaper/pull/309)
+* feat(models): add TRMNL Frame
+* fix: framework_version `latest` failing validation
+
+### Home Assistant app
+
+- **This app is retired.** The official LaraPaper (BYOS) app now has everything it
+  added apart from the device sensors: the read-only Home Assistant access for recipes,
+  LaraPaper's own pre-rendering (Settings → Lab) and the queue worker fixes. Move to it
+  with the steps under **Moving to the official app** in the Documentation tab: your
+  account, devices, playlists, recipes and settings come along, and your TRMNLs don't
+  need pairing again. This app gets no more updates.
+- Built on the official add-on 0.49.0 (LaraPaper 0.49.0, with 0.48.0's PHP and nginx
+  security fixes), so you're up to date until you move.
+
 ## 0.47.0-4
 
 ### Home Assistant app

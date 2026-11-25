@@ -5,10 +5,8 @@ This page is for running the calendar on your own TRMNL server,
 servers (trmnl.com), you don't need any of this: see the [README](README.md).
 
 On LaraPaper the calendar reads **ICS feeds** or **Home Assistant** calendar entities,
-and your calendars stay on your network. This repository also has a Home Assistant app,
-**LaraPaper (local)**, that runs LaraPaper with what the calendar needs from Home
-Assistant built in. LaraPaper also runs as the official LaraPaper add-on for Home
-Assistant, or with Docker Compose on any machine. Rendering
+and your calendars stay on your network. LaraPaper runs as the official LaraPaper app for
+Home Assistant, or with Docker Compose on any machine. Rendering
 a screen loads the TRMNL framework (trmnl.com) and FullCalendar (jsDelivr), so the
 server needs internet access.
 
@@ -21,7 +19,7 @@ flowchart LR
         subgraph core["Home Assistant Core container"]
             HA["<b>Home Assistant</b><br>calendar entities"]
         end
-        subgraph app["LaraPaper (local) app container"]
+        subgraph app["LaraPaper (BYOS) app container"]
             LP["<b>LaraPaper</b><br>polls HA every 15 min,<br>runs the calendar recipe"]
             CR["<b>Headless Chromium</b><br>TRMNL framework and<br>FullCalendar from the web"]
             LP -- "renders to PNG" --> CR
@@ -32,28 +30,26 @@ flowchart LR
     app -- "screen image<br>over Wi-Fi" --> X
 ```
 
-<sub>The official add-on runs in the same place as the app; with Docker Compose, the LaraPaper container runs on any machine that can reach Home Assistant.</sub>
+<sub>With Docker Compose, the LaraPaper container runs on any machine that can reach Home Assistant.</sub>
 
-The recipe is tested with LaraPaper 0.47.0 (the app's version) and still works with
+The recipe is tested with LaraPaper 0.49.0 and still works with
 0.43: there, ICS feeds show fewer weeks (see [ICS feeds](#ics-feeds)) and you tick
-**Remove bleed margin?** yourself. The weather needs LaraPaper 0.47.0 or the app (see
+**Remove bleed margin?** yourself. The weather needs LaraPaper 0.47.0 or later (see
 [Weather](#weather)).
 
 ## 1. Run LaraPaper
 
-**As a Home Assistant app (recommended).** This repository is an app repository. Go to
-Settings → Apps → store → ⋮ → Repositories, add
-`https://github.com/BartSchuurmans/trmnl-rolling-month-calendar`, and install
-**LaraPaper (local)**. It reads your calendars with its own Home Assistant access, so
-you don't need an access token. Its web UI opens inside Home Assistant, so
-you can reach it wherever you reach Home Assistant. Setup steps are in
-[larapaper/DOCS.md](larapaper/DOCS.md).
+**As a Home Assistant app (recommended).** Go to Settings → Apps → store → ⋮ →
+Repositories, add `https://github.com/usetrmnl/trmnl-home-assistant`, and install
+**LaraPaper (BYOS)**. Its web UI opens inside Home Assistant, so you can reach it
+wherever you reach Home Assistant. Set its **Home Assistant key for recipes** option and
+the calendar reads Home Assistant through the app, with no Home Assistant token (see
+[step 4](#4-install-the-recipe)). Setup steps are in its Documentation tab.
 
-**Or as the official LaraPaper add-on.** Add
-`https://github.com/usetrmnl/trmnl-home-assistant` the same way and install **LaraPaper
-(BYOS)**. It runs LaraPaper with its web UI inside Home Assistant, but without the app's
-own Home Assistant access, so the calendar reads Home Assistant with a URL and an access
-token, as with Docker Compose.
+This repository's own app, **LaraPaper (local)**, is retired: it was that app plus a few
+extras, which are now part of it, apart from device sensors. If you run it,
+[move to the official app](larapaper/DOCS.md#moving-to-the-official-app); your devices,
+playlists and settings come along.
 
 **Or with Docker Compose** on any machine:
 
@@ -123,7 +119,7 @@ open the settings of the **Rolling Month Calendar** recipe and fill in either:
 - **Home Assistant calendar entities**, e.g. `calendar.family`, `calendar.work`, with
   **Home Assistant URL** and **Access token**: with Docker Compose a URL the LaraPaper
   container reaches, e.g. `http://homeassistant.local:8123`, and a long-lived access
-  token. In Home Assistant's LaraPaper add-on (or the LaraPaper (local) app) with
+  token. In Home Assistant's LaraPaper app with
   **Home Assistant key for recipes** set, leave the URL at its default
   `http://127.0.0.1:8124` and enter that key as the token: the add-on reads Home
   Assistant with its own, read-only access, so you don't need a Home Assistant token.

@@ -112,8 +112,7 @@ with the same token as the calendars.
 
 **With LaraPaper**, set **Home Assistant weather entity** (and **Home Assistant URL**
 and token, also with ICS feeds). This takes LaraPaper 0.47.0 or later, which asks Home
-Assistant for the forecast the same way, or the LaraPaper (local) app (see [Weather on
-LaraPaper](LARAPAPER.md#weather)).
+Assistant for the forecast the same way (see [Weather on LaraPaper](LARAPAPER.md#weather)).
 
 Use Home Assistant's [Open-Meteo](https://www.home-assistant.io/integrations/open_meteo/)
 integration (free, no key) rather than Met.no, the one Home Assistant sets up as
@@ -148,7 +147,7 @@ toggles.
 | Setting | Default | Notes |
 |---|---|---|
 | Weather (*TRMNL.com*) | – | TRMNL's Weather plugin or the Daily Weather recipe, see [Weather](#weather) |
-| Home Assistant weather entity (*LaraPaper*) | – | The daily forecast next to each day number (LaraPaper 0.47.0 or the Home Assistant app), see [Weather](#weather) |
+| Home Assistant weather entity (*LaraPaper*) | – | The daily forecast next to each day number (LaraPaper 0.47.0 or later), see [Weather](#weather) |
 | Weather temperatures | High | `High and low` adds the low where it fits |
 
 #### Grid
@@ -324,10 +323,10 @@ the changes in detail.
 - **The TRMNL.com Home Assistant recipe** (`plugin/trmnl-com-polling/`): the same markup polling
   Home Assistant from TRMNL.com, plus the serverless function (`plugin/src/transform.js`,
   which LaraPaper runs too) that fetches the weather forecast, built and released the same way.
-- **LaraPaper (local)** (`larapaper/`, `repository.yaml`): a Home Assistant app that runs
-  the official LaraPaper Home Assistant add-on plus calendar and weather access to Home
-  Assistant without a token, rendering ahead of time and device sensors. See
-  [larapaper/DOCS.md](larapaper/DOCS.md).
+- **LaraPaper (local)** (`larapaper/`, `repository.yaml`): a retired Home Assistant app,
+  the official LaraPaper Home Assistant add-on plus device sensors. Everything else it
+  added is in the official add-on now; [larapaper/DOCS.md](larapaper/DOCS.md#moving-to-the-official-app)
+  explains how to move to it.
 - **A local preview** (`preview/`): renders the recipe to a PNG at the device's
   resolution and grey levels, from sample, random or live Home Assistant data. CI uses it
   to check every change.
