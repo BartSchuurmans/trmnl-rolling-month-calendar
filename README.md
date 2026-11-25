@@ -86,7 +86,11 @@ the regular size, which is small from across a room. Set **Text Scale** to Large
 X-Large on the device (or on the calendar's playlist item): the calendar's text follows
 it, and the grid stays as it is. For colored calendars, use the panel's own inks in
 **Calendar colors**: `red`, `green`, `blue` and `yellow` print solid, other names (greys,
-`blue-40`…) as dot patterns.
+`blue-40`…) as dot patterns. A calendar left at `-` takes its own color from the calendar
+plugin, matched to the nearest ink or pattern, as below (Google's Peacock, Sage, Tangerine
+and Grape).
+
+![The calendar on the TRMNL Frame](docs/preview-frame.png)
 
 ## Weather
 

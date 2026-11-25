@@ -21,7 +21,13 @@ node render.mjs $common --set "$usual" --out "$raw/preview.png"
 node render.mjs $common --set "$usual" --device og --out "$raw/preview-1bit.png"
 # shellcheck disable=SC2086
 node render.mjs $common --set "$usual" --device og2 --out "$raw/preview-2bit.png"
-rm -f "$raw"/preview*.html
+# The TRMNL Frame (Spectra 6) as TRMNL.com's Plugin Merge recipe draws it, with the colours
+# Google Calendar shares (--shared-colors) as the calendars' defaults. No device frame:
+# trmnl-component has no Frame model, so the screen goes in as it is.
+# shellcheck disable=SC2086
+node render.mjs --strict --tz Europe/Amsterdam --now 2026-09-30 --device frame --shared-colors --merge-weather trmnl \
+    --set weather_temperatures=high_low --work --set calendar_labels=-,M:,S:,M: --set "$usual" --out "$docs/preview-frame.png"
+rm -f "$raw"/preview*.html "$docs"/preview*.html
 
 node frame.mjs --model x "$raw/preview.png" "$docs/preview.png"
 node frame.mjs --model og "$raw/preview-1bit.png" "$docs/preview-1bit.png"
