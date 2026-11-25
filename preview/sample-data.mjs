@@ -198,6 +198,15 @@ export function sampleTrmnlWeather() {
   };
 }
 
+// Each feed's calendar colour, as calendar apps share it: RFC 7986 COLOR (a CSS colour
+// name) and Apple's X-APPLE-CALENDAR-COLOR (hex), the same colour both ways
+export const ICS_COLORS = {
+  family: ['dodgerblue', '#1E90FF'], mark: ['limegreen', '#32CD32'],
+  sara: ['darkorange', '#FF8C00'], work: ['mediumorchid', '#BA55D3'],
+};
+// and one event with a colour of its own (RFC 7986 COLOR on the event)
+const ICS_EVENT_COLORS = { 'Birthday Oma': 'crimson' };
+
 // iCalendar feed of one calendar: each event repeats weekly with its interval, timed
 // ones in Amsterdam time (with its VTIMEZONE, like Google and iCloud send)
 export function sampleIcs(name) {
@@ -211,12 +220,14 @@ export function sampleIcs(name) {
         : [`DTSTART;TZID=${TZID}:${date}T${compact(e.from)}00`, `DTEND;TZID=${TZID}:${compact(ymd(first(e) + e.nights * DAY_MS))}T${compact(e.to)}00`]),
       `RRULE:FREQ=WEEKLY;INTERVAL=${e.every}`,
       ...(e.summary ? [`SUMMARY:${escape(e.summary)}`] : []),
+      ...(ICS_EVENT_COLORS[e.summary] ? [`COLOR:${ICS_EVENT_COLORS[e.summary]}`] : []),
       'END:VEVENT',
     ];
   });
   return [
     'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Rolling Month Calendar//sample//EN', 'CALSCALE:GREGORIAN',
     `X-WR-CALNAME:${name[0].toUpperCase()}${name.slice(1)} (sample)`, `X-WR-TIMEZONE:${TZID}`,
+    ...(ICS_COLORS[name] ? [`COLOR:${ICS_COLORS[name][0]}`, `X-APPLE-CALENDAR-COLOR:${ICS_COLORS[name][1]}`] : []),
     'BEGIN:VTIMEZONE', `TZID:${TZID}`,
     'BEGIN:DAYLIGHT', 'TZOFFSETFROM:+0100', 'TZOFFSETTO:+0200', 'TZNAME:CEST', 'DTSTART:19700329T020000',
     'RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU', 'END:DAYLIGHT',
