@@ -11,9 +11,6 @@ name: Release
 # creates the tag along with the release, on the commit it ran on, once the render checks
 # pass. A tag created with the workflow's token doesn't start the push trigger, so it
 # runs once. release-label.yml asks recipe PRs for one of those labels.
-#
-# The Home Assistant app is released separately: Home Assistant offers an update
-# whenever `version` in larapaper/config.yaml changes on main.
 
 on:
   push:

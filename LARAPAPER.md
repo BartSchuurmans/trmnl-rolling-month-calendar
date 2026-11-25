@@ -47,8 +47,8 @@ the calendar reads Home Assistant through the app, with no Home Assistant token 
 [step 4](#4-install-the-recipe)). Setup steps are in its Documentation tab.
 
 This repository's own app, **LaraPaper (local)**, is retired: it was that app plus a few
-extras, which are now part of it, apart from device sensors. If you run it,
-[move to the official app](larapaper/DOCS.md#moving-to-the-official-app); your devices,
+extras, which are now part of it, apart from device sensors. If you still run it,
+[move to the official app](#moving-from-the-larapaper-local-app); your devices,
 playlists and settings come along.
 
 **Or with Docker Compose** on any machine:
@@ -174,3 +174,60 @@ on too. Transforms are on by default; if the server switched them off
 (local) app up to 0.47.0-2, the app's proxy turned a `GET /api/weather/<entity>` into the
 call and the recipe polled that.)
 
+## Moving from the LaraPaper (local) app
+
+Up to November 2026 this repository had its own Home Assistant app, **LaraPaper
+(local)**: the official app plus device sensors. It is retired. To move to the official
+**LaraPaper (BYOS)** app and keep your data, copy three things from the old app's data
+folder to the official app's (both keep their data the same way): `database/` (your
+account, devices, playlists, recipes and settings), `generated/` (the screens) and
+`app_key` (which unlocks the settings LaraPaper stores encrypted). Home Assistant
+keeps each app's data folder to itself, so the copy runs from a terminal that can use
+Docker. Your TRMNLs keep talking to port 4567, so they need no changes.
+
+1. **Back up the old app.** Settings → System → Backups → **Create backup** → **Partial
+   backup**, with only that app. Also note its options (its **Configuration**
+   tab): **App URL**, **Home Assistant key for recipes** and any others you changed.
+2. **Stop the old app** (**Stop** on its page).
+3. **Install the official app.** Settings → Apps → store → ⋮ → **Repositories**, add
+   `https://github.com/usetrmnl/trmnl-home-assistant`, then install **LaraPaper
+   (BYOS)**. Don't start it yet. In its **Configuration** tab, enter the options you
+   noted, and the same **Home Assistant key for recipes** in particular: your recipes
+   send it as their access token.
+4. **Copy the data.** Install the **Advanced SSH & Web Terminal** app (from the
+   community apps), turn off its **Protection mode**, start it and click **Open Web
+   UI**. Then run:
+
+   ```sh
+   img=$(docker images --format '{{.ID}} {{.Repository}}' | awk '/larapaper/ { print $1; exit }')
+   docker run --rm --entrypoint sh -v /mnt/data/supervisor/apps/data:/apps "$img" -c '
+     set -e; cd /apps; ls
+     old=$(ls -d *_larapaper_local); new=$(ls -d *_trmnl-larapaper)
+     echo "Copying $old to $new"
+     rm -rf "$new/database" "$new/generated" "$new/app_key"
+     cp -a "$old/database" "$old/generated" "$old/app_key" "$new/"
+     ls -l "$new"'
+   ```
+
+   It lists the app data folders, then the two it copied between and what the official
+   app's folder now holds; it stops before changing anything if it can't find either.
+   If it can't find `*_trmnl-larapaper`, start the official app once, stop it and run
+   the command again. A Supervisor from before Home Assistant renamed add-ons to apps
+   keeps them in `/mnt/data/supervisor/addons/data` (on Home Assistant Supervised,
+   `/usr/share/hassio/addons/data`): use that path instead if `ls` shows nothing. Afterwards, turn **Protection mode** back on
+   (or uninstall the terminal app).
+5. **Start the official app** and click **Open Web UI**. Log in with your usual account:
+   your devices, playlists and recipes are there, and each TRMNL gets its next screen
+   when it next wakes. LaraPaper updates its database to its own version as it starts.
+   Its **Log** tab should say "Home Assistant for recipes on http://127.0.0.1:8124"; if
+   the calendar shows "401: Unauthorized", the key differs from the one in the recipe.
+6. **Remove the device sensors.** The official app has none, so the TRMNL devices under
+   Settings → Devices & services → MQTT stop updating: delete each one there (⋮ →
+   **Delete**).
+7. **Uninstall the old app** once you're happy, and remove this repository
+   (`https://github.com/BartSchuurmans/trmnl-rolling-month-calendar`) from the app store's
+   repositories. Keep the backup from step 1 until then: restoring it brings the old app
+   back as it was.
+
+LaraPaper's **Pre-render playlist items** (Settings → Lab) is stored in the database, so
+it comes along too.

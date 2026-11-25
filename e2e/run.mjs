@@ -2,7 +2,8 @@
 //
 //   node e2e/run.mjs [--container app] [--url http://localhost:4567] [--zip dist/rolling-month-calendar.zip]
 //
-// Needs a running app container (see .github/workflows/app.yml) that reaches this
+// Needs a running container of the official LaraPaper add-on (see
+// .github/workflows/larapaper.yml) that reaches this
 // machine as http://homeassistant:8123 (docker run --add-host homeassistant:host-gateway),
 // with its Home Assistant proxy pointed there (-e SUPERVISOR_TOKEN=e2e-supervisor-token
 // -e HA_API_URL=http://homeassistant:8123/api, home_assistant_key APP_HA_KEY in its
@@ -12,13 +13,9 @@
 // screen the way a TRMNL X does (GET /api/display) and checks what was polled and
 // rendered. Screens land in e2e/out/.
 //
-// --mqtt <container> checks the device sensors the app publishes to Home Assistant
-// (larapaper/mqtt/mqtt.php): the app must reach a Mosquitto broker running in that
-// container (-e MQTT_HOST=homeassistant), whose retained messages the test reads.
-//
 // --local <larapaper dir> runs the helper with the host's PHP against a LaraPaper
-// checkout instead of docker exec (for working on this script; the pre-render and
-// Refresh screen checks need its queue worker running, php artisan queue:work).
+// checkout instead of docker exec (for working on this script; the pre-render check
+// needs its queue worker running, php artisan queue:work).
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -26,7 +23,7 @@ import { APP_HA_KEY, FEEDS, FORECAST_DAYS, startFakeHa, SUPERVISOR_TOKEN, TOKEN 
 
 const dir = path.dirname(new URL(import.meta.url).pathname);
 const opt = { container: 'app', url: 'http://localhost:4567', zip: path.join(dir, '../dist/rolling-month-calendar.zip'),
-  local: null, mqtt: null, ha: 'http://homeassistant:8123', tz: 'Europe/Amsterdam' };
+  local: null, ha: 'http://homeassistant:8123', tz: 'Europe/Amsterdam' };
 const argv = process.argv.slice(2);
 for (let i = 0; i < argv.length; i += 2) opt[argv[i].replace(/^--/, '')] = argv[i + 1];
 
@@ -61,18 +58,7 @@ const php = (...args) => JSON.parse(helper(...args));
 const today = new Intl.DateTimeFormat('en-CA', { timeZone: opt.tz }).format(new Date());
 const dayOffset = (n) => new Date(Date.parse(`${today}T00:00:00Z`) + n * 86400000).toISOString().slice(0, 10);
 
-// The broker's retained messages under the given topic filters: { topic: payload }
-const retained = (...filters) => {
-  let out = '';
-  try {
-    out = execFileSync('docker', ['exec', opt.mqtt, 'mosquitto_sub', '--retained-only', '-W', '2', '-F', '%t %p',
-      ...filters.flatMap((f) => ['-t', f])], { encoding: 'utf8' });
-  } catch (e) {
-    out = e.stdout ?? ''; // -W exits with an error when it times out
-  }
-  return Object.fromEntries(out.split('\n').filter(Boolean).map((l) => [l.slice(0, l.indexOf(' ')), l.slice(l.indexOf(' ') + 1)]));
-};
-// Waits until fn() returns something truthy (the publisher runs every few seconds)
+// Waits until fn() returns something truthy (polled every 2 s)
 const waitFor = async (fn, seconds = 30) => {
   for (let i = 0; i < seconds; i += 2) {
     const value = fn();
@@ -206,63 +192,6 @@ try {
     `/api/display neither polls nor renders (${requests.length - pollsAfter} polls)`);
   check(!!pre && post.device_image === pre.plugin_image && shown.image_url?.includes(pre.plugin_image),
     `device gets the pre-rendered screen (${shown.image_url})`);
-
-  // The app publishes each device to Home Assistant over MQTT (larapaper/mqtt/mqtt.php,
-  // an s6 service): a check-in with telemetry shows up as the device's state, a new
-  // device as a new discovery config, a deleted one is removed again.
-  if (opt.mqtt) {
-    console.log('\n== device sensors (MQTT)');
-    await fetch(`${opt.url}/api/display`, { headers: { 'access-token': setup.api_key, id: 'E2:E2:E2:E2:E2:E2',
-      'fw-version': '1.6.0', 'battery-percent': '80', rssi: '-55', 'battery-charging': '1', 'usb-connected': 'true',
-      sensors: 'make=Sensirion;model=SCD41;kind=temperature;value=21.5;unit=C' } });
-    const configTopic = (mac) => Object.keys(retained('homeassistant/device/+/config')).find((t) => t.endsWith(`_${mac}/config`));
-    const state = await waitFor(() => {
-      const msgs = retained('larapaper/+/e2e2e2e2e2e2/state');
-      const value = JSON.parse(Object.values(msgs)[0] ?? '{}');
-      return value.temperature === 21.5 && value.rssi === -55 ? value : null;
-    });
-    console.log(JSON.stringify(state));
-    check(state?.battery >= 79 && state?.battery <= 81 && state?.charging === 'ON' && state?.usb === 'ON'
-      && state?.online === 'ON' && state?.firmware === '1.6.0' && !!state?.last_seen,
-      'state holds the telemetry of the last check-in');
-    const topic = configTopic('e2e2e2e2e2e2');
-    const config = JSON.parse(retained(topic)[topic] ?? '{}');
-    check(config.dev?.name === 'E2E TRMNL X' && config.dev?.mdl === 'TRMNL X' && config.dev?.sw === '1.6.0'
-      && JSON.stringify(config.dev?.cns) === '[["mac","e2:e2:e2:e2:e2:e2"]]',
-      `discovery config describes the device (${JSON.stringify(config.dev)})`);
-    check(['battery', 'charging', 'usb', 'online', 'last_seen', 'rssi', 'firmware', 'temperature']
-      .every((k) => config.cmps?.[k]), `with its entities (${Object.keys(config.cmps ?? {}).join(', ')})`);
-    const status = retained(config.avty_t ?? 'larapaper/+/status');
-    check(Object.values(status)[0] === 'online', `availability is online (${JSON.stringify(status)})`);
-
-    // The screen the device was given, as the image's bytes (%l: the payload's length)
-    const base = (config.avty_t ?? '').replace(/\/status$/, '');
-    let screenSize = 0;
-    try {
-      screenSize = Number(execFileSync('docker', ['exec', opt.mqtt, 'mosquitto_sub', '--retained-only', '-C', '1', '-W', '2',
-        '-F', '%l', '-t', `${base}/e2e2e2e2e2e2/screen`], { encoding: 'utf8' }).trim());
-    } catch { /* timed out: none retained */ }
-    check(config.cmps?.screen?.p === 'image' && screenSize > 10000, `screen image is published (${screenSize} bytes)`);
-
-    // A control from Home Assistant changes the device in LaraPaper
-    execFileSync('docker', ['exec', opt.mqtt, 'mosquitto_pub', '-t', `${base}/e2e2e2e2e2e2/set/refresh_interval`, '-m', '1800']);
-    const changed = await waitFor(() => {
-      const value = JSON.parse(Object.values(retained(`${base}/e2e2e2e2e2e2/state`))[0] ?? '{}');
-      return value.refresh_interval === 1800 ? value : null;
-    });
-    check(!!changed, 'refresh interval set from Home Assistant');
-    execFileSync('docker', ['exec', opt.mqtt, 'mosquitto_pub', '-t', `${base}/e2e2e2e2e2e2/set/refresh_interval`, '-m', '900']);
-
-    // Refresh screen: the recipe polls and renders now, though its data isn't stale
-    const pollsBeforeRefresh = requests.length;
-    execFileSync('docker', ['exec', opt.mqtt, 'mosquitto_pub', '-t', `${base}/e2e2e2e2e2e2/set/refresh`, '-m', 'PRESS']);
-    check(!!await waitFor(() => requests.length > pollsBeforeRefresh), 'Refresh screen polls the recipe again');
-
-    php('device', 'add');
-    check(!!await waitFor(() => configTopic('e3e3e3e3e3e3')), 'a new device gets its own discovery config');
-    php('device', 'delete');
-    check(await waitFor(() => !configTopic('e3e3e3e3e3e3')), 'a deleted device is removed from Home Assistant');
-  }
 
   console.log('\n== compare');
   const full = results['two-calendars']?.dark_ratio ?? 0;

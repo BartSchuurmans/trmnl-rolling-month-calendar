@@ -7,9 +7,9 @@
 import http from 'node:http';
 
 export const TOKEN = 'e2e-token';
-// what the app's Home Assistant proxy adds (SUPERVISOR_TOKEN in app.yml)
+// what the add-on's Home Assistant proxy adds (SUPERVISOR_TOKEN in larapaper.yml)
 export const SUPERVISOR_TOKEN = 'e2e-supervisor-token';
-// the app's "Home Assistant key for recipes" (options.json in app.yml), which a recipe
+// the add-on's "Home Assistant key for recipes" (options.json in larapaper.yml), which a recipe
 // sends to the proxy as its token
 export const APP_HA_KEY = 'e2e-recipe-key-0123456789abcdef';
 

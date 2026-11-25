@@ -323,10 +323,6 @@ the changes in detail.
 - **The TRMNL.com Home Assistant recipe** (`plugin/trmnl-com-polling/`): the same markup polling
   Home Assistant from TRMNL.com, plus the serverless function (`plugin/src/transform.js`,
   which LaraPaper runs too) that fetches the weather forecast, built and released the same way.
-- **LaraPaper (local)** (`larapaper/`, `repository.yaml`): a retired Home Assistant app,
-  the official LaraPaper Home Assistant add-on plus device sensors. Everything else it
-  added is in the official add-on now; [larapaper/DOCS.md](larapaper/DOCS.md#moving-to-the-official-app)
-  explains how to move to it.
 - **A local preview** (`preview/`): renders the recipe to a PNG at the device's
   resolution and grey levels, from sample, random or live Home Assistant data. CI uses it
   to check every change.
@@ -343,7 +339,6 @@ the changes in detail.
 | `preview/sample-data.mjs`, `docs/sample-ics/`, `docs/sample-ha/`, `preview/sample-server/` | The sample calendars: six weeks that repeat, drawn in the screenshots and published as ICS feeds for TRMNL.com's marketplace preview and as a stand-in Home Assistant (static files, and a Cloudflare Worker that adds the weather) |
 | `scripts/build-zip.sh` | Packages `plugin/src` for import into LaraPaper (attached to each release) |
 | `scripts/build-variant.sh` | Builds the variants, such as the TRMNL.com recipe |
-| `larapaper/`, `repository.yaml` | The LaraPaper (local) Home Assistant app |
 | `docker-compose.yml` | Plain LaraPaper, for running outside Home Assistant |
 
 ## TRMNL framework
@@ -406,17 +401,13 @@ instead of LaraPaper's PHP Liquid, so small differences are possible.
   TRMNL.com recipes are also tested with `trmnlp test` (their polling, serverless function
   and views on TRMNL's devices, against fake APIs); its report is the `trmnlp-test-report`
   artifact.
-- **App** (`.github/workflows/app.yml`, on changes to `larapaper/` or the recipe): lints
-  the app, builds the image (amd64) and starts it with a fake `/data`. It checks that
-  LaraPaper comes up with its queue worker and scheduler, applied the app options, and keeps its key and database across a restart. On main it then
-  publishes the image (amd64 and aarch64) to `ghcr.io/bartschuurmans/larapaper-local`
-  when the app version is new; Home Assistant installs the app from there.
-- **End-to-end** (`e2e/run.mjs`, part of the App workflow): imports the recipe ZIP into
-  that LaraPaper, points it at a fake Home Assistant (`e2e/fake-ha.mjs`) and fetches
+- **End-to-end** (`e2e/run.mjs`, `.github/workflows/larapaper.yml`): starts the official
+  LaraPaper Home Assistant add-on's image with a fake `/data`, imports the recipe ZIP into
+  it, points it at a fake Home Assistant (`e2e/fake-ha.mjs`) and fetches
   the screen like a TRMNL X does (`GET /api/display`). It checks the polled URLs and
   token, the stored payload for two, one and zero-event calendars and for two ICS feeds
-  it serves (recurring and all-day events, no token sent), the weather forecast call the
-  app's proxy makes, that the recipe
+  it serves (recurring and all-day events, no token sent), the weather forecast call through
+  the add-on's Home Assistant proxy, that the recipe
   rendered rather than LaraPaper's error screen, the PNG size, and that events show up
   on the screen. `e2e/ingress.mjs` then logs in to the web UI through a fake Home
   Assistant ingress and checks that the dashboard, the recipe preview and a render load
@@ -444,6 +435,5 @@ To run the render checks locally, set up `FRAMEWORK_DIR` as in the workflow, run
 ## License
 
 MIT, see [LICENSE](LICENSE), for this project's own code. The recipe is forked from
-TRMNL's source-available native calendar plugin, and the Home Assistant app bundles the
-TRMNL framework, its fonts and FullCalendar; see
-[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for their terms.
+TRMNL's source-available native calendar plugin; see
+[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for its terms.
