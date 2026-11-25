@@ -68,6 +68,25 @@ RSpec.describe 'Rolling Month Calendar' do
     expect(screen).to have_no_problems
   end
 
+  # TRMNL's calendar plugins share each event's colour (background_color): the default for a
+  # calendar without one, matched to the screen's palette. Events that come without one
+  # (CalDAV drops it from an event with a COLOR of its own) take the calendar's.
+  SHARED = { 'Swimming lessons' => '#33B679' }.freeze # Sage
+  [['v2', 'bg--gray-'], ['frame', 'bg--green']].each do |device, fill|
+    it "draws the colours calendar plugins share on #{device}" do
+      shared = variables.transform_values do |data|
+        next data unless data.is_a?(Hash) && data['events']
+        data.merge('events' => data['events'].map { |e| e.merge('background_color' => SHARED[e['summary']]).compact })
+      end
+      palette = device == 'frame' ? { palette: 'color-6a' } : {}
+      screen = trmnl.render(device:, **palette, now:, variables: shared, custom_fields:)
+
+      expect(screen).to have_css("[class*='#{fill}']", text: 'Swimming lessons')
+      expect(screen).to have_css("[class*='#{fill}']", text: 'Bin day')
+      expect(screen).to have_no_problems
+    end
+  end
+
   it 'draws an empty grid when no calendar is chosen' do
     screen = trmnl.render(device: 'v2', now:, variables:,
                           custom_fields: custom_fields.reject { |key, _| key.match?(/\Acalendar_\d+\z/) })

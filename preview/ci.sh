@@ -133,6 +133,10 @@ render merge-x --merge --expect-events --set calendar_colors=black,-,gray-50 --s
 # ... at TRMNL.com's default screen scale (regular; LaraPaper's X is xxlarge), and at small,
 # where the text follows the Scale (text-scale.liquid)
 render merge-regular-x --merge --scale regular --expect-events
+# ... with the colours Google Calendar's plugin shares, for calendars without one (Sara's has one)
+render shared-colors-x --shared-colors --work --expect-events --set calendar_colors=-,-,gray-60
+render shared-colors-og --device og --shared-colors --work --expect-events
+render shared-colors-frame --device frame --shared-colors --work --expect-events
 render merge-small-x --merge --scale small --expect-events
 # ... with a forecast from the Weather dropdown: TRMNL's Weather plugin, an Open-Meteo recipe
 render merge-weather-trmnl-x --merge-weather trmnl --expect-events --set weather_temperatures=high_low \

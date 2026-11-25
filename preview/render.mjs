@@ -26,6 +26,9 @@
 // plugin/trmnl-com-merge/merge.liquid and text-scale.liquid (text follows Scale) prepended to the
 // shared markup.
 //
+// --shared-colors (implies --merge) gives each event the colour Google Calendar's plugin
+// shares (background_color), which the recipe uses for calendars without a colour of their own.
+//
 // --merge-weather trmnl|open-meteo adds a forecast in the Weather dropdown (weather_plugin):
 // TRMNL's Weather plugin (today and tomorrow) or a recipe polling Open-Meteo (Daily Weather).
 //
@@ -97,6 +100,7 @@ let ics = false; // or '0.43'
 let work = false;
 let size = 'full';
 let merge = false;
+let sharedColors = false;
 let mergeWeather = null;
 let expectEvents = false;
 let scale = null;
@@ -120,6 +124,7 @@ for (let i = 0; i < args.length; i++) {
   else if (args[i] === '--ics') ics = true;
   else if (args[i] === '--ics-0.43') ics = '0.43';
   else if (args[i] === '--merge') merge = true;
+  else if (args[i] === '--shared-colors') { merge = true; sharedColors = true; }
   else if (args[i] === '--merge-weather') { merge = true; mergeWeather = args[++i]; }
   else if (args[i] === '--expect-events') expectEvents = true;
   else if (args[i] === '--work') work = true;
@@ -200,7 +205,11 @@ function toIcal(calendar, legacy) {
 
 // HA events as a native TRMNL calendar plugin shares them (its Plugin Merge data, under
 // `data` here): { data: { events: [...] } } with start_full/end_full, all-day ones as plain dates.
-function toNative(calendar) {
+// With --shared-colors each event carries the colour Google Calendar's plugin shares
+// (background_color): the calendar's, or the event's own (Birthday Oma: Tomato).
+const SHARED_COLORS = ['#039be5', '#33b679', '#f4511e', '#8e24aa']; // Peacock, Sage, Tangerine, Grape
+const SHARED_EVENT_COLORS = { 'Birthday Oma': '#d50000' };
+function toNative(calendar, index) {
   if (!calendar || calendar.error || !Array.isArray(calendar.data)) return calendar;
   const at = (t) => t.dateTime || t.date;
   const events = calendar.data.map((e) => ({
@@ -209,6 +218,7 @@ function toNative(calendar) {
     date_time: at(e.start), all_day: !e.start.dateTime || at(e.start).slice(0, 10) !== at(e.end).slice(0, 10),
     location: e.location || null,
     start_full: at(e.start), end_full: at(e.end),
+    ...(sharedColors ? { background_color: SHARED_EVENT_COLORS[e.summary] || SHARED_COLORS[index % SHARED_COLORS.length] } : {}),
   }));
   return { data: { events } };
 }
@@ -229,7 +239,7 @@ if (merge) {
   const cals = idx.length ? idx.map((k) => payload[k]) : [Array.isArray(payload) ? { data: payload } : payload];
   cals.forEach((cal, i) => {
     const key = `caldav_${10001 + i}`;
-    merged[key] = toNative(cal).data;
+    merged[key] = toNative(cal, i).data;
     if (!overrides[`calendar_${i + 1}`]) customFields[`calendar_${i + 1}`] = key;
   });
   payload = {};

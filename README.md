@@ -227,6 +227,13 @@ show, with a weather forecast and **Weather temperatures** on `High and low` (se
     prints the names it has an ink for solid (`red`, `green`, `blue`, `yellow`) and the
     rest as patterns with outlined text, like a 1-bit screen.
   - Hex colors are painted as-is. A 1-bit screen snaps them to black or white.
+  - On TRMNL.com, a calendar whose color is `-` or missing takes the color its calendar
+    plugin shares, if any: the calendar's color from Google Calendar and CalDAV (iCloud,
+    Fastmail, ...), and Google's event colors.
+    It becomes the framework color nearest to it: a grey as light as it on greyscale
+    screens, the nearest hue on a color panel with a few inks (the panel's own ink for a
+    vivid color, solid), and the color itself on full-color screens. Use `none` for no
+    color.
   - `white` (or `#fff`) gets a thin grey outline, dotted on 1-/2-bit screens, like the
     grid lines, so its events don't vanish on a white day. Where such an event goes on
     in another week, that side of the outline stays open.
@@ -294,7 +301,8 @@ filtering work as upstream. What changed:
 - **Open-source parts only.** The public FullCalendar 7.1 build instead of TRMNL's
   private one, and styles rebuilt from TRMNL framework classes, because upstream's
   calendar stylesheets aren't published. The look matches upstream's month preview.
-- **Per-calendar colors and prefixes** replace Google's calendar and event colors.
+- **Per-calendar colors and prefixes** replace Google's calendar and event colors, which
+  are only the default for a calendar without a color (TRMNL.com).
 - **Half and quadrant views for mashups.** The top or bottom half keeps the full width
   and shows the weeks that fit (usually two); the left or right half is the full grid at
   half the width, with start times only and tighter spacing. A quadrant is narrow like

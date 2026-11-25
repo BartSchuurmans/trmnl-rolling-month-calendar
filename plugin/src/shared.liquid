@@ -372,7 +372,7 @@
     // A calendar colour is a framework palette token (black, white, gray-10..gray-75,
     // red, blue-40, ...), painted with its bg--* class so every screen gets its own
     // rendering (solid grey on 4-bit, dither pattern on 1-/2-bit, ink on colour panels),
-    // or a hex colour, painted as-is.
+    // or a hex colour, painted as-is. "none" turns off the colour the calendar shares.
     var HUES = 'red|orange|yellow|lime|green|cyan|blue|violet|purple|pink';
     var TOKEN = new RegExp('^(black|white|gray-(10|15|20|25|30|35|40|45|50|55|60|65|70|75)|(' + HUES + ')(-(10|15|20|25|30|35|40|45|50|55|60|65|70|75))?)$');
     var HEX = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i;
@@ -380,7 +380,16 @@
       var v = String(value || '').trim().toLowerCase().replace(/^bg--/, '');
       if (TOKEN.test(v)) return { token: v };
       if (HEX.test(v)) return { hex: v };
+      if (v === 'none') return { none: true };
       return null;
+    }
+    // The colour a TRMNL calendar plugin shares with an event (background_color: Google
+    // Calendar's event colour, else the calendar's; CalDAV the calendar's, but none on an
+    // event with a COLOR of its own), used where the owner set none for the calendar. A
+    // hex colour, matched to the screen's palette when drawn (see shared colours below).
+    function sharedColor(ev) {
+      var v = String(ev.color || '').trim();
+      return HEX.test(v) ? { hex: v.toLowerCase(), shared: true } : null;
     }
 
     // LaraPaper parses an ICS feed into { ical: [{ SUMMARY, DTSTART, DTEND, ... }] }, with
@@ -430,7 +439,8 @@
         end: end ? (allDay ? { date: end.slice(0, 10) } : { dateTime: end }) : null,
         summary: ev.summary || null,
         description: ev.description || '',
-        location: ev.location || ''
+        location: ev.location || '',
+        color: ev.background_color || null
       };
     }
 
@@ -700,20 +710,34 @@
           return;
         }
         var calEvents = [];
+        // the owner's colour for the calendar, else the one its plugin shares per event; an
+        // event that comes without one takes the calendar's most common shared colour
+        var calColor = parseColor(cfg.calendarColors[i]), sharedCount = {}, calShared = null;
+        if (!calColor) {
+          (cal.events || []).forEach(function(raw) {
+            var shared = sharedColor(raw);
+            if (shared) sharedCount[shared.hex] = (sharedCount[shared.hex] || 0) + 1;
+          });
+          var commonest = Object.keys(sharedCount).sort(function(a, b) { return sharedCount[b] - sharedCount[a]; })[0];
+          if (commonest) calShared = { hex: commonest, shared: true };
+        }
         (cal.events || []).forEach(function(raw) {
           // private events without details have no summary; upstream calls them 'Busy'
           raw.summary = raw.summary || 'Busy';
           if (isIgnored(raw, cfg)) return;
-          var ev = toEvent(raw, cfg.calendarPrefixes[i], parseColor(cfg.calendarColors[i]), cfg);
+          var color = calColor ? (calColor.none ? null : calColor) : sharedColor(raw) || calShared;
+          var ev = toEvent(raw, cfg.calendarPrefixes[i], color, cfg);
           if (ev) calEvents.push(ev);
         });
+        // a day off (usual week) takes the calendar's colour: the owner's, else a shared one
+        var offColor = calColor ? (calColor.none ? null : calColor) : calShared;
         // the days the calendar's data is complete for, as polled: Home Assistant from 6 days
         // back to 43 days ahead, end exclusive (polling_url in settings.yml), an ICS feed
         // from 7 days back to icsDaysAhead days after the poll; TRMNL's plugins: unknown
         calEvents = applyUsualWeek(calEvents, parseUsualWeek(cfg.calendarUsualWeeks[i]),
           cfg.source === 'ha' ? addDays(today, -6) : cfg.source === 'ics' ? addDays(today, -7) : null,
           cfg.source === 'ha' ? addDays(today, 42) : cfg.source === 'ics' ? addDays(today, icsDaysAhead - 1) : null,
-          cfg.calendarPrefixes[i], parseColor(cfg.calendarColors[i]), cfg.usualEvents === 'no_time');
+          cfg.calendarPrefixes[i], offColor, cfg.usualEvents === 'no_time');
         calEvents.forEach(function(ev) {
           var raw = ev.extendedProps;
           if (!cfg.includePastEvents) {
@@ -860,6 +884,52 @@
         // colour panels with a few inks (screen--color-6a, the TRMNL Frame), whose depth the
         // framework gives as 4 but whose greys are patterns too.
         var patternedGreys = isPatterned('gray-75');
+        // A colour a calendar plugin shares (sharedColor) becomes the framework token nearest
+        // to it, so each screen draws it its own way: a grey of the same lightness on greyscale
+        // screens, the nearest hue on colour panels with a few inks (an ink itself, solid, for
+        // a vivid mid-tone), and as-is on full-colour screens. Matched against the raw palette
+        // (--<token>), which dark mode and themes leave alone; the bg--* class paints it.
+        var screenClass = (node.closest('.screen') || document.documentElement).className;
+        var colourScreen = /\bscreen--color-/.test(screenClass);
+        var fullColour = /\bscreen--color-full\b/.test(screenClass);
+        var SHADES = [10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75];
+        var rgbOf = function(c) {
+          var m = /^#?([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(String(c).trim());
+          if (!m) return null;
+          var h = m[1].length === 3 ? m[1].replace(/./g, '$&$&') : m[1];
+          return [0, 2, 4].map(function(o) { return parseInt(h.slice(o, o + 2), 16) / 255; });
+        };
+        var hsl = function(rgb) {
+          var max = Math.max.apply(null, rgb), min = Math.min.apply(null, rgb), l = (max + min) / 2, d = max - min;
+          if (!d) return { h: 0, s: 0, l: l };
+          var h = max === rgb[0] ? (rgb[1] - rgb[2]) / d + (rgb[1] < rgb[2] ? 6 : 0) : max === rgb[1] ? (rgb[2] - rgb[0]) / d + 2 : (rgb[0] - rgb[1]) / d + 4;
+          return { h: h * 60, s: d / (1 - Math.abs(2 * l - 1)), l: l };
+        };
+        var luma = function(rgb) { return 0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2]; };
+        var nearest = function(tokens, measure, target, bonus) {
+          var best = null, bestDiff = Infinity;
+          tokens.forEach(function(token) {
+            var rgb = rgbOf(screenStyles.getPropertyValue('--' + token));
+            var diff = rgb ? Math.abs(measure(rgb) - target) - (bonus ? bonus(token) : 0) : Infinity;
+            if (diff < bestDiff) { best = token; bestDiff = diff; }
+          });
+          return best;
+        };
+        var paletteColor = function(hex) {
+          var rgb = rgbOf(hex);
+          if (!rgb || fullColour) return { hex: hex };
+          var c = hsl(rgb);
+          if (!colourScreen || c.s < 0.2) {
+            return { token: nearest(SHADES.map(function(n) { return 'gray-' + n; }), luma, luma(rgb)) || 'gray-50' };
+          }
+          var hueDiff = function(a, b) { var d = Math.abs(a - b) % 360; return d > 180 ? 360 - d : d; };
+          // by each hue's -40 shade (the bare ones may be colour names: --red: red); a hue the
+          // panel has an ink for (prints solid) wins a near tie, so a sage green is green
+          var hue = nearest(['red', 'orange', 'yellow', 'lime', 'green', 'cyan', 'blue', 'violet', 'purple', 'pink'].map(function(h) { return h + '-40'; }),
+            function(rgb) { return hueDiff(hsl(rgb).h, c.h); }, 0, function(t) { return isPatterned(t.replace(/-40$/, '')) ? 0 : 15; }).replace(/-40$/, '');
+          if (c.s > 0.5 && Math.abs(c.l - 0.5) < 0.12) return { token: hue };
+          return { token: nearest(SHADES.map(function(n) { return hue + '-' + n; }), function(rgb) { return hsl(rgb).l; }, c.l) };
+        };
         node.classList.toggle('trmnl-calendar--patterned', patternedGreys);
         // On high-density screens (the TRMNL X) the framework's small text is Inter at 13px
         // times --text-ui-scale (device x Scale x Text Scale). The calendar uses 16px, like
@@ -930,7 +1000,10 @@
         // is a dither pattern (1-/2-bit, a grey on the Frame), text in the ink colour with
         // the framework's contrast outline (text-stroke), like upstream's adaptiveEventStroke;
         // on a colour panel, white text outlined in black on a dark mix.
+        var matched = {};
         built.events.forEach(function(ev) {
+          var shared = ev.extendedProps.color && ev.extendedProps.color.shared && ev.extendedProps.color.hex;
+          if (shared) ev.extendedProps.color = matched[shared] = matched[shared] || paletteColor(shared);
           var color = ev.extendedProps.color || { token: 'gray-70' };
           var raw = color.hex || screenStyles.getPropertyValue('--' + color.token).trim();
           var painted = color.hex || paintOf(color.token) || raw;
