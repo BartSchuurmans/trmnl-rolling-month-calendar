@@ -4,6 +4,8 @@ PRODID:-//Rolling Month Calendar//sample//EN
 CALSCALE:GREGORIAN
 X-WR-CALNAME:Sara (sample)
 X-WR-TIMEZONE:Europe/Amsterdam
+COLOR:darkorange
+X-APPLE-CALENDAR-COLOR:#FF8C00
 BEGIN:VTIMEZONE
 TZID:Europe/Amsterdam
 BEGIN:DAYLIGHT

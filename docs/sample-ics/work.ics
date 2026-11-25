@@ -4,6 +4,8 @@ PRODID:-//Rolling Month Calendar//sample//EN
 CALSCALE:GREGORIAN
 X-WR-CALNAME:Work (sample)
 X-WR-TIMEZONE:Europe/Amsterdam
+COLOR:mediumorchid
+X-APPLE-CALENDAR-COLOR:#BA55D3
 BEGIN:VTIMEZONE
 TZID:Europe/Amsterdam
 BEGIN:DAYLIGHT

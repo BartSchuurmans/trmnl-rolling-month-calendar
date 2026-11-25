@@ -4,6 +4,8 @@ PRODID:-//Rolling Month Calendar//sample//EN
 CALSCALE:GREGORIAN
 X-WR-CALNAME:Mark (sample)
 X-WR-TIMEZONE:Europe/Amsterdam
+COLOR:limegreen
+X-APPLE-CALENDAR-COLOR:#32CD32
 BEGIN:VTIMEZONE
 TZID:Europe/Amsterdam
 BEGIN:DAYLIGHT
