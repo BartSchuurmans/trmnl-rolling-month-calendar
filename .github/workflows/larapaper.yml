@@ -1,0 +1,79 @@
+name: LaraPaper
+
+# End-to-end test of the recipe on LaraPaper, in the official LaraPaper Home Assistant
+# add-on (usetrmnl/trmnl-home-assistant, trmnl-larapaper/) with a fake /data and a fake
+# Home Assistant: e2e/run.mjs imports the recipe ZIP, polls the fake Home Assistant
+# (directly and through the add-on's read-only proxy) and ICS feeds, and fetches the
+# TRMNL X screen as the device does; e2e/ingress.mjs then drives the web UI through a
+# fake Home Assistant ingress. The add-on's own behaviour (options, services, proxy and
+# ingress rules) is its smoke test's job upstream. Its version is LaraPaper's:
+# scripts/check-upstream.sh reads ADDON_IMAGE below.
+
+on:
+  pull_request:
+    paths: [plugin/**, e2e/**, scripts/build-zip.sh, .github/workflows/larapaper.yml]
+  push:
+    branches: [main]
+    paths: [plugin/**, e2e/**, scripts/build-zip.sh, .github/workflows/larapaper.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  ADDON_IMAGE: ghcr.io/usetrmnl/trmnl-larapaper-amd64:0.49.0
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # build-zip.sh dates the ZIP by the last plugin/src commit
+
+      - name: Start the add-on with a fake /data
+        run: |
+          mkdir -p "$RUNNER_TEMP/data"
+          echo '{"app_url": "http://localhost:4567/", "multiuser_registration": false, "home_assistant_key": "e2e-recipe-key-0123456789abcdef"}' > "$RUNNER_TEMP/data/options.json"
+          # homeassistant:8123 is the fake Home Assistant of the end-to-end test; the
+          # add-on's Home Assistant proxy goes there too, with the token the Supervisor
+          # would provide (the key is APP_HA_KEY in e2e/fake-ha.mjs). The ingress port is
+          # published for e2e/ingress.mjs, which plays Home Assistant (Home Assistant
+          # itself reaches it over its own network, as 172.30.32.2). LaraPaper's Lab
+          # pre-render is off by default; the end-to-end test runs it by hand.
+          docker run -d --name app -p 4567:8080 -p 127.0.0.1:8099:8099 -e TZ=Europe/Amsterdam \
+            -e SUPERVISOR_TOKEN=e2e-supervisor-token -e HA_API_URL=http://homeassistant:8123/api \
+            -e HA_INGRESS_PROXY=172.16.0.0/12 \
+            --add-host homeassistant:host-gateway -v "$RUNNER_TEMP/data:/data" "$ADDON_IMAGE"
+          for i in $(seq 1 90); do
+            if curl -fsS -o /dev/null http://localhost:4567/up; then echo "up after ${i}x2s"; exit 0; fi
+            sleep 2
+          done
+          docker logs app
+          exit 1
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - name: End-to-end (recipe ZIP → LaraPaper → fake Home Assistant → TRMNL X screen)
+        run: |
+          sh scripts/build-zip.sh
+          node e2e/run.mjs --container app --url http://localhost:4567 --zip dist/rolling-month-calendar.zip
+
+      - name: Web UI through Home Assistant ingress (login, dashboard, recipe preview and render)
+        run: |
+          (cd preview && npm ci && npx playwright-core install --only-shell chromium)
+          node e2e/ingress.mjs --container app --ingress http://localhost:8099
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: e2e-screens
+          path: e2e/out/*.png
+          if-no-files-found: ignore
+
+      - name: Logs
+        if: always()
+        run: docker logs app 2>&1 | tail -100 || true

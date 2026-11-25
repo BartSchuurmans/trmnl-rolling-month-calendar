@@ -140,19 +140,6 @@ switch ($command) {
         $user->forceFill(['password' => $password, 'email_verified_at' => now()])->save();
         out(['email' => $user->email, 'password' => $password, 'plugin_id' => plugin()->id]);
 
-    case 'device':
-        $attributes = ['api_key' => 'e2e-second-device'];
-        if ($argv[2] === 'add') {
-            $device = Device::updateOrCreate($attributes, [
-                'name' => 'E2E TRMNL OG', 'mac_address' => 'E3:E3:E3:E3:E3:E3', 'friendly_id' => 'E2ETOG',
-                'user_id' => User::where('email', 'e2e@example.com')->firstOrFail()->id,
-                'device_model_id' => DeviceModel::where('name', 'og_png')->value('id'),
-            ]);
-        } else {
-            Device::where($attributes)->delete();
-        }
-        out(['devices' => Device::pluck('mac_address')]);
-
     case 'prerender':
         // The job looks 61-120 s ahead: last check-in plus the refresh interval
         $device = Device::where('api_key', API_KEY)->firstOrFail();

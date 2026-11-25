@@ -1,7 +1,8 @@
 # Dependency updates for CI and the preview tooling only. Versions that must move in
-# step across the recipe, the app and the previews are left out (see CLAUDE.md):
-# FullCalendar (shared.liquid, preview/package.json), LaraPaper (larapaper/Dockerfile,
-# config.yaml, keepsuit/liquid in preview/php), the TRMNL framework and trmnlp.
+# step across the recipe, the end-to-end test and the previews are left out (see
+# CLAUDE.md): FullCalendar (shared.liquid, preview/package.json), LaraPaper (the add-on
+# image in .github/workflows/larapaper.yml, keepsuit/liquid in preview/php), the TRMNL
+# framework and trmnlp.
 version: 2
 updates:
   - package-ecosystem: github-actions
@@ -20,6 +21,6 @@ updates:
       preview:
         patterns: ["*"]
     ignore:
-      # Pinned to the version the recipe loads and the app bundles.
+      # Pinned to the version the recipe loads.
       - dependency-name: fullcalendar
       - dependency-name: "@fullcalendar/core"

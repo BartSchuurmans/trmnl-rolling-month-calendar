@@ -2,7 +2,7 @@
 
 Rolling-month calendar recipe for a TRMNL X, rendered by LaraPaper (self-hosted TRMNL
 server) from ICS feeds or Home Assistant calendar entities. Forked from the native TRMNL calendar
-plugin; see README.md for setup on TRMNL.com, LARAPAPER.md for LaraPaper and the app, and
+plugin; see README.md for setup on TRMNL.com, LARAPAPER.md for LaraPaper (and moving off the retired app), and
 UPSTREAM.md for what differs from upstream.
 
 ## Layout
@@ -22,21 +22,12 @@ UPSTREAM.md for what differs from upstream.
   Home Assistant for trying `plugin/trmnl-com-polling/`; `preview/sample-server/worker.mjs`
   is the better one, on Cloudflare Workers, deployed from main by Cloudflare: data from
   today, plus the weather forecast's POST).
-- `larapaper/` + `repository.yaml` — Home Assistant app, retired since 0.49.0-1 (`stage:
-  deprecated`; `DOCS.md` tells users how to move their data to the official add-on; to be
-  removed once Bart has moved): the official LaraPaper add-on's
-  image (`ghcr.io/usetrmnl/trmnl-larapaper-<arch>`, from usetrmnl/trmnl-home-assistant:
-  /data, options, ingress, the Home Assistant proxy for recipes) plus what it lacks: the
-  device sensors. Its extras run from `rootfs/usr/local/bin/larapaper-local-entrypoint`
-  (before the add-on's own `homeassistant-entrypoint` and `10-homeassistant.sh`) and as
-  s6 services (`rootfs/etc/s6-overlay/`:
-  definitions in `s6-rc.d/`, enabled in `user-bundles.d/user/contents.d/`, which adds to
-  the image's own bundle; an `s6-rc.d/user` bundle would replace it and drop LaraPaper's
-  queue worker and scheduler); fix what the add-on does in the add-on (Bart's fork), not
-  here. Up to app 0.46.0 it also bundled the framework, fonts and FullCalendar (see
-  Browsershot below).
-- `e2e/` — end-to-end test against the app container: fake Home Assistant, driver,
-  in-container helper.
+- `e2e/` — end-to-end test against the official LaraPaper Home Assistant add-on's image
+  (`ghcr.io/usetrmnl/trmnl-larapaper-<arch>`, from usetrmnl/trmnl-home-assistant): fake
+  Home Assistant, driver, in-container helper. This repository's own Home Assistant app
+  (`larapaper/`, LaraPaper (local): the add-on plus MQTT device sensors) was retired in
+  app 0.49.0-1 and removed; see git history. Fix what the add-on does in the add-on
+  (Bart's fork), not here.
 - `plugin/<variant>/` (now `trmnl-com-merge/` and `trmnl-com-polling/`, see `plugin/README.md`) — the
   recipe for another channel: its own `settings.yml` and `*.liquid` put in front of
   `src/shared.liquid`. `trmnl-com-merge/`: TRMNL.com, Plugin Merge strategy, `merge.liquid`.
@@ -45,7 +36,7 @@ UPSTREAM.md for what differs from upstream.
   markup on TRMNL.com; releases upload it.
 - `scripts/build-zip.sh` — builds `dist/rolling-month-calendar.zip` for LaraPaper's recipe import;
   `scripts/build-variant.sh` builds the variants (`dist/<variant>/src`, ZIP each).
-- `LICENSE` (MIT, own code) and `THIRD_PARTY_NOTICES.md` (upstream plugin, the app's base).
+- `LICENSE` (MIT, own code) and `THIRD_PARTY_NOTICES.md` (upstream plugin).
 
 ## Checks
 
@@ -76,16 +67,16 @@ UPSTREAM.md for what differs from upstream.
   `leftOut` in `VARIANTS` there.
 - `sh preview/docs-images.sh` regenerates the README screenshots in `docs/`, each in
   TRMNL's device frame (`preview/frame.mjs`, the SVG from usetrmnl/trmnl-component).
-- `node e2e/run.mjs` — end-to-end: imports `dist/rolling-month-calendar.zip` into a running app
-  container (`app`, started as in `app.yml` with `--add-host
+- `node e2e/run.mjs` — end-to-end: imports `dist/rolling-month-calendar.zip` into a running add-on
+  container (`app`, started as in `larapaper.yml` with `--add-host
   homeassistant:host-gateway`), polls the fake HA in `e2e/fake-ha.mjs`, fetches the
   TRMNL X screen via `/api/display` and checks payloads and pixels; screens in
   `e2e/out/`. `e2e/larapaper.php` runs inside the container through LaraPaper's own
   services. `--local <larapaper checkout>` runs it without Docker. `node e2e/ingress.mjs`
   (after it) drives the web UI in Chromium through a fake Home Assistant ingress.
 - CI: `.github/workflows/render.yml` (recipe), `release.yml` and `release-label.yml` (see Releasing), `trmnl-com.yml` (uploads the TRMNL.com
-  variants on a release, compares TRMNL.com with the latest release weekly) and `app.yml` (builds and smoke-tests
-  the Home Assistant app, then runs the end-to-end test; on main it publishes the image).
+  variants on a release, compares TRMNL.com with the latest release weekly) and `larapaper.yml` (the end-to-end test
+  on the official add-on's image, pinned in `ADDON_IMAGE`).
 
 ## Things that are easy to get wrong
 
@@ -117,7 +108,7 @@ passing after layout changes.
 `//localhost`, `//127.` etc. (and, before spatie/browsershot 5.5 / LaraPaper 0.47.0,
 `file:`), so assets can't point at localhost. Screens render from a temporary `file://`
 page, and since Browsershot 5.5 every other `file://` request from it is aborted, so
-root-relative assets can't load from the filesystem either (the app bundled the
+root-relative assets can't load from the filesystem either (the retired app bundled the
 framework and FullCalendar that way up to 0.46.0; upstream item 49). Assets come from the
 web: the framework from trmnl.com, FullCalendar from jsDelivr.
 
@@ -191,7 +182,7 @@ purifies them down to `href` (since 0.44.0 opening in a new tab, and the About
 
 **Home Assistant access.** The recipe's default URL `http://127.0.0.1:8124` is a
 read-only nginx proxy in the official add-on (`home_assistant_key` option, from add-on
-0.47.0-3, which the app builds on). It
+0.47.0-3). It
 answers only requests with the key as Bearer token (the recipe's `ha_token`), swaps in
 the `SUPERVISOR_TOKEN` (`homeassistant_api: true`) and forwards to
 `http://supervisor/core/api` only reads (states, calendars, history, logbook, template)
@@ -205,37 +196,16 @@ add-on's nginx server on port 8099 (`10-homeassistant.sh` in its image), which a
 only the Supervisor (172.30.32.2; `HA_INGRESS_PROXY` in CI). HA strips
 `/api/hassio_ingress/<token>` and sends it as `X-Ingress-Path`; nginx passes it to
 Laravel as `X-Forwarded-Prefix` (the Supervisor is a trusted proxy), so Laravel's URLs
-carry it, and rewrites APP_URL storage links (pages, JSON and Livewire snapshots). The
-app adds nothing to that server.
+carry it, and rewrites APP_URL storage links (pages, JSON and Livewire snapshots).
 
 **Pre-rendering.** LaraPaper renders only inside the device's GET `/api/display` (when
 the recipe's data is older than its refresh interval), and the TRMNL firmware gives that
 request 15 s. LaraPaper 0.47.0's Lab setting "Pre-render playlist items"
 (`PrerenderUpcomingPlaylistItemsJob`, every minute from its scheduler, renders in its
 queue worker) renders a device's next playlist item 61-120 s before it's due
-(`last_refreshed_at` + refresh interval). It's off by default and the app leaves it to
-the user (Settings → Lab, stored in the database); `e2e/run.mjs` runs the job by hand
-through `e2e/larapaper.php prerender`. Toggle values are cached for an hour. Up to app
-0.47.0-1 the app had its own script
-(`larapaper/prerender/prerender.php`, see git history).
-
-**Device sensors.** The app also publishes every LaraPaper device to Home Assistant through
-MQTT discovery (`larapaper/mqtt/mqtt.php`, s6 service `larapaper-local-mqtt`, as
-www-data): one retained device-based discovery config per MAC address
-(`homeassistant/device/larapaper_<instance>_<mac>/config`, instance from the app key) and
-a JSON state, every 10 s (`LARAPAPER_LOCAL_MQTT_INTERVAL`), through LaraPaper's models,
-plus the device's current screen as image bytes when it changes. Controls (sleep mode and
-times, refresh interval, firmware install) arrive on `larapaper/<instance>/<mac>/set/<key>`
-and update the `Device` as LaraPaper's device page does; the Refresh screen button
-queues LaraPaper's `RenderPlaylistItemImageJob` (force, as a playlist item's "Refresh
-cache") for each recipe in that device's active playlists (polls and renders, due or
-not). It finds deleted devices from the broker's retained configs. The
-broker comes from the Supervisor (`services: mqtt:want`; asked by the s6 run script as root with
-the root-only token copy `larapaper-local-entrypoint` keeps, since the add-on takes
-`SUPERVISOR_TOKEN` out of the environment) or `MQTT_HOST` (CI, with a
-Mosquitto container; `e2e/run.mjs --mqtt`). Its MQTT client is a minimal 3.1.1 one in
-the script (QoS 0, last will), so the image needs no Composer packages. The app option
-`mqtt` turns it off, as does `LARAPAPER_LOCAL_MQTT=0`, which wins.
+(`last_refreshed_at` + refresh interval). It's off by default and up to the
+user (Settings → Lab, stored in the database); `e2e/run.mjs` runs the job by hand
+through `e2e/larapaper.php prerender`. Toggle values are cached for an hour.
 
 **FullCalendar 7 and the Mono theme.** v7 has no semantic `.fc-*` classes (they are
 hashed); everything is styled through class hooks (`dayCellClass`, `listItemEventClass`,
@@ -303,18 +273,6 @@ dates with `getUTC*`.
   The release also attaches each variant's ZIP and uploads the TRMNL.com variants there
   (`trmnl-com.yml`, needs the `TRMNL_API_KEY` secret and plugin ID variables); TRMNL.com
   changes only on a release.
-- Home Assistant app: bump `version` in `larapaper/config.yaml` (`<LaraPaper
-  version>-N`) with any change to the image; `app.yml` fails PRs that change app files
-  other than DOCS.md/translations without a bump. Add an entry to
-  `larapaper/CHANGELOG.md` (shown in HA's update dialog): on `<LaraPaper version>-1`,
-  LaraPaper's own release notes first, as `sh scripts/larapaper-release-notes.sh
-  <version>` prints them (`### LaraPaper <version>`; `app.yml` puts them in its job
-  summary too), then always `### Home Assistant app` with the app's own changes
-  (`app.yml` checks both headings). HA offers the update once
-  it's on main; `app.yml` then publishes the image (amd64 + aarch64, `image:` in
-  config.yaml) to GHCR, skipping versions that already exist. HA pulls that image, it
-  doesn't build locally, so a version on main without a published image can't install.
-
 ## Conventions
 
 - TRMNL framework reference: `skills/trmnl/references/template_guide.md` (classes,
@@ -324,7 +282,7 @@ dates with `getUTC*`.
   workflows and voice) don't apply here, as FullCalendar needs this recipe's own CSS.
 - The recipe (and its variants) runs on servers of various versions: keep older LaraPaper
   versions working unless that needs ugly workarounds, and document any version cutoff in
-  LARAPAPER.md (LaraPaper) or README.md. The app (`larapaper/`) only has to work with the LaraPaper it bundles.
+  LARAPAPER.md (LaraPaper) or README.md.
 - Keep upstream's behaviour and comments where the code is forked (see UPSTREAM.md) and
   update UPSTREAM.md when diverging.
 - Sizes in CSS scale with `--mono-u` (`--ui-scale`); colours use framework vars (see Dark mode).
@@ -333,9 +291,8 @@ dates with `getUTC*`.
 - After changing `plugin/src/`, rebuild with `scripts/build-zip.sh`; re-importing the
   ZIP updates the recipe in LaraPaper in place (same `id`).
 - Bumping LaraPaper: the add-on image's tag (LaraPaper's version, once the add-on has
-  released it; a `-N` tag is an add-on-only fix on that version, and the app stays
-  `<LaraPaper version>-N`) in `BUILD_FROM` in `larapaper/Dockerfile` + `version` in
-  `config.yaml`. Bumping the framework: `preview/assets.txt` hashes and paths,
+  released it; a `-N` tag is an add-on-only fix on that version) in `ADDON_IMAGE` in
+  `.github/workflows/larapaper.yml`, and the tested version in LARAPAPER.md. Bumping the framework: `preview/assets.txt` hashes and paths,
   `framework_version` in every `settings.yml`. FullCalendar: the jsDelivr URL in
   `shared.liquid` and `preview/package.json`.
 - Dependabot (`.github/dependabot.yml`) only bumps GitHub Actions and `preview/` npm
