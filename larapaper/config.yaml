@@ -1,9 +1,12 @@
 name: LaraPaper (local)
-version: "0.47.0-4"
+version: "0.49.0-1"
 slug: larapaper_local
 description: >-
-  The official LaraPaper (BYOS) add-on, plus a Home Assistant proxy for recipes,
-  pre-rendering and device sensors.
+  Retired: move to the official LaraPaper (BYOS) app, which now has everything this
+  app added apart from device sensors (see Documentation).
+# Shown as deprecated in the store; the official app has taken over (DOCS.md explains
+# how to move the data)
+stage: deprecated
 url: https://github.com/BartSchuurmans/trmnl-rolling-month-calendar/tree/main/larapaper
 # Built and published by .github/workflows/app.yml when the version changes on main
 image: ghcr.io/bartschuurmans/larapaper-local

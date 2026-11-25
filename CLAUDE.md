@@ -22,7 +22,9 @@ UPSTREAM.md for what differs from upstream.
   Home Assistant for trying `plugin/trmnl-com-polling/`; `preview/sample-server/worker.mjs`
   is the better one, on Cloudflare Workers, deployed from main by Cloudflare: data from
   today, plus the weather forecast's POST).
-- `larapaper/` + `repository.yaml` — Home Assistant app: the official LaraPaper add-on's
+- `larapaper/` + `repository.yaml` — Home Assistant app, retired since 0.49.0-1 (`stage:
+  deprecated`; `DOCS.md` tells users how to move their data to the official add-on; to be
+  removed once Bart has moved): the official LaraPaper add-on's
   image (`ghcr.io/usetrmnl/trmnl-larapaper-<arch>`, from usetrmnl/trmnl-home-assistant:
   /data, options, ingress, the Home Assistant proxy for recipes) plus what it lacks: the
   device sensors. Its extras run from `rootfs/usr/local/bin/larapaper-local-entrypoint`

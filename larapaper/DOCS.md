@@ -1,5 +1,10 @@
 # LaraPaper (local)
 
+> **This app is retired.** The official **LaraPaper (BYOS)** app now has everything this
+> app added apart from the device sensors. Move to it with the steps in
+> [Moving to the official app](#moving-to-the-official-app): your account, devices,
+> playlists, recipes and settings come along. This app gets no more updates.
+
 [LaraPaper](https://github.com/usetrmnl/larapaper), the self-hosted TRMNL server, set
 up for the Rolling Month Calendar and Home Assistant. It is the official
 [LaraPaper (BYOS) add-on](https://github.com/usetrmnl/trmnl-home-assistant/tree/main/trmnl-larapaper),
@@ -56,6 +61,61 @@ The image is built by this repository's CI from the add-on's image.
    integration (named after its zone, e.g. `weather.home`) over Met.no
    (`weather.forecast_home`): Met.no's forecast for today leaves out the hours already
    past, so today's high drops through the day.
+
+## Moving to the official app
+
+The official app keeps its data the same way this one does, so moving means copying
+three things from this app's data folder to the official app's: `database/` (your
+account, devices, playlists, recipes and settings), `generated/` (the screens) and
+`app_key` (which unlocks the settings LaraPaper stores encrypted). Home Assistant
+keeps each app's data folder to itself, so the copy runs from a terminal that can use
+Docker. Your TRMNLs keep talking to port 4567, so they need no changes.
+
+1. **Back up this app.** Settings → System → Backups → **Create backup** → **Partial
+   backup**, with only this app. Also note this app's options (its **Configuration**
+   tab): **App URL**, **Home Assistant key for recipes** and any others you changed.
+2. **Stop this app** (**Stop** on its page).
+3. **Install the official app.** Settings → Apps → store → ⋮ → **Repositories**, add
+   `https://github.com/usetrmnl/trmnl-home-assistant`, then install **LaraPaper
+   (BYOS)**. Don't start it yet. In its **Configuration** tab, enter the options you
+   noted, and the same **Home Assistant key for recipes** in particular: your recipes
+   send it as their access token.
+4. **Copy the data.** Install the **Advanced SSH & Web Terminal** app (from the
+   community apps), turn off its **Protection mode**, start it and click **Open Web
+   UI**. Then run:
+
+   ```sh
+   img=$(docker images --format '{{.ID}} {{.Repository}}' | awk '/larapaper/ { print $1; exit }')
+   docker run --rm --entrypoint sh -v /mnt/data/supervisor/addons/data:/apps "$img" -c '
+     set -e; cd /apps
+     old=$(ls -d *_larapaper_local); new=$(ls -d *_trmnl-larapaper)
+     echo "Copying $old to $new"
+     rm -rf "$new/database" "$new/generated" "$new/app_key"
+     cp -a "$old/database" "$old/generated" "$old/app_key" "$new/"
+     ls -l "$new"'
+   ```
+
+   It prints the two folders it copied between and what the official app's folder
+   now holds. If it says it can't find `*_trmnl-larapaper`, start the official app
+   once, stop it and run the command again. On Home Assistant Supervised (not Home
+   Assistant OS), use `/usr/share/hassio/addons/data` in place of
+   `/mnt/data/supervisor/addons/data`. Afterwards, turn **Protection mode** back on
+   (or uninstall the terminal app).
+5. **Start the official app** and click **Open Web UI**. Log in with your usual account:
+   your devices, playlists and recipes are there, and each TRMNL gets its next screen
+   when it next wakes. LaraPaper updates its database to its own version as it starts.
+   Its **Log** tab should say "Home Assistant for recipes on http://127.0.0.1:8124"; if
+   the calendar shows "401: Unauthorized", the key differs from the one in the recipe.
+6. **Remove the device sensors.** The official app has none, so the TRMNL devices under
+   Settings → Devices & services → MQTT stop updating: delete each one there (⋮ →
+   **Delete**).
+7. **Uninstall this app** once you're happy, and remove this repository
+   (`https://github.com/BartSchuurmans/trmnl-rolling-month-calendar`) from the app store's
+   repositories. Keep the backup from step 1 until then: restoring it brings this app
+   back as it was.
+
+LaraPaper's **Pre-render playlist items** (Settings → Lab) is stored in the database, so
+it comes along too.
 
 ## Device sensors
 
