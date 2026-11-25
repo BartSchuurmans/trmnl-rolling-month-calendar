@@ -3,7 +3,7 @@
 # any change that alters how the calendar looks, and commit the images with it. Same
 # prerequisites as render.mjs (see ci.sh). The date is fixed, so "today" and the sample
 # events (sample-data.mjs) stay put and only real changes show up in the images.
-# frame.mjs then puts each screen in TRMNL's device frame (TRMNL X or OG).
+# frame.mjs then puts each screen in TRMNL's device frame (TRMNL X, OG or Frame).
 set -eu
 cd "$(dirname "$0")"
 docs=../docs
@@ -22,13 +22,13 @@ node render.mjs $common --set "$usual" --device og --out "$raw/preview-1bit.png"
 # shellcheck disable=SC2086
 node render.mjs $common --set "$usual" --device og2 --out "$raw/preview-2bit.png"
 # The TRMNL Frame (Spectra 6) as TRMNL.com's Plugin Merge recipe draws it, with the colours
-# Google Calendar shares (--shared-colors) as the calendars' defaults. No device frame:
-# trmnl-component has no Frame model, so the screen goes in as it is.
+# Google Calendar shares (--shared-colors) as the calendars' defaults.
 # shellcheck disable=SC2086
 node render.mjs --strict --tz Europe/Amsterdam --now 2026-09-30 --device frame --shared-colors --merge-weather trmnl \
-    --set weather_temperatures=high_low --work --set calendar_labels=-,M:,S:,M: --set "$usual" --out "$docs/preview-frame.png"
-rm -f "$raw"/preview*.html "$docs"/preview*.html
+    --set weather_temperatures=high_low --work --set calendar_labels=-,M:,S:,M: --set "$usual" --out "$raw/preview-frame.png"
+rm -f "$raw"/preview*.html
 
 node frame.mjs --model x "$raw/preview.png" "$docs/preview.png"
 node frame.mjs --model og "$raw/preview-1bit.png" "$docs/preview-1bit.png"
 node frame.mjs --model og "$raw/preview-2bit.png" "$docs/preview-2bit.png"
+node frame.mjs --model frame "$raw/preview-frame.png" "$docs/preview-frame.png"

@@ -1,6 +1,8 @@
 // Puts a screenshot in TRMNL's device frame, for the README images (docs-images.sh).
 //
-//   node frame.mjs [--model og|x] [--color white|black|sage|gray|wood] <in.png> <out.png>
+//   node frame.mjs [--model og|x|frame] [--color white|black|sage|gray|wood|white-oak|cherry|sapele|walnut] <in.png> <out.png>
+//
+// (The Frame comes in its four woods only; any other colour gives white oak.)
 //
 // The frame is the bezel artwork from TRMNL's own <trmnl-frame> web component
 // (github.com/usetrmnl/trmnl-component, MIT), pinned below by commit and SHA-256 and
@@ -16,12 +18,14 @@ import { chromium } from 'playwright-core';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const COMPONENT = {
-  url: 'https://raw.githubusercontent.com/usetrmnl/trmnl-component/c72d9dc6a161d77a99d4f953c7ca5df2fc7278b7/trmnl-component.js',
-  sha256: '03185367007c8713281a306181d8beec4a8aa33ac559089604893e665b0f7e5e',
+  url: 'https://raw.githubusercontent.com/usetrmnl/trmnl-component/1f6f164f35d6475d8f41ea2999e6c00bca676f7c/trmnl-component.js',
+  sha256: 'eaa79463d568379e0cb85c556a85d8fd5a0b514dcc0de5cdbe4cd9736ee8aaf8',
 };
 // The screen's shape in each model's SVG: a <use> of it is the first thing drawn on
-// the screen, and the screenshot goes right after it, under the inner shadow.
-const SCREEN = { og: '#path-4', x: '#x-screen' };
+// the screen, and the screenshot goes right after it, under the inner shadow. The Frame
+// has a plain grey rect there, inside the moulding's 1280x720 window (its overlay), and
+// the moulding is drawn over the window's edge: the screenshot fills the window.
+const SCREEN = { og: '#path-4', x: '#x-screen', frame: { rect: 'rect[x="62"][y="62"]', x: 60, y: 60, width: 1280, height: 720 } };
 
 const args = process.argv.slice(2);
 const opts = { model: 'x', color: 'white' };
@@ -32,7 +36,7 @@ for (let i = 0; i < args.length; i++) {
   else files.push(args[i]);
 }
 if (files.length !== 2 || !SCREEN[opts.model]) {
-  console.error('usage: node frame.mjs [--model og|x] [--color white|black|sage|gray|wood] <in.png> <out.png>');
+  console.error('usage: node frame.mjs [--model og|x|frame] [--color white|black|sage|gray|wood|white-oak|cherry|sapele|walnut] <in.png> <out.png>');
   process.exit(2);
 }
 const [input, output] = files;
@@ -67,19 +71,26 @@ const box = await page.evaluate(({ model, color, screen, href, width, height }) 
   document.body.append(svg);
 
   const NS = 'http://www.w3.org/2000/svg';
-  const shape = svg.querySelector(screen);
-  const use = svg.querySelector(`use[*|href="${screen}"]`);
-  const bb = shape.getBBox();
-  const clip = document.createElementNS(NS, 'clipPath');
-  clip.id = 'screenshot-clip';
-  clip.append(shape.cloneNode());
-  clip.firstChild.removeAttribute('id');
-  svg.querySelector('defs').append(clip);
   const image = document.createElementNS(NS, 'image');
+  let bb;
+  if (typeof screen === 'string') {
+    const shape = svg.querySelector(screen);
+    const use = svg.querySelector(`use[*|href="${screen}"]`);
+    bb = shape.getBBox();
+    const clip = document.createElementNS(NS, 'clipPath');
+    clip.id = 'screenshot-clip';
+    clip.append(shape.cloneNode());
+    clip.firstChild.removeAttribute('id');
+    svg.querySelector('defs').append(clip);
+    image.setAttribute('clip-path', 'url(#screenshot-clip)');
+    use.after(image);
+  } else {
+    bb = screen;
+    svg.querySelector(screen.rect).after(image);
+  }
   for (const [k, v] of Object.entries({ x: bb.x, y: bb.y, width: bb.width, height: bb.height,
-    preserveAspectRatio: 'none', 'clip-path': 'url(#screenshot-clip)', href })) image.setAttribute(k, v);
+    preserveAspectRatio: 'none', href })) image.setAttribute(k, v);
   image.style.imageRendering = 'pixelated';
-  use.after(image);
 
   // Scale the frame so the screen is the screenshot's size, and shift it by under a
   // pixel so the screen starts on a whole pixel: no resampling of the screenshot.
