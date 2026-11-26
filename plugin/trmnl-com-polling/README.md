@@ -15,8 +15,8 @@ What it leaves out of `plugin/src` (see `VARIANTS` in `preview/variants.mjs`):
 Home Assistant gives forecasts only to `weather.get_forecasts`, a POST, while its
 calendars answer only GET, and TRMNL.com polls every URL with the same verb and body. So
 after the calendars are polled, the function makes that call itself (to **Home Assistant
-URL**, with the token) and adds the response last, in the shape the LaraPaper (local)
-app's proxy gives (`{service_response: ...}`). A failed call shows as "Could not load
+URL**, with the token) and adds the response last, in the shape Home Assistant's
+`weather.get_forecasts` answers (`{service_response: ...}`). A failed call shows as "Could not load
 <entity>" and the calendars still show. Its tests (`tests/`, run by `trmnlp test` in
 `ci.sh`) run it against a fake Home Assistant and draw the result.
 
