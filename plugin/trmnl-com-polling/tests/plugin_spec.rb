@@ -77,16 +77,28 @@ RSpec.describe 'Rolling Month Calendar (Home Assistant)' do
     [...document.querySelectorAll('.mono-event')].map(function(el) {
       var title = el.querySelector('.mono-event-title') || el;
       var style = getComputedStyle(title), text = style.color;
-      // a dither pattern (1-/2-bit, a tint on the Frame) mixes inks: the text needs its outline
-      var patterned = /url\\(/.test(getComputedStyle(el).backgroundImage);
+      // a dither pattern (1-/2-bit, a tint on the Frame) mixes inks: the text needs its outline,
+      // or to stand out from every ink in it (the Frame's purple: red and blue, white text)
+      var box = getComputedStyle(el), patterned = /url\\(/.test(box.backgroundImage);
       var stroke = el.classList.contains('text-stroke') && style.getPropertyValue('--tn-text-stroke-color').trim();
+      var fills = [box.backgroundColor];
+      if (patterned && stroke) fills = [stroke];
+      else if (patterned) {
+        fills = (decodeURIComponent(box.backgroundImage).match(/<path\\b[^>]*>/g) || [])
+          .map(function(path) { return (/\\bfill=['"]([^'"]+)['"]/.exec(path) || [0, 'black'])[1]; })
+          .concat(/, 0\\)$/.test(box.backgroundColor) ? [] : [box.backgroundColor]);
+      }
       var probe = document.createElement('span');
-      probe.style.color = stroke || text;
       title.appendChild(probe);
-      var fill = patterned ? getComputedStyle(probe).color : getComputedStyle(el).backgroundColor;
+      var lum = function(c) {
+        probe.style.color = c;
+        var v = getComputedStyle(probe).color.match(/[\\d.]+/g).map(Number);
+        return 0.299 * v[0] + 0.587 * v[1] + 0.114 * v[2];
+      };
+      var worst = fills.map(function(fill) { return [title.textContent, fill, text, Math.abs(lum(fill) - lum(text))]; })
+        .sort(function(a, b) { return a[3] - b[3]; })[0];
       probe.remove();
-      var lum = function(c) { var v = c.match(/[\\d.]+/g).map(Number); return 0.299 * v[0] + 0.587 * v[1] + 0.114 * v[2]; };
-      return [title.textContent, fill, text, Math.abs(lum(fill) - lum(text))];
+      return worst;
     }).filter(function(e) { return e[3] < 100; }).map(function(e) { return e.slice(0, 3); })
   JS
 
@@ -104,19 +116,60 @@ RSpec.describe 'Rolling Month Calendar (Home Assistant)' do
   end
 
   # Colour names print in the Frame's inks, greys and tints as patterns, which get the 1-bit
-  # treatment (outlined text, weekends shaded in the header only), white text outlined in black
-  # on a dark mix; each event's text stays readable
-  it 'draws readable events in colour on the Frame' do
-    colors = custom_fields.merge(calendar_colors: 'red,gray-35,purple-30')
+  # treatment (weekends shaded in the header only). With "Color style" on Filled events every
+  # event is filled: plain text on an ink and on an even mix of two dark inks (purple-30),
+  # outlined text on a pattern of a dark and a light ink (a grey); each stays readable
+  it 'draws readable filled events in colour on the Frame' do
+    colors = custom_fields.merge(calendar_colors: 'red,gray-35,purple-30', color_style: 'fill')
     screen = trmnl.render(**FRAME, now:, custom_fields: colors, mocks:)
 
     expect(screen).to have_text('Parent-teacher meeting')
     expect(screen).to have_css('.trmnl-calendar--patterned')
-    expect(screen).to have_css('.mono-event.bg--gray-35.text-stroke')
+    expect(screen).to have_css('.mono-event--fill.bg--red', text: 'Parent-teacher meeting')
+    expect(screen).to have_css('.mono-event.bg--gray-35.text-stroke.text-stroke--black')
     expect(screen).to have_no_css('.mono-event.bg--red.text-stroke')
-    expect(screen).to have_css('.mono-event.bg--purple-30.text-stroke.text-stroke--black')
+    expect(screen).to have_css('.mono-event.bg--purple-30')
+    expect(screen).to have_no_css('.mono-event.bg--purple-30.text-stroke')
     expect(screen.evaluate(UNREADABLE_EVENTS)).to eq([])
     expect(screen).to have_no_overflow(except: CLIPPED)
+  end
+
+  # ... and by default (Automatic: Bars and bands on the Frame) only all-day events and events over several days: a
+  # timed event keeps black text on white, next to a bar in the calendar's colour, with an
+  # edge where the colour is as light as the paper (yellow)
+  it 'draws timed events with a bar in the colour on the Frame' do
+    colors = custom_fields.merge(calendar_colors: 'red,yellow,purple-30')
+    screen = trmnl.render(**FRAME, now:, custom_fields: colors, mocks:)
+
+    expect(screen).to have_css('.mono-event--bar:has(.mono-event-bar.bg--red.trmnl-bar--ink)', text: 'Parent-teacher meeting')
+    expect(screen).to have_no_css('.mono-event-bar.bg--red.trmnl-bar--edge')
+    expect(screen).to have_css('.mono-event-bar.bg--yellow.trmnl-bar--ink.trmnl-bar--edge')
+    expect(screen).to have_css('.mono-event-bar.bg--purple-30.trmnl-bar--ink')
+    expect(screen).to have_no_css(".mono-event--bar[class*='bg--']")
+    expect(screen).to have_css('.mono-event--fill.bg--red', text: 'Bin day')
+    expect(screen.evaluate(UNREADABLE_EVENTS)).to eq([])
+    expect(screen).to have_no_overflow(except: CLIPPED)
+  end
+
+  # On other screens Automatic fills every event, as ever; Bars and bands is there for the
+  # choosing: clean text next to a bar in the grey or pattern, an edge around a white one
+  %w[v2 og_png].each do |device|
+    it "draws timed events with a bar in the colour on #{device} when Color style is Bars and bands" do
+      colors = custom_fields.merge(calendar_colors: 'gray-35,white,gray-60')
+      filled = trmnl.render(device:, now:, custom_fields: colors, mocks:)
+
+      expect(filled).to have_css('.mono-event--fill.bg--gray-35', text: 'Parent-teacher meeting')
+      expect(filled).to have_no_css('.trmnl-bar--ink')
+
+      screen = trmnl.render(device:, now:, custom_fields: colors.merge(color_style: 'bars'), mocks:)
+
+      expect(screen).to have_css('.mono-event--bar:has(.mono-event-bar.bg--gray-35.trmnl-bar--ink)', text: 'Parent-teacher meeting')
+      expect(screen).to have_css('.mono-event-bar.bg--white.trmnl-bar--ink.trmnl-bar--edge')
+      expect(screen).to have_no_css('.mono-event-bar.bg--gray-35.trmnl-bar--edge')
+      expect(screen).to have_no_css(".mono-event--bar[class*='bg--']")
+      expect(screen).to have_css('.mono-event--fill.bg--gray-35', text: 'Bin day')
+      expect(screen).to have_no_overflow(except: CLIPPED)
+    end
   end
 
   # Text Scale, which an owner picks per device or playlist item: the text grows, the grid stays

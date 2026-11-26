@@ -78,6 +78,16 @@ custom_fields:
     description: Optional event background, one per calendar in the same order as the calendars above. A <a href="https://trmnl.com/framework/docs/3.3/colors" class="underline" target="_blank">TRMNL color name</a> (black, gray-10 … gray-75, red, blue-40, …) or a hex color. Names become solid greys on the TRMNL X and dither patterns on 1-bit screens; on a colour screen such as the TRMNL Frame, red, green, blue and yellow print in its own inks. Use - (or leave it empty) for the calendar's own color as its plugin shares it (Google Calendar and CalDAV calendars such as iCloud), matched to the screen's palette; none for no color.
     optional: true
     default: '-'
+  - keyname: color_style
+    field_type: select
+    name: Color style
+    group: Calendars
+    description: 'How a calendar''s color is drawn. Filled events fills every event with it. Bars and bands keeps timed events in black text next to a bar in the color, and fills only all-day events and events over several days. Automatic picks bars and bands on a color e-paper screen such as the TRMNL Frame, whose inks leave little contrast for text, and filled events on every other screen.'
+    options:
+      - Automatic: auto
+      - Bars and bands: bars
+      - Filled events: fill
+    default: auto
   - keyname: calendar_usual_week
     field_type: multi_string
     name: Usual week

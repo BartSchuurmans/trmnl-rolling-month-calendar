@@ -84,11 +84,18 @@ The [Frame](https://trmnl.com/blog/introducing-frame) is a 31.5" color screen (2
 Spectra 6). The calendar fills it like any other screen, but TRMNL.com draws its text at
 the regular size, which is small from across a room. Set **Text Scale** to Large or
 X-Large on the device (or on the calendar's playlist item): the calendar's text follows
-it, and the grid stays as it is. For colored calendars, use the panel's own inks in
-**Calendar colors**: `red`, `green`, `blue` and `yellow` print solid, other names (greys,
-`blue-40`…) as dot patterns. A calendar left at `-` takes its own color from the calendar
-plugin, matched to the nearest ink or pattern, as below (Google's Peacock, Sage, Tangerine
-and Grape).
+it, and the grid stays as it is.
+
+For colored calendars, use the panel's own inks in **Calendar colors**: `red`, `green`,
+`blue` and `yellow` print solid, and `purple` and `cyan` (a teal) as an even mix of two
+inks. Other names (greys, `orange`, `blue-40`…) are coarser dot patterns. A calendar left
+at `-` takes its own color from the calendar plugin, matched to the nearest of those six
+(or black, for a grey), as below: Google's Peacock, Sage, Tangerine and Grape.
+
+Text on an ink has much less contrast than black on white. So on the Frame only all-day
+events and events over several days are filled with the calendar's color; a timed event
+keeps its black text, next to a bar in the color. That is **Color style** on `Automatic`;
+set it to `Filled events` to fill them all, as other screens do.
 
 ![The calendar on the TRMNL Frame](docs/preview-frame.png)
 
@@ -143,6 +150,7 @@ toggles.
 |---|---|---|
 | Calendar prefixes | – | Text shown before each event title, per calendar (e.g. `W:`) |
 | Calendar colors | – | Event background per calendar: a TRMNL color name (`black`, `gray-10` … `gray-75`, `red`, `blue-40`, …) or a hex color |
+| Color style | Automatic | `Filled events` fills every event of a colored calendar; `Bars and bands` gives its timed events black text next to a bar in the color, and fills only all-day events and events over several days. `Automatic` is bars and bands on a color e-paper screen (the TRMNL Frame) and filled events on every other screen |
 | Usual week | – | Per calendar with a weekly routine (e.g. working hours), such as `Mon-Thu 08:30-17:00 Work`: only what differs from it is shown, see [Usual week](#usual-week) |
 | Usual events | Hidden | `Without times` keeps the events that match a Usual week, without their times |
 
@@ -229,15 +237,26 @@ show, with a weather forecast and **Weather temperatures** on `High and low` (se
     to a grey), dither patterns with outlined text on 1-/2-bit screens, and real
     colors on full-color screens. A color panel with a few inks, like the TRMNL Frame's,
     prints the names it has an ink for solid (`red`, `green`, `blue`, `yellow`) and the
-    rest as patterns with outlined text, like a 1-bit screen.
+    rest as patterns of two inks. Its inks are darker than they look on a monitor, so
+    text is white on every ink but yellow, and on a mix of two dark inks (`purple`,
+    `cyan`, `red-25`); a pattern of a dark and a light ink (`orange`, `pink`, the greys)
+    gets outlined text, like a 1-bit screen.
   - Hex colors are painted as-is. A 1-bit screen snaps them to black or white.
   - On TRMNL.com, a calendar whose color is `-` or missing takes the color its calendar
     plugin shares, if any: the calendar's color from Google Calendar and CalDAV (iCloud,
     Fastmail, ...), and Google's event colors.
     It becomes the framework color nearest to it: a grey as light as it on greyscale
-    screens, the nearest hue on a color panel with a few inks (the panel's own ink for a
-    vivid color, solid), and the color itself on full-color screens. Use `none` for no
-    color.
+    screens, and the color itself on full-color screens. A color panel with a few inks
+    gets only what it prints evenly: the nearest ink, or `purple` or `cyan`, and black or
+    white for a grey. So two calendars in similar colors (red and orange) can come out
+    the same there; give one its own color. Use `none` for no color.
+  - **Color style** decides what is filled. `Bars and bands` fills only all-day events
+    and events over several days, while a timed event gets a bar in the color (wider than
+    the grey one, with an edge for white) and keeps black text. `Filled events` fills
+    every event, as described above. `Automatic`, the default, is bars and bands on a
+    color panel with a few inks and filled events on every other screen. On the TRMNL X
+    and OG a fill tells calendars apart better than a bar in a grey can, but bars and
+    bands spares a 1-bit screen its outlined text on patterns.
   - `white` (or `#fff`) gets a thin grey outline, dotted on 1-/2-bit screens, like the
     grid lines, so its events don't vanish on a white day. Where such an event goes on
     in another week, that side of the outline stays open.

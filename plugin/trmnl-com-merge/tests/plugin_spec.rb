@@ -72,19 +72,39 @@ RSpec.describe 'Rolling Month Calendar' do
   # calendar without one, matched to the screen's palette. Events that come without one
   # (CalDAV drops it from an event with a COLOR of its own) take the calendar's.
   SHARED = { 'Swimming lessons' => '#33B679' }.freeze # Sage
+  let(:shared) do
+    variables.transform_values do |data|
+      next data unless data.is_a?(Hash) && data['events']
+
+      data.merge('events' => data['events'].map { |e| e.merge('background_color' => SHARED[e['summary']]).compact })
+    end
+  end
+
+  # ... a grey on the TRMNL X; on the Frame the green ink, with "Color style" on Filled events
   [['v2', 'bg--gray-'], ['frame', 'bg--green']].each do |device, fill|
     it "draws the colours calendar plugins share on #{device}" do
-      shared = variables.transform_values do |data|
-        next data unless data.is_a?(Hash) && data['events']
-        data.merge('events' => data['events'].map { |e| e.merge('background_color' => SHARED[e['summary']]).compact })
-      end
       palette = device == 'frame' ? { palette: 'color-6a' } : {}
-      screen = trmnl.render(device:, **palette, now:, variables: shared, custom_fields:)
+      screen = trmnl.render(device:, **palette, now:, variables: shared,
+                            custom_fields: custom_fields.merge('color_style' => 'fill'))
 
-      expect(screen).to have_css("[class*='#{fill}']", text: 'Swimming lessons')
-      expect(screen).to have_css("[class*='#{fill}']", text: 'Bin day')
+      expect(screen).to have_css(".mono-event--fill[class*='#{fill}']", text: 'Swimming lessons')
+      expect(screen).to have_css(".mono-event--fill[class*='#{fill}']", text: 'Bin day')
       expect(screen).to have_no_problems
     end
+  end
+
+  # ... and by default on the Frame (Automatic: Bars and bands there) a bar in the ink next to a timed event,
+  # which keeps its black text on white; the all-day event stays a band, with white text
+  it 'draws the colours calendar plugins share as bars and bands on the Frame' do
+    screen = trmnl.render(**FRAME, now:, variables: shared, custom_fields:)
+
+    expect(screen).to have_css('.mono-event--bar:has(.mono-event-bar.bg--green.trmnl-bar--ink)', text: 'Swimming lessons')
+    expect(screen).to have_no_css(".mono-event--bar[class*='bg--']")
+    expect(screen).to have_css('.mono-event--fill.bg--green', text: 'Bin day')
+    expect(screen.evaluate(<<~JS)).to eq('rgb(255, 255, 255)')
+      getComputedStyle(document.querySelector('.mono-event--fill.bg--green .mono-event-title')).color
+    JS
+    expect(screen).to have_no_problems
   end
 
   it 'draws an empty grid when no calendar is chosen' do
