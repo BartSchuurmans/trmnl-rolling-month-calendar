@@ -230,8 +230,17 @@ greys and any colour it has no ink for as dither patterns (a `background-image`)
 black, white, red, green, blue and yellow are solid. So the 1-bit treatment (header-only
 weekend shading, dotted lines, outlined text on patterned fills) keys off
 `.trmnl-calendar--patterned`, which the JS sets from a probe of `bg--gray-75`, never off
-`.screen--1bit`/`--2bit`; a fill's own pattern is probed per token, and a dark mix
-(`purple-30`, `green-25`) gets white text outlined in black, judged from the token's colour. `render.mjs --device
+`.screen--1bit`/`--2bit`; a fill's own pattern is probed per token. The inks print darker
+than their screen colours (green is a mid-tone), so on a panel with a few inks (`inkPanel`:
+`screen--color-*` but not `color-full`) the JS reads the inks a fill is made of from the
+probe (`inkMix`: background colour plus the pattern SVG's fills): all dark (an ink, `purple`,
+`cyan`, `red-25`) takes plain white text, all light (`yellow`, its tints) plain black, and
+only a mix of both the outline. Shared colours snap to what prints evenly (`PRINTED_HUES`),
+and `color_style` (default `bars`) draws a coloured calendar's timed events as a bar in the
+colour with black text, filling only all-day and multi-day ones; all of it is for those
+panels only, the X and OG must not change. Judge Frame designs in ink colours, not pure RGB
+(the framework's `screen--preview-colors` classes), and view dither patterns 1:1 or
+Lanczos-scaled: image viewers alias them into wrong colours. `render.mjs --device
 frame` maps to the six inks; at `--scale regular` (TRMNL.com) Chromium blurs the pixel
 fonts, which TRMNL (Firefox) doesn't, so trust the trmnlp specs' Frame screens there
 (`palette: 'color-6a'`: trmnlp picks `bw` by itself, upstream item 51).

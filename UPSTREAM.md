@@ -90,10 +90,14 @@ treats its native plugins as source-available and is fine with them being remixe
   (`colorize_events`). HA has none, so each calendar gets a configured colour. Framework
   colour names go through `bg--*` classes; on patterned fills (1-/2-bit, tints on a colour
   panel) the text gets `text-stroke`, like upstream's `adaptiveEventStroke`; on a colour
-  panel a dark mix gets white text outlined in black (`text-stroke--black`). A calendar
+  panel a mix of a dark and a light ink gets it too (white text outlined in black,
+  `text-stroke--black`, where it is mostly dark), while an ink or an even mix takes plain
+  white or black text. A calendar
   without a configured colour takes the one TRMNL's calendar plugins share per event
   (Google's `background_color`, upstream's `colorize_events` colours), matched to the
-  nearest framework colour for the screen.
+  nearest framework colour for the screen. On a colour panel with a few inks (the TRMNL
+  Frame), **Color style** leaves a coloured calendar's timed events unfilled by default: a
+  bar in the colour and black text, as upstream draws events without a colour.
 - **Added**: optional per-calendar prefixes, a line above the grid naming any
   calendar that failed to load, and an optional daily weather forecast (icon and high,
   optionally the low) next to the day numbers from today on: from a Home Assistant

@@ -92,8 +92,12 @@ render colors-x --set calendar_colors=black,-,gray-65 --set calendar_labels=-,M:
 # The TRMNL Frame (Spectra 6) as LaraPaper draws it (xxlarge): colour names print in its inks,
 # greys as patterns (drawn like 1-bit). TRMNL.com draws it at regular with pixel fonts, which
 # Chromium blurs at that size; the TRMNL.com specs (trmnlp test, Firefox as on TRMNL) cover that.
+# A coloured calendar's timed events get a bar in the colour there (color_style: bars) ...
 render frame --device frame --set calendar_colors=red,blue,gray-35 --set calendar_labels=-,M:,S: --set weather_entity=weather.forecast_home
 render frame-portrait --device frame-portrait --set calendar_colors=green,-,gray-60 --expect-events
+render frame-dark --device frame --dark --set calendar_colors=yellow,black,purple --set calendar_labels=-,M:,S:
+# ... or every event filled, as on other screens: an ink, an even mix of two (purple), a pattern
+render frame-fill --device frame --set color_style=fill --set calendar_colors=red,purple,gray-35 --set calendar_labels=-,M:,S: --expect-events
 # Dark mode (the plugin's dark_mode setting), with coloured calendars and a forecast
 render dark-x --dark --set calendar_colors=gray-35,white,gray-60 --set calendar_labels=-,M:,S: --set weather_entity=weather.forecast_home
 render dark-og --device og --dark --set calendar_colors=gray-35,white,gray-60 --set calendar_labels=-,M:,S:
@@ -137,6 +141,7 @@ render merge-regular-x --merge --scale regular --expect-events
 render shared-colors-x --shared-colors --work --expect-events --set calendar_colors=-,-,gray-60
 render shared-colors-og --device og --shared-colors --work --expect-events
 render shared-colors-frame --device frame --shared-colors --work --expect-events
+render shared-colors-frame-fill --device frame --shared-colors --work --expect-events --set color_style=fill
 render merge-small-x --merge --scale small --expect-events
 # ... with a forecast from the Weather dropdown: TRMNL's Weather plugin, an Open-Meteo recipe
 render merge-weather-trmnl-x --merge-weather trmnl --expect-events --set weather_temperatures=high_low \

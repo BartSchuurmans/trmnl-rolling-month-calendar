@@ -256,6 +256,14 @@
   /* the low smaller, so it fits more often; not on 1-/2-bit, whose pixel fonts don't scale */
   .screen--4bit .trmnl-calendar .trmnl-weather-low { font-size: 0.8em; margin-left: calc(-1px * var(--mono-u)); }
 
+  /* "Color style" set to bars and bands, on a colour panel with a few inks (the TRMNL
+     Frame): a coloured calendar's timed event keeps black text on paper, next to a bar in
+     the calendar's colour, wider than the grey one so the ink shows; a colour close to the
+     cell's (yellow or white on paper) gets an edge */
+  .trmnl-calendar .trmnl-bar--ink { width: calc(8px * var(--mono-u)); border-radius: calc(1px * var(--mono-u)); }
+  .trmnl-calendar .mono-event--narrow .trmnl-bar--ink { width: calc(4px * var(--mono-u)); }
+  .trmnl-calendar .trmnl-bar--edge { outline: 1px solid var(--mono-ink); outline-offset: -1px; }
+
   .trmnl-calendar-error { font-weight: 700; }
 </style>
 
@@ -574,9 +582,10 @@
         start: start,
         end: end,
         allDay: allDay,
-        // coloured calendars fill every event, timed ones included, instead of a dot;
-        // otherwise single-day all-day events get the timed events' bar ('list-item' is
-        // FullCalendar's dot display) and only multi-day ones keep a filled band
+        // coloured calendars fill every event, timed ones included, instead of a dot (but
+        // see "Color style" below, on colour panels); otherwise single-day all-day events
+        // get the timed events' bar ('list-item' is FullCalendar's dot display) and only
+        // multi-day ones keep a filled band
         display: color ? 'block' : (allDay && isSingleDay(start, end) ? 'list-item' : 'auto'),
         extendedProps: { summary: ev.summary, description: ev.description || '', location: ev.location || '', color: color }
       };
@@ -867,7 +876,7 @@
         var probe = document.createElement('div');
         probe.style.display = 'none';
         node.appendChild(probe);
-        var paintedBy = {}, patternedBy = {};
+        var paintedBy = {}, patternedBy = {}, partsBy = {};
         var probeToken = function(token) {
           if (!(token in paintedBy)) {
             probe.className = 'bg--' + token;
@@ -875,6 +884,16 @@
             paintedBy[token] = /^rgba\(.*,\s*0\)$/.test(style.backgroundColor) ? '' : style.backgroundColor;  // no such class
             // a dither pattern is an image; a solid colour (an ink, or any grey on 4-bit) none
             patternedBy[token] = /url\(/.test(style.backgroundImage);
+            // the colours the fill is made of: its background colour, and those of its
+            // pattern, an SVG of one path per colour (black where it names none)
+            var parts = paintedBy[token] ? [paintedBy[token]] : [];
+            if (patternedBy[token]) {
+              try {
+                var paths = decodeURIComponent(style.backgroundImage).match(/<path\b[^>]*>/g) || [];
+                parts = paths.length ? parts.concat(paths.map(function(path) { return (/\bfill=['"]([^'"]+)['"]/.exec(path) || [0, 'black'])[1]; })) : [];
+              } catch (e) { parts = []; }
+            }
+            partsBy[token] = parts;
           }
         };
         var paintOf = function(token) { probeToken(token); return paintedBy[token]; };
@@ -886,12 +905,45 @@
         var patternedGreys = isPatterned('gray-75');
         // A colour a calendar plugin shares (sharedColor) becomes the framework token nearest
         // to it, so each screen draws it its own way: a grey of the same lightness on greyscale
-        // screens, the nearest hue on colour panels with a few inks (an ink itself, solid, for
-        // a vivid mid-tone), and as-is on full-colour screens. Matched against the raw palette
+        // screens, an ink or an even mix of two on colour panels with a few inks (see
+        // inkPanel), and as-is on full-colour screens. Matched against the raw palette
         // (--<token>), which dark mode and themes leave alone; the bg--* class paints it.
         var screenClass = (node.closest('.screen') || document.documentElement).className;
         var colourScreen = /\bscreen--color-/.test(screenClass);
         var fullColour = /\bscreen--color-full\b/.test(screenClass);
+        // A colour panel with a few inks (the TRMNL Frame: black, white, red, yellow, green,
+        // blue). Its inks are darker than their colours on a screen: only yellow is as light
+        // as the paper, the others take white text. What the panel has no ink for is a
+        // pattern of two inks, even where both are dark (red and blue for purple) or both
+        // light (yellow and white), and coarse where one is dark and one light (orange,
+        // pink, the greys). inkMix says which: 'dark', 'light' or 'mixed' (also when the
+        // pattern can't be read).
+        var inkPanel = colourScreen && !fullColour;
+        // a CSS colour's lightness, 0 to 255 (the probe resolves names and hex alike)
+        var lightness = function(css) {
+          probe.style.color = '';
+          probe.style.color = css;
+          var rgb = /^rgba?\(\s*(\d+)[\s,]+(\d+)[\s,]+(\d+)/.exec(probe.style.color ? getComputedStyle(probe).color : '');
+          probe.style.color = '';
+          return rgb ? 0.299 * rgb[1] + 0.587 * rgb[2] + 0.114 * rgb[3] : 0;
+        };
+        var isLightInk = function(css) { return lightness(css) >= 200; };
+        // a bar in a colour close to the cell's gets an edge: yellow and white on paper, and
+        // in dark mode black
+        var paperIsLight = isLightInk(screenStyles.getPropertyValue('--framework-canvas-bg').trim() || '#fff');
+        var likePaper = function(css) { return paperIsLight ? isLightInk(css) : lightness(css) < 40; };
+        var mixBy = {};
+        var inkMix = function(token) {
+          if (!(token in mixBy)) {
+            probeToken(token);
+            var light = partsBy[token].filter(isLightInk).length;
+            mixBy[token] = !partsBy[token].length ? 'mixed' : !light ? 'dark' : light === partsBy[token].length ? 'light' : 'mixed';
+          }
+          return mixBy[token];
+        };
+        // The hues those panels print (the inks as they look, and the even mixes), for
+        // matching a shared colour: a sky blue is the blue ink, not the darker teal
+        var PRINTED_HUES = { red: 0, orange: 30, yellow: 52, green: 120, cyan: 185, blue: 225, purple: 290 };
         var SHADES = [10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75];
         var rgbOf = function(c) {
           var m = /^#?([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(String(c).trim());
@@ -919,10 +971,23 @@
           var rgb = rgbOf(hex);
           if (!rgb || fullColour) return { hex: hex };
           var c = hsl(rgb);
+          var hueDiff = function(a, b) { var d = Math.abs(a - b) % 360; return d > 180 ? 360 - d : d; };
+          if (inkPanel) {
+            // only what the panel prints evenly: black or white for a grey, else the nearest
+            // ink, or mix of two dark inks (purple, teal); an ink wins a near tie. Nothing
+            // near (a blue on a black, white, red and yellow panel): as on other colour panels
+            if (c.s < 0.2 || c.l < 0.12 || c.l > 0.93) return { token: c.l < 0.6 ? 'black' : 'white' };
+            var even = null, evenDiff = Infinity;
+            Object.keys(PRINTED_HUES).forEach(function(token) {
+              if (inkMix(token) === 'mixed') return;
+              var diff = hueDiff(PRINTED_HUES[token], c.h) - (isPatterned(token) ? 0 : 15);
+              if (diff < evenDiff) { even = token; evenDiff = diff; }
+            });
+            if (even && evenDiff <= 45) return { token: even };
+          }
           if (!colourScreen || c.s < 0.2) {
             return { token: nearest(SHADES.map(function(n) { return 'gray-' + n; }), luma, luma(rgb)) || 'gray-50' };
           }
-          var hueDiff = function(a, b) { var d = Math.abs(a - b) % 360; return d > 180 ? 360 - d : d; };
           // by each hue's -40 shade (the bare ones may be colour names: --red: red); a hue the
           // panel has an ink for (prints solid) wins a near tie, so a sage green is green
           var hue = nearest(['red', 'orange', 'yellow', 'lime', 'green', 'cyan', 'blue', 'violet', 'purple', 'pink'].map(function(h) { return h + '-40'; }),
@@ -1000,6 +1065,13 @@
         // is a dither pattern (1-/2-bit, a grey on the Frame), text in the ink colour with
         // the framework's contrast outline (text-stroke), like upstream's adaptiveEventStroke;
         // on a colour panel, white text outlined in black on a dark mix.
+        // Colour panels with a few inks (inkPanel): white text on every ink but yellow, and
+        // on an even mix of dark inks; black on yellow and its tints; the outline only on a
+        // pattern of a dark and a light ink. And "Color style" (colorStyle) set to bars and
+        // bands, the default: a coloured calendar's timed events within a day aren't filled
+        // but drawn like the others, black on paper, with a bar in the calendar's colour;
+        // its all-day events and those over several days stay bands.
+        var barStyle = inkPanel && settings.colorStyle !== 'fill';
         var matched = {};
         built.events.forEach(function(ev) {
           var shared = ev.extendedProps.color && ev.extendedProps.color.shared && ev.extendedProps.color.hex;
@@ -1018,12 +1090,36 @@
           // gets white text outlined in black; 1-/2-bit keep the ink colour, as upstream
           var darkMix = patterned && depth > 2 && isDark(raw);
           ev.contrastColor = darkMix ? 'var(--white)' : patterned ? 'var(--mono-ink)' : !isDark(painted) ? 'var(--black)' : 'var(--white)';
+          // a hex colour is painted as given: the panel prints the ink nearest to it
+          var inks = !inkPanel ? 'mixed' : color.token ? inkMix(color.token) : 'solid';
+          if (inks === 'dark' || inks === 'light') {
+            ev.contrastColor = inks === 'dark' ? 'var(--white)' : 'var(--black)';
+            patterned = darkMix = false;
+          }
+          var withinDay = !ev.allDay && (!ev.end || ev.start.slice(0, 10) === new Date(Date.parse(ev.end + 'Z') - 1).toISOString().slice(0, 10));
+          if (barStyle && ev.extendedProps.color && withinDay && !ev.extendedProps.off) {
+            ev.display = 'list-item';
+            delete ev.color;
+            delete ev.contrastColor;
+            ev.extendedProps.barColor = color.hex || '';
+            ev.extendedProps.barClass = (color.hex ? '' : 'bg--' + color.token + ' ') + 'trmnl-bar--ink' +
+              (inks !== 'mixed' && likePaper(painted) ? ' trmnl-bar--edge' : '');
+            return;
+          }
           if (patterned) classes.push('text-stroke', 'text-stroke--small');
           if (darkMix) classes.push('text-stroke--black');
           ev.extendedProps.fillClass = classes.join(' ');
         });
         node.removeChild(probe);
         baseOpts.rowEventClass = function(info) { return info.event.extendedProps.fillClass; };
+        if (barStyle) {
+          baseOpts.listItemEventBeforeClass = function(info) { return info.event.extendedProps.barClass || 'bg--gray-50'; };
+          // a hex colour has no class to paint the bar with
+          baseOpts.eventDidMount = function(info) {
+            var bar = info.event.extendedProps.barColor && info.el.querySelector('.mono-event-bar');
+            if (bar) bar.style.backgroundColor = info.event.extendedProps.barColor;
+          };
+        }
 
         // Rolling month fills the screen with as many whole weeks as actually fit.
         // Render the max first — 6, because only 6 weeks of events are fetched ahead
@@ -1169,6 +1265,7 @@
          "calendarEntities": {% if source != "ha" %}""{% else %}{{ s.calendars | default: "" | json | escape }}{% endif %},
          "calendarPrefixes": {{ s.calendar_labels | default: "" | json | escape }},
          "calendarColors": {{ s.calendar_colors | default: "" | json | escape }},
+         "colorStyle": {{ s.color_style | default: "bars" | json | escape }},
          "calendarUsualWeeks": {{ s.calendar_usual_week | default: "" | json | escape }},
          "usualEvents": {{ s.usual_events | default: "hide" | json | escape }},
          "weatherEntity": {% if source != "merge" and s.weather_entity contains "weather." %}{{ s.weather_entity | strip | json | escape }}{% else %}""{% endif %},
