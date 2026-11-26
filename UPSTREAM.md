@@ -95,9 +95,10 @@ treats its native plugins as source-available and is fine with them being remixe
   white or black text. A calendar
   without a configured colour takes the one TRMNL's calendar plugins share per event
   (Google's `background_color`, upstream's `colorize_events` colours), matched to the
-  nearest framework colour for the screen. On a colour panel with a few inks (the TRMNL
-  Frame), **Color style** leaves a coloured calendar's timed events unfilled by default: a
-  bar in the colour and black text, as upstream draws events without a colour.
+  nearest framework colour for the screen. **Color style** can leave a coloured calendar's
+  timed events unfilled (a bar in the colour and black text, as upstream draws events
+  without a colour), which is the default on a colour panel with a few inks (the TRMNL
+  Frame).
 - **Added**: optional per-calendar prefixes, a line above the grid naming any
   calendar that failed to load, and an optional daily weather forecast (icon and high,
   optionally the low) next to the day numbers from today on: from a Home Assistant

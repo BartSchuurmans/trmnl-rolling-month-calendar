@@ -94,8 +94,8 @@ at `-` takes its own color from the calendar plugin, matched to the nearest of t
 
 Text on an ink has much less contrast than black on white. So on the Frame only all-day
 events and events over several days are filled with the calendar's color; a timed event
-keeps its black text, next to a bar in the color. Set **Color style** to `Filled events`
-to fill them all, as other screens do.
+keeps its black text, next to a bar in the color. That is **Color style** on `Automatic`;
+set it to `Filled events` to fill them all, as other screens do.
 
 ![The calendar on the TRMNL Frame](docs/preview-frame.png)
 
@@ -150,7 +150,7 @@ toggles.
 |---|---|---|
 | Calendar prefixes | – | Text shown before each event title, per calendar (e.g. `W:`) |
 | Calendar colors | – | Event background per calendar: a TRMNL color name (`black`, `gray-10` … `gray-75`, `red`, `blue-40`, …) or a hex color |
-| Color style | Bars and bands | On a color e-paper screen (the TRMNL Frame): `Bars and bands` gives a colored calendar's timed events black text next to a bar in its color, and fills only all-day events and events over several days; `Filled events` fills every event. Other screens always fill |
+| Color style | Automatic | `Filled events` fills every event of a colored calendar; `Bars and bands` gives its timed events black text next to a bar in the color, and fills only all-day events and events over several days. `Automatic` is bars and bands on a color e-paper screen (the TRMNL Frame) and filled events on every other screen |
 | Usual week | – | Per calendar with a weekly routine (e.g. working hours), such as `Mon-Thu 08:30-17:00 Work`: only what differs from it is shown, see [Usual week](#usual-week) |
 | Usual events | Hidden | `Without times` keeps the events that match a Usual week, without their times |
 
@@ -250,10 +250,13 @@ show, with a weather forecast and **Weather temperatures** on `High and low` (se
     gets only what it prints evenly: the nearest ink, or `purple` or `cyan`, and black or
     white for a grey. So two calendars in similar colors (red and orange) can come out
     the same there; give one its own color. Use `none` for no color.
-  - On a color panel with a few inks, **Color style** decides what is filled: by default
-    (`Bars and bands`) only all-day events and events over several days, while a timed
-    event gets a bar in the color (wider than the grey one) and keeps black text;
-    `Filled events` fills every event, as described above.
+  - **Color style** decides what is filled. `Bars and bands` fills only all-day events
+    and events over several days, while a timed event gets a bar in the color (wider than
+    the grey one, with an edge for white) and keeps black text. `Filled events` fills
+    every event, as described above. `Automatic`, the default, is bars and bands on a
+    color panel with a few inks and filled events on every other screen. On the TRMNL X
+    and OG a fill tells calendars apart better than a bar in a grey can, but bars and
+    bands spares a 1-bit screen its outlined text on patterns.
   - `white` (or `#fff`) gets a thin grey outline, dotted on 1-/2-bit screens, like the
     grid lines, so its events don't vanish on a white day. Where such an event goes on
     in another week, that side of the outline stays open.

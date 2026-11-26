@@ -222,10 +222,12 @@
     height: calc(2px * var(--mono-u));
     background: var(--fc-event-contrast-color, var(--mono-ink));
   }
-  /* 1-/2-bit pixel fonts are a few pixels high: a thick strike would cover them */
-  .trmnl-calendar.trmnl-calendar--patterned .mono-event.trmnl-event--off::after { top: 50%; height: 1px; }
+  /* 1-/2-bit pixel fonts are a few pixels high: a thick strike would cover them. Not where
+     such a screen has smooth text (.trmnl-calendar--pixel-text is set by the JS): the Frame
+     as LaraPaper draws it keeps the strike above */
+  .trmnl-calendar.trmnl-calendar--patterned.trmnl-calendar--pixel-text .mono-event.trmnl-event--off::after { top: 50%; height: 1px; }
   /* on a dither pattern a 1px line gets lost: 2px there (a paper edge would cut the glyphs) */
-  .trmnl-calendar.trmnl-calendar--patterned .mono-event.trmnl-event--off.text-stroke::after { top: calc(50% - 2px); height: 2px; }
+  .trmnl-calendar.trmnl-calendar--patterned.trmnl-calendar--pixel-text .mono-event.trmnl-event--off:is(.text-stroke, .trmnl-event--pattern)::after { top: calc(50% - 2px); height: 2px; }
   /* "Usual events" set to "Without times": a usual event without its times, and with a
      regular-weight title, so the events that differ stand out (not on 1-/2-bit: the regular
      pixel font breaks up at some positions) */
@@ -256,10 +258,10 @@
   /* the low smaller, so it fits more often; not on 1-/2-bit, whose pixel fonts don't scale */
   .screen--4bit .trmnl-calendar .trmnl-weather-low { font-size: 0.8em; margin-left: calc(-1px * var(--mono-u)); }
 
-  /* "Color style" set to bars and bands, on a colour panel with a few inks (the TRMNL
-     Frame): a coloured calendar's timed event keeps black text on paper, next to a bar in
-     the calendar's colour, wider than the grey one so the ink shows; a colour close to the
-     cell's (yellow or white on paper) gets an edge */
+  /* "Color style" as bars and bands (by itself on a colour panel with a few inks, the TRMNL
+     Frame; elsewhere when chosen): a coloured calendar's timed event keeps black text on
+     paper, next to a bar in the calendar's colour, wider than the grey one so the colour
+     shows; a colour close to the cell's (yellow or white on paper) gets an edge */
   .trmnl-calendar .trmnl-bar--ink { width: calc(8px * var(--mono-u)); border-radius: calc(1px * var(--mono-u)); }
   .trmnl-calendar .mono-event--narrow .trmnl-bar--ink { width: calc(4px * var(--mono-u)); }
   .trmnl-calendar .trmnl-bar--edge { outline: 1px solid var(--mono-ink); outline-offset: -1px; }
@@ -929,9 +931,9 @@
         };
         var isLightInk = function(css) { return lightness(css) >= 200; };
         // a bar in a colour close to the cell's gets an edge: yellow and white on paper, and
-        // in dark mode black
+        // in dark mode black (a 1-bit screen prints a hex colour as the nearer of the two)
         var paperIsLight = isLightInk(screenStyles.getPropertyValue('--framework-canvas-bg').trim() || '#fff');
-        var likePaper = function(css) { return paperIsLight ? isLightInk(css) : lightness(css) < 40; };
+        var likePaper = function(css) { return paperIsLight ? lightness(css) >= (depth === 1 ? 128 : 200) : lightness(css) < (depth === 1 ? 128 : 40); };
         var mixBy = {};
         var inkMix = function(token) {
           if (!(token in mixBy)) {
@@ -1014,6 +1016,8 @@
             node.style.setProperty('--mono-event-font-size', 'calc(' + 16 * eventScale + 'px * ' + textScale + ')');
             node.style.setProperty('--mono-event-line-height', 'calc(' + 22 * eventScale + 'px * ' + textScale + ')');
           }
+        } else {
+          node.classList.add('trmnl-calendar--pixel-text');
         }
         var shadeClass = function(info) {
           return (info.dow === 0 || info.dow === 6) && settings.shadeWeekends ? 'bg--gray-75' : '';
@@ -1067,11 +1071,13 @@
         // on a colour panel, white text outlined in black on a dark mix.
         // Colour panels with a few inks (inkPanel): white text on every ink but yellow, and
         // on an even mix of dark inks; black on yellow and its tints; the outline only on a
-        // pattern of a dark and a light ink. And "Color style" (colorStyle) set to bars and
-        // bands, the default: a coloured calendar's timed events within a day aren't filled
-        // but drawn like the others, black on paper, with a bar in the calendar's colour;
-        // its all-day events and those over several days stay bands.
-        var barStyle = inkPanel && settings.colorStyle !== 'fill';
+        // pattern of a dark and a light ink.
+        // "Color style" (colorStyle) as bars and bands: a coloured calendar's timed events
+        // within a day aren't filled but drawn like the others, black on paper, with a bar
+        // in the calendar's colour; its all-day events and those over several days stay
+        // bands. Automatic picks that on colour panels with a few inks, where text on a
+        // fill is hard to read, and filled events on every other screen, as before.
+        var barStyle = settings.colorStyle === 'bars' || (inkPanel && settings.colorStyle !== 'fill');
         var matched = {};
         built.events.forEach(function(ev) {
           var shared = ev.extendedProps.color && ev.extendedProps.color.shared && ev.extendedProps.color.hex;
@@ -1092,6 +1098,9 @@
           ev.contrastColor = darkMix ? 'var(--white)' : patterned ? 'var(--mono-ink)' : !isDark(painted) ? 'var(--black)' : 'var(--white)';
           // a hex colour is painted as given: the panel prints the ink nearest to it
           var inks = !inkPanel ? 'mixed' : color.token ? inkMix(color.token) : 'solid';
+          var coarse = patterned && inks === 'mixed';
+          // a pattern, also where its text needs no outline (the Frame's purple): see the strike of a day off
+          if (patterned) classes.push('trmnl-event--pattern');
           if (inks === 'dark' || inks === 'light') {
             ev.contrastColor = inks === 'dark' ? 'var(--white)' : 'var(--black)';
             patterned = darkMix = false;
@@ -1103,7 +1112,7 @@
             delete ev.contrastColor;
             ev.extendedProps.barColor = color.hex || '';
             ev.extendedProps.barClass = (color.hex ? '' : 'bg--' + color.token + ' ') + 'trmnl-bar--ink' +
-              (inks !== 'mixed' && likePaper(painted) ? ' trmnl-bar--edge' : '');
+              (!coarse && likePaper(painted) ? ' trmnl-bar--edge' : '');
             return;
           }
           if (patterned) classes.push('text-stroke', 'text-stroke--small');
@@ -1265,7 +1274,7 @@
          "calendarEntities": {% if source != "ha" %}""{% else %}{{ s.calendars | default: "" | json | escape }}{% endif %},
          "calendarPrefixes": {{ s.calendar_labels | default: "" | json | escape }},
          "calendarColors": {{ s.calendar_colors | default: "" | json | escape }},
-         "colorStyle": {{ s.color_style | default: "bars" | json | escape }},
+         "colorStyle": {{ s.color_style | default: "auto" | json | escape }},
          "calendarUsualWeeks": {{ s.calendar_usual_week | default: "" | json | escape }},
          "usualEvents": {{ s.usual_events | default: "hide" | json | escape }},
          "weatherEntity": {% if source != "merge" and s.weather_entity contains "weather." %}{{ s.weather_entity | strip | json | escape }}{% else %}""{% endif %},

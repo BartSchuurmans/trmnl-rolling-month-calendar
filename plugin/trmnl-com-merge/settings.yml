@@ -82,11 +82,12 @@ custom_fields:
     field_type: select
     name: Color style
     group: Calendars
-    description: 'How a calendar''s color is drawn on a color e-paper screen such as the TRMNL Frame, whose inks leave less contrast for text than black on white. Bars and bands keeps timed events in black text next to a bar in the color, and fills all-day events and events over several days. Filled events fills every event, as other screens always do.'
+    description: 'How a calendar''s color is drawn. Filled events fills every event with it. Bars and bands keeps timed events in black text next to a bar in the color, and fills only all-day events and events over several days. Automatic picks bars and bands on a color e-paper screen such as the TRMNL Frame, whose inks leave little contrast for text, and filled events on every other screen.'
     options:
+      - Automatic: auto
       - Bars and bands: bars
       - Filled events: fill
-    default: bars
+    default: auto
   - keyname: calendar_usual_week
     field_type: multi_string
     name: Usual week

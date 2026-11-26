@@ -134,7 +134,7 @@ RSpec.describe 'Rolling Month Calendar (Home Assistant)' do
     expect(screen).to have_no_overflow(except: CLIPPED)
   end
 
-  # ... and by default (Bars and bands) only all-day events and events over several days: a
+  # ... and by default (Automatic: Bars and bands on the Frame) only all-day events and events over several days: a
   # timed event keeps black text on white, next to a bar in the calendar's colour, with an
   # edge where the colour is as light as the paper (yellow)
   it 'draws timed events with a bar in the colour on the Frame' do
@@ -149,6 +149,27 @@ RSpec.describe 'Rolling Month Calendar (Home Assistant)' do
     expect(screen).to have_css('.mono-event--fill.bg--red', text: 'Bin day')
     expect(screen.evaluate(UNREADABLE_EVENTS)).to eq([])
     expect(screen).to have_no_overflow(except: CLIPPED)
+  end
+
+  # On other screens Automatic fills every event, as ever; Bars and bands is there for the
+  # choosing: clean text next to a bar in the grey or pattern, an edge around a white one
+  %w[v2 og_png].each do |device|
+    it "draws timed events with a bar in the colour on #{device} when Color style is Bars and bands" do
+      colors = custom_fields.merge(calendar_colors: 'gray-35,white,gray-60')
+      filled = trmnl.render(device:, now:, custom_fields: colors, mocks:)
+
+      expect(filled).to have_css('.mono-event--fill.bg--gray-35', text: 'Parent-teacher meeting')
+      expect(filled).to have_no_css('.trmnl-bar--ink')
+
+      screen = trmnl.render(device:, now:, custom_fields: colors.merge(color_style: 'bars'), mocks:)
+
+      expect(screen).to have_css('.mono-event--bar:has(.mono-event-bar.bg--gray-35.trmnl-bar--ink)', text: 'Parent-teacher meeting')
+      expect(screen).to have_css('.mono-event-bar.bg--white.trmnl-bar--ink.trmnl-bar--edge')
+      expect(screen).to have_no_css('.mono-event-bar.bg--gray-35.trmnl-bar--edge')
+      expect(screen).to have_no_css(".mono-event--bar[class*='bg--']")
+      expect(screen).to have_css('.mono-event--fill.bg--gray-35', text: 'Bin day')
+      expect(screen).to have_no_overflow(except: CLIPPED)
+    end
   end
 
   # Text Scale, which an owner picks per device or playlist item: the text grows, the grid stays

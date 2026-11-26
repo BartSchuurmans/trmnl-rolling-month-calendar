@@ -93,7 +93,7 @@ RSpec.describe 'Rolling Month Calendar' do
     end
   end
 
-  # ... and by default on the Frame (Bars and bands) a bar in the ink next to a timed event,
+  # ... and by default on the Frame (Automatic: Bars and bands there) a bar in the ink next to a timed event,
   # which keeps its black text on white; the all-day event stays a band, with white text
   it 'draws the colours calendar plugins share as bars and bands on the Frame' do
     screen = trmnl.render(**FRAME, now:, variables: shared, custom_fields:)

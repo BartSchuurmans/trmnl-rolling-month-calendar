@@ -236,9 +236,10 @@ than their screen colours (green is a mid-tone), so on a panel with a few inks (
 probe (`inkMix`: background colour plus the pattern SVG's fills): all dark (an ink, `purple`,
 `cyan`, `red-25`) takes plain white text, all light (`yellow`, its tints) plain black, and
 only a mix of both the outline. Shared colours snap to what prints evenly (`PRINTED_HUES`),
-and `color_style` (default `bars`) draws a coloured calendar's timed events as a bar in the
-colour with black text, filling only all-day and multi-day ones; all of it is for those
-panels only, the X and OG must not change. Judge Frame designs in ink colours, not pure RGB
+and `color_style` on `auto` (the default) draws a coloured calendar's timed events as a bar
+in the colour with black text, filling only all-day and multi-day ones. Text colours, the
+snapping and `auto`'s bars are for those panels only: the X and OG must not change, unless
+the owner picks `bars` (any screen) themselves. Judge Frame designs in ink colours, not pure RGB
 (the framework's `screen--preview-colors` classes), and view dither patterns 1:1 or
 Lanczos-scaled: image viewers alias them into wrong colours. `render.mjs --device
 frame` maps to the six inks; at `--scale regular` (TRMNL.com) Chromium blurs the pixel

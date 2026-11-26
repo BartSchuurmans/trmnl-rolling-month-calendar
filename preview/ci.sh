@@ -89,10 +89,13 @@ render sample-x
 render sample-og --device og
 render sample-og-2bit --device og2
 render colors-x --set calendar_colors=black,-,gray-65 --set calendar_labels=-,M:,S: --set month_header=true
+# ... with "Color style" on Bars and bands: a bar in the colour instead of a fill for timed events
+render bars-x --set color_style=bars --set calendar_colors=gray-35,white,gray-60 --set calendar_labels=-,M:,S: --expect-events
+render bars-og --device og --set color_style=bars --set calendar_colors=gray-35,white,black --set calendar_labels=-,M:,S: --expect-events
 # The TRMNL Frame (Spectra 6) as LaraPaper draws it (xxlarge): colour names print in its inks,
 # greys as patterns (drawn like 1-bit). TRMNL.com draws it at regular with pixel fonts, which
 # Chromium blurs at that size; the TRMNL.com specs (trmnlp test, Firefox as on TRMNL) cover that.
-# A coloured calendar's timed events get a bar in the colour there (color_style: bars) ...
+# A coloured calendar's timed events get a bar in the colour there (color_style: auto) ...
 render frame --device frame --set calendar_colors=red,blue,gray-35 --set calendar_labels=-,M:,S: --set weather_entity=weather.forecast_home
 render frame-portrait --device frame-portrait --set calendar_colors=green,-,gray-60 --expect-events
 render frame-dark --device frame --dark --set calendar_colors=yellow,black,purple --set calendar_labels=-,M:,S:
