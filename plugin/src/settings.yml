@@ -96,7 +96,7 @@ custom_fields:
     field_type: string
     name: Home Assistant weather entity
     group: Weather
-    description: Optional. A <a href="https://www.home-assistant.io/integrations/weather/" class="underline" target="_blank">weather entity</a> (e.g. weather.forecast_home) whose daily forecast is shown next to each day number, from today on, through the Home Assistant URL and token above (also with ICS feeds). Needs LaraPaper 0.47.0 or later, or the LaraPaper (local) app (<a href="https://github.com/BartSchuurmans/trmnl-rolling-month-calendar/blob/main/LARAPAPER.md#weather" class="underline" target="_blank">how it works</a>).
+    description: Optional. A <a href="https://www.home-assistant.io/integrations/weather/" class="underline" target="_blank">weather entity</a> (e.g. weather.forecast_home) whose daily forecast is shown next to each day number, from today on, through the Home Assistant URL and token above (also with ICS feeds). Needs LaraPaper 0.47.0 or later (<a href="https://github.com/BartSchuurmans/trmnl-rolling-month-calendar/blob/main/LARAPAPER.md#weather" class="underline" target="_blank">how it works</a>).
     placeholder: weather.forecast_home
     optional: true
   - keyname: weather_temperatures

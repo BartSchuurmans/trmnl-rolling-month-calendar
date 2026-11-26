@@ -56,7 +56,7 @@ const VARIANTS = {
     own: /^$/,
     differs: {
       name: 'its own recipe on TRMNL.com, named after its data source',
-      'ha_url.default': 'the default is the LaraPaper (local) app\'s proxy; TRMNL.com needs the public URL',
+      'ha_url.default': 'the default is the LaraPaper add-on\'s read-only proxy; TRMNL.com needs the public URL',
       'ha_url.optional': 'Home Assistant is the only source here',
       'ha_token.optional': 'TRMNL.com reaches Home Assistant from the internet, always with a token',
       'calendars.optional': 'Home Assistant is the only source here',

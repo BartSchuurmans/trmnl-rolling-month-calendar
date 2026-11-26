@@ -149,8 +149,8 @@ export function sampleHaRange(name, start, end) {
   return Object.hasOwn(CALENDARS, name) ? haEvents(name, Date.parse(`${start}T00:00:00Z`), Date.parse(`${end}T00:00:00Z`), TZID) : null;
 }
 
-// A weather entity's daily forecast as the LaraPaper (local) app's proxy hands it over
-// (Home Assistant's weather.get_forecasts response): ten days from `today`, each dated
+// A weather entity's daily forecast as Home Assistant's weather.get_forecasts answers it
+// (what transform.js adds): ten days from `today`, each dated
 // at noon UTC, cycling through every condition the recipe draws.
 const FORECAST = [
   ['cloudy', 17, 9], ['rainy', 15, 10], ['partlycloudy', 16, 8], ['sunny', 19, 9], ['partlycloudy', 18, 11],
